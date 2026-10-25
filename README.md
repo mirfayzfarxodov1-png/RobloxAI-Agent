@@ -1,31 +1,23 @@
-# RobloxAI Agent
+# RobloxAI Agent Website
 
-Windows desktop MVP for generating Roblox Luau starter projects.
+Browser-based React + Vite website for generating a Roblox Luau starter project ZIP.
 
-## Current status
-- Electron + React + TypeScript desktop shell
-- Local starter-project export into a folder you choose
-- Starter Meadow scope: one zone, coins, egg opening, pets, basic UI, and DataStore starter
-- Windows CI workflow for tests and build
-
-## Requirements
-- Windows 10/11 64-bit
-- Node.js 20+ and npm
-- Roblox Studio for importing/testing the exported Luau scripts
-
-## Run
-```powershell
-npm install
-npm run dev
-```
+## Run locally (Windows)
+1. Install Node.js 20 LTS or newer.
+2. Download this repository ZIP from GitHub and extract it.
+3. Open the extracted folder in Terminal / PowerShell.
+4. Run:
+   ```powershell
+   npm install
+   npm run dev
+   ```
+5. Open the URL printed by Vite, normally http://localhost:5173.
 
 ## Build
 ```powershell
 npm test
 npm run build
-npm run package:win
-```
+npm run preview
+``
 
-The current version exports starter scripts locally. It does not yet control Roblox Studio, run play-tests, use an AI model, or publish a game. Those are roadmap items. No extra zones, stealing mechanics, or Robux features are included in this starter.
-
-See docs/ROADMAP.md and docs/SECURITY.md.
+The site runs in a browser and downloads a ZIP containing Config.lua, Main.server.lua, Client.client.lua and import instructions. Current version is a starter generator only. It does not yet use an AI model, control Roblox Studio, run Studio play-tests, repair Studio errors automatically, or publish a game. Never put a private AI API key in browser code; a future AI integration must use a backend.
