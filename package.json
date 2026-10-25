@@ -1,17 +1,17 @@
 {
   "name": "robloxai-agent",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Windows desktop starter-project generator for Roblox Luau games",
-  "main": "out/main/index.js",
+  "type": "module",
+  "description": "Browser-based Roblox Luau starter project generator",
   "scripts": {
-    "dev": "electron-vite dev",
-    "build": "tsc --noEmit -p tsconfig.json && electron-vite build",
-    "preview": "electron-vite preview",
-    "package:win": "npm run build && electron-builder --win nsis",
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc --noEmit -p tsconfig.json && vite build",
+    "preview": "vite preview --host 0.0.0.0",
     "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
+    "jszip": "^3.10.1",
     "lucide-react": "^0.468.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
@@ -21,30 +21,7 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
-    "electron": "^33.2.1",
-    "electron-builder": "^25.1.8",
-    "electron-vite": "^3.0.0",
     "typescript": "^5.7.2",
     "vite": "^6.0.5"
-  },
-  "build": {
-    "appId": "com.robloxai.agent",
-    "productName": "RobloxAI Agent",
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "out/**/*",
-      "package.json"
-    ],
-    "win": {
-      "target": [
-        "nsis"
-      ]
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true
-    }
   }
 }
