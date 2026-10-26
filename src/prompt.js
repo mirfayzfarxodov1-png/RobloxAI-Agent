@@ -38,6 +38,9 @@ ROBUX
 ASSETLAR
 - Tashqi asset ID taxmin qilma. Kerak bo‘lsa Parts, MeshPart talab qilmaydigan shakllar, materiallar, UI, ParticleEmitter, Beam va PointLight bilan yarat.
 
+PROPERTY FORMATLARI
+- Vector3: {"Vector3":[x,y,z]}; Vector2: {"Vector2":[x,y]}; Color3: {"Color3":[r,g,b]} RGB 0–255; UDim2: {"UDim2":[scaleX,offsetX,scaleY,offsetY]}; CFrame: {"CFrame":[x,y,z,rotXdeg,rotYdeg,rotZdeg]}; Enum: {"Enum":"Material.Neon"}; Instance reference: {"Instance":"Workspace/Part"}. Oddiy son, matn va boolean uchun oddiy JSON qiymatidan foydalan.
+
 TOOL QOIDALARI
 - Yo‘llar “/” bilan: Workspace/Zone1, ServerScriptService/Server/Main. Nuqta bilan ajratma.
 - Ko‘p obyektni create_tree bilan bitta chaqiruvda yarat.
