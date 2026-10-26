@@ -1,0 +1,131 @@
+const root = document.getElementById('app');
+const state = {
+  user:null,messages:[],busy:false,status:{connected:false,placeName:'',deviceId:null},
+  steps:{used:0,limit:300},modal:null,authMode:'login',login:'',password:'',invite:'',
+  notice:'',prompt:'',code:'',expiresAt:0,devices:[],serverOnline:false,mobileMenu:false
+};
+let stream=null,codeTicker=null;
+function node(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined&&text!==null)n.textContent=String(text);return n;}
+function button(text,cls,action,disabled=false){const b=node('button',cls,text);b.type='button';b.disabled=disabled;b.addEventListener('click',action);return b;}
+function link(text,href,cls){const a=node('a',cls,text);a.href=href;if(/^https?:\/\//.test(href)){a.target='_blank';a.rel='noreferrer';}return a;}
+function iconButton(label,glyph,action){const b=button(glyph,'icon-button',action);b.setAttribute('aria-label',label);b.title=label;return b;}
+async function api(path,body,method){
+  const options={method:method||(body===undefined?'GET':'POST'),credentials:'same-origin',headers:{}};
+  if(body!==undefined){options.headers['Content-Type']='application/json';options.body=JSON.stringify(body);}
+  const response=await fetch(path,options);const data=await response.json().catch(()=>({}));
+  if(!response.ok){const error=new Error(data.error||'So‘rov bajarilmadi');error.status=response.status;error.data=data;throw error;}return data;
+}
+function addMessage(message){const id=String(message.id||Date.now()+'-'+Math.random());const idx=state.messages.findIndex(m=>String(m.id)===id);const item={...message,id};if(idx>=0)state.messages[idx]=item;else state.messages.push(item);state.scrollBottom=true;render();}
+function safeInline(parent,text){
+  const regex=/(\*\*[^*]+\*\*|\x60[^\x60]+\x60)/g;let cursor=0,match;
+  while((match=regex.exec(text))!==null){if(match.index>cursor)parent.append(document.createTextNode(text.slice(cursor,match.index)));const raw=match[0];if(raw.startsWith('**'))parent.append(node('strong','',raw.slice(2,-2)));else parent.append(node('code','',raw.slice(1,-1)));cursor=match.index+raw.length;}
+  if(cursor<text.length)parent.append(document.createTextNode(text.slice(cursor)));
+}
+function safeMarkdown(parent,text){
+  const parts=String(text||'').split(/\x60{3}([a-zA-Z0-9_-]*)\n?([\s\S]*?)\x60{3}/g);
+  for(let i=0;i<parts.length;i++){
+    if(i%3===1){const pre=node('pre');pre.append(node('code','',parts[i+1]||''));parent.append(pre);i++;continue;}
+    const lines=parts[i].split('\n');let paragraph=[];
+    const flush=()=>{if(!paragraph.length)return;const p=node('p');safeInline(p,paragraph.join('\n'));parent.append(p);paragraph=[];};
+    for(const line of lines){if(!line.trim()){flush();continue;}if(/^\s*[-*]\s+/.test(line)){flush();let list=parent.lastElementChild;if(!list||list.tagName!=='UL'){list=node('ul');parent.append(list);}const li=node('li');safeInline(li,line.replace(/^\s*[-*]\s+/,''));list.append(li);}else paragraph.push(line);}flush();
+  }
+}
+function renderMessage(m){
+  if(m.role==='tool'||m.role==='tool_result'){
+    const wrap=node('div','message-tool');const b=button('', 'tool-row',()=>{const p=wrap.querySelector('.tool-preview');if(p)p.classList.toggle('hidden');});
+    b.append(node('span','',m.role==='tool'?'🧱':(m.ok?'✓':'✕')),node('span','',m.text||m.summary||m.name||'Studio buyrug‘i'),node('span','tool-state',m.role==='tool'?'…':(m.ok?'✓':'✕')));wrap.append(b);
+    if(m.preview||m.details)wrap.append(node('div','tool-preview hidden',m.preview||m.details));return wrap;
+  }
+  const article=node('article','message message-'+(m.role||'assistant'));article.append(node('div','message-avatar',m.role==='user'?'M':m.role==='error'?'!':'Q'));
+  const body=node('div','message-body'),meta=node('div','message-meta');meta.append(node('strong','',m.role==='user'?'Sen':m.role==='error'?'Xatolik':'Quruvchi AI'));body.append(meta);
+  const text=node('div','message-text');safeMarkdown(text,m.text||'');body.append(text);article.append(body);return article;
+}
+function render(){
+  root.replaceChildren();if(!state.user){renderAuth();return;}
+  const shell=node('div','app-shell'),sidebar=node('aside','sidebar'+(state.mobileMenu?' open':''));
+  const brand=node('div','brand-row');brand.append(node('div','brand-mark','Q'));const brandCopy=node('div','brand-copy');brandCopy.append(node('strong','','Quruvchi'),node('small','','ROBLOX AI STUDIO'));brand.append(brandCopy,iconButton('Menyuni yopish','×',()=>{state.mobileMenu=false;render();}));brand.lastElementChild.className='icon-button mobile-close';sidebar.append(brand);
+  sidebar.append(button('＋  Yangi chat','new-chat',newChat),node('div','side-label','ISH MAYDONI'),button('◫  AI bilan qurish','side-link active',()=>{}));
+  const studioLink=button('▣  Studio ulash','side-link',openPair);studioLink.append(node('span','tiny-status'+(state.status.connected?' online':'')));sidebar.append(studioLink,button('⚙  Sozlamalar','side-link',()=>{state.modal='settings';render();}),node('div','side-label','YORDAM'),button('?  Qanday ishlaydi?','side-link',()=>{state.modal='help';render();}),node('div','sidebar-spacer'));
+  const usage=node('div','usage-card'),usageTitle=node('div','usage-title','ϟ  Kunlik limit');usageTitle.append(node('span','',state.steps.used+' / '+state.steps.limit));usage.append(usageTitle);
+  const track=node('div','usage-track'),fill=node('span');const pct=state.steps.limit?Math.min(100,state.steps.used/state.steps.limit*100):0;fill.className=pct>=100?'bar-full':pct>=66?'bar-two-thirds':pct>=33?'bar-one-third':'bar-low';track.append(fill);usage.append(track,node('p','','Bugungi AI tool qadamlari'));sidebar.append(usage);
+  const profile=node('div','profile-row');profile.append(node('div','avatar',state.user.login.slice(0,1).toUpperCase()));const profileInfo=node('div','profile-info');profileInfo.append(node('strong','',state.user.login),node('small','',state.serverOnline?'Server ulangan':'Server offline'));profile.append(profileInfo,iconButton('Chiqish','↪',logout));sidebar.append(profile);shell.append(sidebar);
+
+  const main=node('main','main-area'),top=node('header','topbar'),topLeft=node('div','topbar-left');const menu=iconButton('Menyuni ochish','☰',()=>{state.mobileMenu=!state.mobileMenu;render();});menu.className='icon-button menu-button';topLeft.append(menu);
+  const crumbs=node('div','breadcrumbs');crumbs.append(node('span','','Ish maydoni'),node('b','', '/'),node('strong','','AI bilan qurish'));topLeft.append(crumbs);
+  const actions=node('div','topbar-actions'),backend=node('div','backend-pill '+(state.serverOnline?'online':'offline'));backend.append(node('i'),document.createTextNode(state.serverOnline?'Server ulangan':'Server offline'));
+  const studio=button('','studio-pill'+(state.status.connected?' connected':''),openPair);studio.append(node('span','studio-dot'),document.createTextNode(state.status.connected?(state.status.placeName||'Studio ulangan'):'Studio ulash'),node('span','','⌄'));
+  actions.append(backend,studio,link('↗','https://github.com/mirfayzfarxodov1-png/RobloxAI-Agent','github-link'));top.append(topLeft,actions);main.append(top);
+
+  const layout=node('div','chat-layout'),heading=node('div','chat-heading'),headingText=node('div');headingText.append(node('div','eyebrow','✧  AI GAME BUILDER'));
+  const h1=node('h1');h1.append(document.createTextNode('G‘oyangni o‘yinga aylantir'),node('span','','.'));headingText.append(h1,node('p','','Oddiy tilda yoz. Quruvchi reja tuzadi, Luau kodini tayyorlaydi va Studio bilan bog‘lanishga yordam beradi.'));
+  const chip=node('div','heading-chip'+(state.status.connected?' connected':''));chip.append(node('span','pulse-dot'),document.createTextNode(state.status.connected?'Studio ulangan':'Studio ulanmagan'));heading.append(headingText,chip);layout.append(heading);
+  const scroll=node('div','chat-scroll');
+  if(!state.messages.length){
+    const welcome=node('section','welcome-block'),art=node('div','welcome-art');art.append(node('div','art-orbit orbit-one'),node('div','art-orbit orbit-two'),node('div','art-cube','✧'),node('div','floating-icon float-spark','✦'),node('div','floating-icon float-code','</>'),node('div','floating-icon float-game','▣'));
+    welcome.append(art,node('h2','','Nimani quramiz?'),node('p','','O‘yin mexanikasi, UI, skriptlar yoki butun loyiha — g‘oyangni yozib boshlaymiz.'));
+    const grid=node('div','suggestion-grid'),suggestions=[
+      ['🌱','Pet simulator','Yashil zona, bosilganda ochiladigan tuxum va orqamdan yuradigan pet yasab ber'],
+      ['🏁','Obby o‘yini','Tanga yig‘iladigan obby: 10 ta platforma, checkpointlar va tanga hisoblagich UI'],
+      ['🛠','Tayyor asos','Leaderstats, DataStore saqlash va do‘kon UI bilan tayyor asos qur']
+    ];
+    for(const [emoji,title,prompt] of suggestions){const card=button('', 'suggestion-card',()=>{state.prompt=prompt;render();const area=root.querySelector('#prompt');if(area){area.focus();area.setSelectionRange(area.value.length,area.value.length);}});card.append(node('span','suggestion-emoji',emoji),node('strong','',title),node('span','',prompt),node('div','suggestion-arrow','＋'));grid.append(card);}
+    welcome.append(grid);scroll.append(welcome);
+  }
+  const list=node('div','message-list');for(const m of state.messages)list.append(renderMessage(m));scroll.append(list);
+  if(state.busy){const work=node('div','working-row');work.append(node('span','spinner'),document.createTextNode('Quruvchi ishlayapti…'));scroll.append(work);}layout.append(scroll);
+  const composerWrap=node('div','composer-wrap'),composer=node('div','composer'),textarea=node('textarea');textarea.id='prompt';textarea.rows=2;textarea.maxLength=8000;textarea.value=state.prompt;textarea.placeholder='Masalan: pet simulator uchun to‘liq tizim yarat...';textarea.setAttribute('aria-label','Xabaringiz');textarea.addEventListener('input',e=>state.prompt=e.target.value);textarea.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});
+  const bottom=node('div','composer-bottom'),hints=node('div','composer-hints');hints.append(node('span','','↵ Enter yuborish'),node('span','','·'),node('span','','Shift + Enter yangi qator'));
+  bottom.append(hints,button(state.busy?'■  To‘xtatish':'➤  Yuborish','send-button'+(state.busy?' stop':''),state.busy?stop:sendMessage,!state.busy&&!state.prompt.trim()));
+  composer.append(textarea,bottom);composerWrap.append(composer,node('div','composer-foot','◇  AI yaratgan kodni Roblox Studio’da sinab ko‘r. Haqiqiy Play-test alohida talab qilinadi.'));layout.append(composerWrap);main.append(layout);shell.append(main,shellVersion());root.append(shell);
+  if(state.modal)renderModal(shell);if(state.scrollBottom){scroll.scrollTop=scroll.scrollHeight;state.scrollBottom=false;}
+}
+function shellVersion(){return node('div','version-label','QURUVCHI  WEB · v1.0');}
+function renderAuth(){
+  const wrap=node('div','auth-page'),card=node('section','auth-card');card.append(node('div','brand-mark','Q'),node('h1','','Quruvchi'),node('p','auth-intro','Roblox Studio uchun AI quruvchi'));
+  const tabs=node('div','auth-tabs');tabs.append(button('Kirish',state.authMode==='login'?'active':'',()=>{state.authMode='login';state.notice='';render();}),button('Ro‘yxatdan o‘tish',state.authMode==='register'?'active':'',()=>{state.authMode='register';state.notice='';render();}));card.append(tabs);
+  const form=node('form'),loginLabel=node('label','form-label','LOGIN'),loginInput=node('input');loginInput.name='login';loginInput.autocomplete='username';loginInput.required=true;loginInput.minLength=3;loginInput.maxLength=32;loginInput.value=state.login;loginInput.placeholder='foydalanuvchi';loginInput.addEventListener('input',e=>state.login=e.target.value);loginLabel.append(loginInput);form.append(loginLabel);
+  const passLabel=node('label','form-label','PAROL'),passInput=node('input');passInput.type='password';passInput.name='password';passInput.autocomplete=state.authMode==='login'?'current-password':'new-password';passInput.required=true;passInput.minLength=8;passInput.maxLength=200;passInput.value=state.password;passInput.placeholder='Kamida 8 belgi';passInput.addEventListener('input',e=>state.password=e.target.value);passLabel.append(passInput);form.append(passLabel);
+  if(state.authMode==='register'){const label=node('label','form-label','TAKLIF KODI (Ixtiyoriy)'),input=node('input');input.name='invite';input.value=state.invite;input.placeholder='Taklif kodi';input.addEventListener('input',e=>state.invite=e.target.value);label.append(input);form.append(label);}
+  if(state.notice)form.append(node('div','form-error',state.notice));
+  const submit=button(state.authMode==='login'?'Kirish':'Hisob yaratish','primary-button full',()=>{});submit.type='submit';form.append(submit);
+  form.addEventListener('submit',async e=>{e.preventDefault();state.notice='';try{const data=await api(state.authMode==='login'?'/api/login':'/api/register',{login:state.login,password:state.password,...(state.authMode==='register'?{invite:state.invite}:{})});state.user={login:data.login||state.login};state.password='';state.notice='';await loadApp();}catch(error){state.notice=error.message;render();}});
+  card.append(form,node('p','auth-security','Sessiya xavfsiz cookie bilan saqlanadi. AI kaliti brauzerga yuborilmaydi.'));wrap.append(card);root.append(wrap);
+}
+function renderModal(shell){
+  const backdrop=node('div','modal-backdrop');backdrop.addEventListener('mousedown',e=>{if(e.target===backdrop)closeModal();});
+  const card=node('section','modal-card');card.setAttribute('role','dialog');card.setAttribute('aria-modal','true');const close=iconButton('Yopish','×',closeModal);close.classList.add('modal-close');card.append(close);
+  if(state.modal==='pair'){
+    card.append(node('div','modal-icon','▣'),node('h2','','Roblox Studio’ni ulash'),node('p','modal-subtitle','Sayt va Studio pluginini bir martalik kod orqali bog‘lang.'));
+    const steps=node('div','pair-steps');for(const [n,title,desc] of [['1','Pluginni oling','GitHub repodagi plugin/Quruvchi.lua faylini yuklab oling.'],['2','Studio’da ishga tushiring','Plugins papkasiga qo‘shing. HTTP so‘rovi ruxsatini tasdiqlang.'],['3','Kodni kiriting','Panelda server URL va quyidagi kodni kiriting.']]){const row=node('div');row.append(node('b','',n));const span=node('span');span.append(node('strong','',title),node('small','',desc));row.append(span);steps.append(row);}card.append(steps);
+    const code=node('div','pair-code'),codeText=state.code?state.code.slice(0,4)+'-'+state.code.slice(4):'••••-••••';code.append(node('strong','',codeText),iconButton('Kodni nusxalash','▣',async()=>{if(!state.code)return;try{await navigator.clipboard.writeText(state.code);state.notice='Kod nusxalandi';}catch{state.notice='Nusxalab bo‘lmadi';}render();}));card.append(code);
+    const remaining=Math.max(0,Math.ceil((state.expiresAt-Date.now())/1000));card.append(node('div','pair-timer',state.code?(remaining?'Kod muddati: '+Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0'):'Kod muddati tugagan'):'Kod olish uchun tugmani bosing'),button(state.code?'Yangi kod olish':'Ulash kodini olish','primary-button full',createPair),link('Plugin faylini yuklab olish','/plugin.lua','plugin-download'));
+    const list=node('div','device-list');for(const d of state.devices){const item=node('div','device-item');item.append(node('span','device-status'+(d.connected?' connected':'')));const info=node('div');info.append(node('strong','',d.placeName||'Roblox Studio'),node('small','',d.connected?'Ulangan':'Uzilgan'));item.append(info,button('O‘chirish','device-delete',async()=>{if(!confirm('Ushbu Studio qurilmasini uzasizmi?'))return;try{await api('/api/devices/'+d.id,undefined,'DELETE');await loadDevices();render();}catch(e){state.notice=e.message;render();}}));list.append(item);}card.append(list);
+    if(state.notice)card.append(node('div','form-error',state.notice));
+  }else if(state.modal==='settings'){
+    card.append(node('div','modal-icon','⚙'),node('h2','','Sozlamalar'),node('p','modal-subtitle','Quruvchi ish muhiti va xavfsizlik holati.'));
+    for(const [label,value] of [['Server',state.serverOnline?'ONLINE':'OFFLINE'],['Studio bridge',state.status.connected?'ULANGAN':'ULANMAGAN'],['Bugungi tool limiti',state.steps.used+' / '+state.steps.limit],['run_code','Plugin ichida sukut bo‘yicha O‘CHIQ']]){const row=node('div','settings-row'),left=node('div');left.append(node('strong','',label));row.append(left,node('span','state-tag',value));card.append(row);}card.append(node('p','modal-footnote','API kalitni .env ichida saqlang. GitHub yoki frontend kodiga qo‘ymang.'));
+  }else if(state.modal==='help'){
+    card.append(node('div','modal-icon','?'),node('h2','','Quruvchi qanday ishlaydi?'),node('p','modal-subtitle','Brauzer serverga, server Claude API’ga, server esa Studio pluginiga buyruqlar yuboradi.'));
+    const help=node('div','help-list');for(const line of ['G‘oyangni chatga yoz.','AI avval mavjud Studio ierarxiyasini ko‘radi va reja tuzadi.','Plugin ruxsat etilgan tool buyruqlarini bajaradi.','Play-testni o‘zing bajar; muammo bo‘lsa “logs” deb yoz.'])help.append(node('p','',line));card.append(help,node('p','modal-footnote','AI yaratgan kodda xato bo‘lishi mumkin. Plugin Play rejimini bosmaydi. DataStore uchun Studio API Services sozlamasi kerak.'));
+  }
+  backdrop.append(card);shell.append(backdrop);
+}
+function closeModal(){state.modal=null;state.notice='';if(codeTicker){clearInterval(codeTicker);codeTicker=null;}render();}
+async function openPair(){state.modal='pair';state.notice='';render();await loadDevices();if(state.modal==='pair')render();if(codeTicker)clearInterval(codeTicker);codeTicker=setInterval(()=>{if(state.modal==='pair')render();else{clearInterval(codeTicker);codeTicker=null;}},1000);}
+async function createPair(){try{const d=await api('/api/pair',{});state.code=d.code;state.expiresAt=d.expiresAt;state.notice='';render();}catch(e){state.notice=e.message;render();}}
+async function loadDevices(){try{state.devices=await api('/api/devices');}catch{state.devices=[];}}
+async function loadHistory(){try{const d=await api('/api/chat/history');state.messages=(d.messages||[]).map(m=>({...m,role:m.role==='user'?'user':'assistant'}));}catch{}}
+async function loadApp(){try{const me=await api('/api/me');state.user={login:me.login};state.steps=me.steps||state.steps;state.status=me.status||state.status;state.serverOnline=true;state.busy=!!me.running;await loadHistory();connectStream();}catch(error){state.user=null;state.serverOnline=false;state.notice=error.message;}render();}
+function connectStream(){
+  if(stream)stream.close();stream=new EventSource('/api/stream');
+  stream.addEventListener('status',e=>{try{state.status=JSON.parse(e.data);render();}catch{}});
+  stream.addEventListener('state',e=>{try{const d=JSON.parse(e.data);state.busy=!!d.running;if(d.steps)state.steps=d.steps;render();}catch{}});
+  stream.addEventListener('message',e=>{try{const d=JSON.parse(e.data);if(d.kind==='user'||d.kind==='assistant')addMessage({id:d.id,role:d.kind,text:d.text});else if(d.kind==='tool')addMessage({id:d.id||d.toolId,role:'tool',name:d.name,summary:d.summary,text:(d.name||'Tool')+(d.summary?' · '+d.summary:'')});else if(d.kind==='tool_result')addMessage({id:d.id||('result-'+d.toolId+'-'+Date.now()),role:'tool_result',toolId:d.toolId,ok:d.ok,preview:d.preview,text:(d.ok?'✓ ':'✕ ')+(d.preview||'Tool natijasi')});else if(d.kind==='error')addMessage({id:d.id,role:'error',text:d.text||'Xatolik yuz berdi'});else if(d.kind==='info')addMessage({id:d.id,role:'assistant',text:d.text||''});}catch{}});
+  stream.addEventListener('reset',()=>{state.messages=[];render();});stream.onerror=()=>{};
+}
+async function sendMessage(){const text=state.prompt.trim();if(!text||state.busy)return;try{await api('/api/chat',{text});state.prompt='';state.busy=true;render();}catch(error){if(error.status===412||error.data?.needPairing){state.notice='Avval Roblox Studio’ni ulang.';openPair();}else addMessage({role:'error',text:error.message});}}
+async function stop(){try{await api('/api/stop',{});}catch(e){addMessage({role:'error',text:e.message});}state.busy=false;render();}
+async function newChat(){try{await api('/api/chat/new',{});state.messages=[];state.prompt='';state.busy=false;render();}catch(e){addMessage({role:'error',text:e.message});}}
+async function logout(){try{await api('/api/logout',{});}catch{}if(stream){stream.close();stream=null;}state.user=null;state.messages=[];state.password='';state.notice='';state.modal=null;render();}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.modal)closeModal();});
+(async function boot(){try{const me=await api('/api/me');state.user={login:me.login};state.steps=me.steps||state.steps;state.status=me.status||state.status;state.serverOnline=true;state.busy=!!me.running;await loadHistory();connectStream();}catch{state.user=null;try{const r=await fetch('/healthz');state.serverOnline=r.ok;}catch{state.serverOnline=false;}}render();})();
