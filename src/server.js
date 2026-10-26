@@ -150,6 +150,15 @@ const server = http.createServer(async (req, res) => {
       return pollDevice(device.user_id, device.id, req, res, Number.isFinite(wait) ? Math.max(0, Math.min(20, wait)) : 12);
     }
 
+    if (method === 'POST' && pathname === '/api/plugin/disconnect') {
+      const bearer = String(req.headers.authorization || '').match(/^Bearer\\s+(.+)$/i)?.[1];
+      if (!bearer) return json(res, 401, { error:'Token talab qilinadi' });
+      const device = db.prepare('SELECT id,user_id FROM devices WHERE token_hash=?').get(sha256(bearer));
+      if (!device) return json(res, 401, { error:'Qurilma uzilgan' });
+      disconnectDevice(device.user_id, device.id);
+      return json(res, 200, { ok:true });
+    }
+
     if (method === 'POST' && pathname === '/api/plugin/result') {
       const bearer = String(req.headers.authorization || '').match(/^Bearer\s+(.+)$/i)?.[1];
       if (!bearer) return json(res, 401, { error:'Token talab qilinadi' });
