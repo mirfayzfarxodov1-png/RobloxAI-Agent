@@ -132,7 +132,7 @@ async function runLoop(userId, task) {
         const output = truncateOutput(result.output || '', 20000);
         results.push({ type:'tool_result', tool_use_id:toolUse.id, is_error:!result.ok, content:output });
         emit(userId, 'message', { id: crypto.randomUUID(), kind:'tool_result', toolId:toolUse.id, ok:!!result.ok, preview:output.slice(0, 300) });
-        if (result.cancelled) break;
+        if (result.cancelled) continue;
       }
       if (results.length) saveMessage(task.conversationId, 'user', results);
       if (signal.aborted) break;
@@ -148,13 +148,18 @@ async function runLoop(userId, task) {
       }
     }
   } finally {
-    // Ensure every stored tool_use has a matching result if a task was cancelled mid-command.
-    const raw = getMessages(task.conversationId);
-    const repaired = repairHistory(raw);
-    if (JSON.stringify(raw.map(m => m.content)) !== JSON.stringify(repaired.map(m => m.content))) {
-      // Add a repair user turn instead of mutating immutable history rows.
-      const last = repaired[repaired.length - 1];
-      if (last?.role === 'user' && last.content.some(b => b.type === 'tool_result')) saveMessage(task.conversationId, 'user', last.content.filter(b => b.type === 'tool_result'));
+    // Persist missing tool results for the last assistant tool-use turn after cancellation.
+    const rows = getMessages(task.conversationId);
+    const lastAssistantIndex = rows.map((m, i) => m.role === 'assistant' && m.content.some(b => b?.type === 'tool_use') ? i : -1).filter(i => i >= 0).pop();
+    if (lastAssistantIndex !== undefined) {
+      const uses = rows[lastAssistantIndex].content.filter(b => b?.type === 'tool_use');
+      const seen = new Set();
+      for (const row of rows.slice(lastAssistantIndex + 1)) {
+        if (row.role === 'assistant') break;
+        if (row.role === 'user') for (const block of row.content) if (block?.type === 'tool_result') seen.add(block.tool_use_id);
+      }
+      const missing = uses.filter(b => !seen.has(b.id)).map(b => ({ type:'tool_result', tool_use_id:b.id, is_error:true, content:signal.aborted ? 'Foydalanuvchi to‘xtatdi' : 'Tool natijasi mavjud emas' }));
+      if (missing.length) saveMessage(task.conversationId, 'user', missing);
     }
     if (signal.aborted) emit(userId, 'message', { id: crypto.randomUUID(), kind:'info', text:'To‘xtatildi' });
   }
