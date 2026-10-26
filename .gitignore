@@ -1,6 +1,5 @@
 node_modules/
 dist/
-dist-electron/
 release/
 .env
 .env.*
@@ -10,11 +9,6 @@ release/
 Thumbs.db
 .vscode/
 .idea/
-
-# Quruvchi backend secrets and local database
-.env
-.env.*
-!.env.example
 data/
 *.sqlite
 *.sqlite-shm
