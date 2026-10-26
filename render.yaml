@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: quruvchi
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: DATA_DIR
+        value: /data
+      - key: PUBLIC_URL
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: CLAUDE_MODEL
+        value: claude-sonnet-5
+    disk:
+      name: quruvchi-data
+      mountPath: /data
+      sizeGB: 1
