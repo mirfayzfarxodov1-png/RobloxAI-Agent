@@ -11,7 +11,7 @@ function link(text,href,cls){const a=node('a',cls,text);a.href=href;if(/^https?:
 function iconButton(label,glyph,action){const b=button(glyph,'icon-button',action);b.setAttribute('aria-label',label);b.title=label;return b;}
 async function api(path,body,method){
   const options={method:method||(body===undefined?'GET':'POST'),credentials:'same-origin',headers:{}};
-  if(body!==undefined){options.headers['Content-Type']='application/json';options.body=JSON.stringify(body);}
+  if(body!==undefined){options.headers['Content-Type']='application/json';options.body=JSON.stringify(body);}else if(options.method==='POST'||options.method==='DELETE'){options.headers['Content-Type']='application/json';}
   const response=await fetch(path,options);const data=await response.json().catch(()=>({}));
   if(!response.ok){const error=new Error(data.error||'So‘rov bajarilmadi');error.status=response.status;error.data=data;throw error;}return data;
 }
