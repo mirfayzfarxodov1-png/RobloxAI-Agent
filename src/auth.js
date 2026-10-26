@@ -47,7 +47,8 @@ export function getUserFromRequest(req) {
   const cookie = req.headers.cookie || '';
   const match = cookie.split(';').map(v => v.trim()).find(v => v.startsWith(SESSION_COOKIE + '='));
   if (!match) return null;
-  const token = decodeURIComponent(match.slice(SESSION_COOKIE.length + 1));
+  let token;
+  try { token = decodeURIComponent(match.slice(SESSION_COOKIE.length + 1)); } catch { return null; }
   const row = db.prepare('SELECT u.id,u.login,s.token_hash FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?').get(sha256(token), Date.now());
   return row ? { id: row.id, login: row.login, tokenHash: row.token_hash } : null;
 }
