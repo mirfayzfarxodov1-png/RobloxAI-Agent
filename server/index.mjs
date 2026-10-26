@@ -156,7 +156,14 @@ async function runAI(uid, text) {
       db.prepare('INSERT INTO studio_tasks(id,user_id,payload,status,created_at,updated_at) VALUES(?,?,?,"queued",?,?)').run(id, uid, JSON.stringify({ summary: String(input.summary || 'Studio yangilanishi'), actions }), now(), now());
       emit(uid, 'message', { id: crypto.randomUUID(), kind: 'tool', name: 'Studio vazifasi', summary: actions.length + ' ta amal navbatga qo‘yildi' });
       textParts.push('\n\nStudio vazifasi navbatga qo‘yildi (' + actions.length + ' amal). Plugin bajarib, natijani qaytargach holat ko‘rinadi.');
-    } else textParts.push('\n\nStudio ulanmagan, shuning uchun loyihaga hech narsa yozilmadi. Studio pluginini ulang va keyin qayta so‘rang.');
+    } else {
+      const manual = actions.map((a, i) => {
+        const path = String(a.parent || 'Workspace');
+        const title = (i + 1) + '. ' + String(a.type) + ' — ' + String(a.name) + ' (joyi: ' + path + ')';
+        return title + (a.source ? '\n\n```lua\n' + String(a.source) + '\n```' : '');
+      }).join('\n\n');
+      textParts.push('\n\nStudio ulanmagan, shuning uchun hech narsa loyihaga yozilmadi. Pluginni ulaganingizdan keyin qayta so‘rashingiz mumkin.' + (manual ? '\n\nQo‘lda foydalanish uchun AI tayyorlagan amallar:\n\n' + manual : ''));
+    }
   }
   return { text: textParts.join('\n\n').trim() || 'AI javobi bo‘sh qaytdi. Qayta urinib ko‘ring.' };
 }
@@ -166,6 +173,7 @@ app.post('/api/chat', requireAuth, chatLimit, async (req, res) => {
   const uid = req.user.id;
   if (running.has(uid)) return res.status(409).json({ error: 'Oldingi vazifa hali ishlayapti. Kuting yoki to‘xtating.' });
   if (usedSteps(uid) >= DAILY_LIMIT) return res.status(429).json({ error: 'Kunlik AI qadam limiti tugadi.' });
+  if (!process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'AI provider sozlanmagan. Serverdagi .env fayliga ANTHROPIC_API_KEY kiriting; kalitni GitHub yoki brauzerga joylamang.' });
   running.set(uid, true); cancelled.delete(uid); publish(uid, 'user', p.data.text);
   emit(uid, 'state', { running: true, steps: { used: usedSteps(uid), limit: DAILY_LIMIT } });
   res.status(202).json({ accepted: true });
