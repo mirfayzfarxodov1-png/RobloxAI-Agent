@@ -1,85 +1,76 @@
 # Quruvchi — Roblox Studio AI Builder
 
-Quruvchi is a full-stack, Uzbek-first web app for planning Roblox games, generating Luau guidance, and sending supported creation tasks to a Roblox Studio plugin.
-
-## Features
-
-- React + Vite responsive website.
-- Express backend with registration/login, bcrypt password hashing, signed HTTP-only session cookie, request limits, and SQLite persistence.
-- Anthropic API integration on the server; the provider key is never read by browser code.
-- Chat history and server-sent events for live status/messages.
-- One-time expiring Studio pairing codes, hashed Studio tokens, plugin heartbeat, task queue, and result reporting.
-- Studio plugin supports a limited set of actions: create Part, Folder, Script/LocalScript/ModuleScript, and set an allowlist of properties.
-- Health endpoint at `/healthz`.
+Quruvchi is an Uzbek-first web application connecting a chat UI, Anthropic Claude tool-use loop, and a Roblox Studio plugin. The AI can inspect the open Studio hierarchy, create or update instances and scripts, read code, change properties, delete allowed instances, and read Output logs. **run_code is off by default** and requires an explicit toggle inside the plugin.
 
 ## Requirements
 
-- Node.js 20 LTS or newer.
-- An AI provider API key with access to the configured Anthropic model for live AI answers. Provider usage can cost money and may have rate limits.
-- Roblox Studio to use the plugin bridge.
+- Node.js **22.13.0 or newer** (uses native node:sqlite).
+- An Anthropic API key and a provider account with access to the configured model. Provider usage may cost money and has provider-side limits.
+- Roblox Studio.
 
-## Run locally on Windows
+The application intentionally has **no external npm runtime dependencies**. It uses Node.js built-ins, including node:http, node:crypto, node:sqlite, and native fetch.
 
-1. Install Node.js 20 LTS or newer.
-2. Download/clone this repository and open PowerShell in its folder.
-3. Install packages:
+## Local setup on Windows
 
-   ```powershell
-   npm install
-   ```
+1. Install Node.js 22.13+.
+2. Clone or download this repository and open PowerShell in the project folder.
+3. Copy the environment template with **Copy-Item .env.example .env**, then open the file in Notepad.
+4. Set ANTHROPIC_API_KEY to your own provider key. Keep the real key in .env only. Leave PUBLIC_URL=http://localhost:3000 and COOKIE_SECURE=false for local HTTP.
+5. Start the server with **npm start**.
+6. Open **http://localhost:3000**. Create an account, then use **Studio ulash** to generate a one-time pairing code.
 
-4. Copy the environment template and edit it:
-
-   ```powershell
-   Copy-Item .env.example .env
-   notepad .env
-   ```
-
-5. Set a unique `JWT_SECRET` (at least 32 characters) and put your AI provider key in `ANTHROPIC_API_KEY`. Do not paste the key into frontend code or commit it to GitHub.
-6. Start the website and backend:
-
-   ```powershell
-   npm run dev
-   ```
-
-7. Open `http://localhost:5173`. The API runs at `http://localhost:8787`; `/healthz` reports whether an AI key is configured.
-
-The first visit should show the login/register dialog. Create an account with a login of 3–32 letters/numbers/underscore/dot/dash and a password of at least 8 characters.
+No npm install is required because the project has no external dependencies. SQLite database files are created under data/.
 
 ## Connect Roblox Studio
 
-1. Start the backend and website locally or deploy the backend to HTTPS.
-2. In Roblox Studio, enable HTTP requests in Game Settings > Security.
-3. Install `roblox-plugin/QuruvchiBridge.plugin.lua` as a local Studio plugin.
-4. In the website, choose **Studio ulash** and generate a one-time code.
-5. In the plugin, enter the same server base URL (local development: `http://127.0.0.1:8787`), code, and optional place name. Click **Ulash va ishga tushirish**.
-6. Ask the AI to create a specific supported object/script. The plugin polls the server task queue and reports the result.
+1. Open Roblox Studio in Edit mode.
+2. In Game Settings → Security, enable HTTP requests. Only do this for a project you control.
+3. In Quruvchi, click **Studio ulash → Ulash kodini olish**.
+4. Download the plugin from the same modal. It is also available at /plugin.lua; the server embeds PUBLIC_URL into the download.
+5. Install the downloaded Quruvchi.lua as a local Studio plugin, restart Studio if needed, then open the **Quruvchi AI** toolbar panel.
+6. Enter the eight-character code and click **Ulanish**.
+7. Ask Quruvchi to inspect or change the project. Review the plugin log and test changes in a separate place before using them in an important game.
 
-The plugin executes only the supported action types and property allowlist in its source. Review AI-generated scripts and use a test place before applying changes to an important project. The bridge is not a substitute for Roblox Studio's own testing or security review.
+The plugin uses long-polling with bearer-token authentication. Pairing codes expire after ten minutes and can only be used once. You can revoke a device from the website.
 
-## Build and run production
+## Tests
 
-```powershell
-npm test
-npm run build
-$env:NODE_ENV="production"
-$env:COOKIE_SECURE="true"
-npm start
-```
+Run **npm test**.
 
-For production, deploy over HTTPS, set a unique `JWT_SECRET`, set `COOKIE_SECURE=true`, keep the SQLite database on persistent storage, configure backups, and do not expose the SQLite file publicly. The default database file lives under `data/`.
+The end-to-end test starts a temporary server, uses a fake Claude-compatible HTTP endpoint, and simulates a Studio plugin. It checks authentication, Origin/CSRF checks, pairing-code single-use behavior, tool execution, cancellation history repair, and device revocation. It does not prove that Roblox Studio or the real Anthropic provider works in every environment.
 
-## Important limitations
+## Production deployment
 
-- AI quality, usage cost, availability, and rate limits depend on the configured provider and account.
-- Without `ANTHROPIC_API_KEY`, the server returns a setup message instead of pretending to generate an AI answer.
-- The Studio bridge supports a limited action contract, not arbitrary full-game generation. Unsupported actions are rejected. A task is not considered successful until the plugin reports a result.
-- These source changes do not deploy the project to a public website. The local URL is `http://localhost:5173`; a public URL requires hosting and environment configuration.
-- AI-generated code may contain defects. Review and test changes in a separate Roblox place.
+Use HTTPS and persistent storage. Set these environment variables in your host's secret/environment settings:
 
-## Project layout
+- NODE_ENV=production
+- PORT to the port provided by the host
+- PUBLIC_URL=https://your-real-hostname (exact origin, no trailing path)
+- COOKIE_SECURE=true
+- DATA_DIR=/data (or another persistent directory)
+- ANTHROPIC_API_KEY to your secret API key
+- Optionally INVITE_CODE to restrict registration
 
-- `src/` — website UI.
-- `server/index.mjs` — API, auth, AI integration, chat history, Studio bridge.
-- `roblox-plugin/QuruvchiBridge.plugin.lua` — Studio plugin.
-- `.env.example` — configuration template without secrets.
+Use the included Dockerfile or render.yaml as a deployment starting point. A public site is **not deployed by committing these files**; hosting must still be configured and started.
+
+## Architecture
+
+- public/ — static HTML, CSS, and browser JavaScript. No framework and no inline scripts.
+- src/server.js — native HTTP server, routes, CSRF/Origin checks, static delivery, and plugin download.
+- src/auth.js — native scrypt password hashing, random sessions, hashed session tokens, and HTTP-only cookies.
+- src/db.js — native SQLite schema, conversations, messages, and usage.
+- src/claude.js — Anthropic Messages API client with bounded retries and cancellation.
+- src/agent.js — bounded tool-use loop, history repair, cancellation, and daily limits.
+- src/hub.js — SSE events, device status, long-poll command queue, timeouts, and result matching.
+- src/tools.js — tool schemas.
+- src/prompt.js — Roblox-specific system prompt.
+- plugin/Quruvchi.lua — Studio plugin and supported tool handlers.
+- test/ — fake provider/plugin helpers and end-to-end tests.
+
+## Honest limitations
+
+- AI-generated code can be wrong. Quruvchi does not promise zero defects.
+- The plugin cannot press Play or claim a runtime test passed. You must test in Studio and send “logs” if something fails.
+- External asset IDs are not guessed. Roblox APIs, permissions, DataStore availability, and Studio settings can affect results.
+- run_code is intentionally disabled until you explicitly enable it in the plugin. Only enable it for code and projects you trust.
+- API usage depends on your provider account, model access, pricing, and limits. This application does not make those provider limits disappear.
