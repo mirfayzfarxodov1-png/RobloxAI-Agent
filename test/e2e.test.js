@@ -39,7 +39,7 @@ test('Quruvchi auth, CSRF, pairing, tool loop, cancellation history, and device 
   const fake=await startFakeClaude();
   const port=await freePort(),base='http://127.0.0.1:'+port;
   const dataDir=await mkdtemp(path.join(os.tmpdir(),'quruvchi-test-'));
-  const child=spawn(process.execPath,[path.join(projectRoot,'src','server.js')],{
+  const child=spawn(process.execPath,['--experimental-sqlite',path.join(projectRoot,'src','server.js')],{
     cwd:dataDir,
     env:{...process.env,NODE_ENV:'test',PORT:String(port),PUBLIC_URL:base,DATA_DIR:dataDir,ANTHROPIC_API_KEY:'fake-key',ANTHROPIC_BASE_URL:fake.url,CLAUDE_MODEL:'fake-model',COOKIE_SECURE:'false',INVITE_CODE:'test123',COMMAND_TIMEOUT_MS:'5000',MAX_STEPS:'3',DAILY_STEP_LIMIT:'20',TRUST_PROXY:'false'},
     stdio:['ignore','pipe','pipe']
