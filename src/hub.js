@@ -49,8 +49,11 @@ function updateStatus(userId) {
   const hub = userHub(userId);
   const status = statusForUser(userId);
   const signature = JSON.stringify(status);
-  if (signature !== hub.lastStatus) { hub.lastStatus = signature; emit(userId, 'status', status); }
-  emit(userId, 'state', stateForUser(userId));
+  if (signature !== hub.lastStatus) {
+    hub.lastStatus = signature;
+    emit(userId, 'status', status);
+    emit(userId, 'state', stateForUser(userId));
+  }
 }
 export function stateForUser(userId) {
   const usage = db.prepare('SELECT steps FROM usage WHERE user_id=? AND day=?').get(userId, new Date().toISOString().slice(0, 10));
