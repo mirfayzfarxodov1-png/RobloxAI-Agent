@@ -189,6 +189,8 @@ const server = http.createServer(async (req, res) => {
       }
       if (method === 'GET' && pathname === '/api/stream') return attachSse(user.id, req, res);
       if (method === 'POST' && pathname === '/api/pair') {
+        const limit = consumeLimit('pairIp', clientIp(req) + ':user:' + user.id);
+        if (!limit.allowed) return json(res, 429, { error:'Juda ko‘p kod so‘raldi, keyinroq qayta urining' }, { 'Retry-After':String(limit.retryAfter) });
         const code = issuePairCode(user.id);
         return json(res, 200, code);
       }
