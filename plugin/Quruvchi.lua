@@ -150,9 +150,8 @@ local function decodeValue(value)
     return value
 end
 local function protectedService(instance)
-    local serviceNames = { Workspace=true,Lighting=true,ReplicatedStorage=true,ReplicatedFirst=true,ServerScriptService=true,ServerStorage=true,StarterGui=true,StarterPack=true,StarterPlayer=true,Teams=true,SoundService=true,Chat=true,TextChatService=true,Players=true,RunService=true,DataStoreService=true,MarketplaceService=true,HttpService=true,LogService=true,CoreGui=true }
     if instance == game then return true end
-    if instance.Parent == game and serviceNames[instance.Name] then return true end
+    if instance.Parent == game then return true end
     if instance.Name == "StarterPlayerScripts" or instance.Name == "StarterCharacterScripts" then return true end
     return false
 end
@@ -242,7 +241,8 @@ local function getTree(input)
 end
 local function createTree(input)
     return recordWaypoint("create_tree",function()
-        local parent = resolveParent(input.parent)
+        local parentPath = input.parent or "Workspace"
+        local parent = resolveParent(parentPath)
         local warnings, pendingRefs, count = {}, {}, {n=0}
         local created = buildTree(parent,input.tree,warnings,pendingRefs,count)
         for _, pending in ipairs(pendingRefs) do
@@ -252,7 +252,7 @@ local function createTree(input)
                 if not assigned then table.insert(warnings,pending.instance.Name .. "." .. pending.key .. ": " .. tostring(err)) end
             else table.insert(warnings,pending.instance.Name .. "." .. pending.key .. ": Instance path topilmadi") end
         end
-        return { created=count.n, path=input.parent .. "/" .. created.Name, warnings=warnings }
+        return { created=count.n, path=parentPath .. "/" .. created.Name, warnings=warnings }
     end)
 end
 local function ensureParent(path)
@@ -332,7 +332,12 @@ local function runCode(input)
     if typeof(input.code)~="string" or #input.code>20000 then error("Kod bo‘sh yoki juda katta") end
     if type(loadstring)~="function" then error("Bu Studio muhiti loadstring’ni qo‘llamaydi") end
     local captured={}
-    local env={game=game,workspace=workspace,Enum=Enum,Instance=Instance,Vector3=Vector3,Vector2=Vector2,CFrame=CFrame,Color3=Color3,BrickColor=BrickColor,UDim=UDim,UDim2=UDim2,math=math,string=string,table=table,task=task,pairs=pairs,ipairs=ipairs,typeof=typeof,pcall=pcall,select=select,tonumber=tonumber,tostring=tostring,type=type,assert=assert,error=error,warn=function(...) table.insert(captured,"WARN: "..table.concat({...}," ")) end,print=function(...) table.insert(captured,table.concat({...}," ")) end}
+    local function joinArgs(...)
+        local out = {}
+        for i, value in ipairs({...}) do out[i] = tostring(value) end
+        return table.concat(out, " ")
+    end
+    local env={game=game,workspace=workspace,Enum=Enum,Instance=Instance,Vector3=Vector3,Vector2=Vector2,CFrame=CFrame,Color3=Color3,BrickColor=BrickColor,UDim=UDim,UDim2=UDim2,math=math,string=string,table=table,task=task,pairs=pairs,ipairs=ipairs,typeof=typeof,pcall=pcall,select=select,tonumber=tonumber,tostring=tostring,type=type,assert=assert,error=error,warn=function(...) table.insert(captured,"WARN: "..joinArgs(...)) end,print=function(...) table.insert(captured,joinArgs(...)) end}
     local chunk,compileError=loadstring(input.code,"QuruvchiRunCode")
     if not chunk then error(compileError) end
     if setfenv then setfenv(chunk,env) end
