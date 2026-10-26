@@ -17,13 +17,13 @@ async function freePort() {
   await new Promise(resolve=>server.close(resolve));
   return port;
 }
-async function waitForServer(url, child) {
+async function waitForServer(url, child, output) {
   for(let i=0;i<100;i++){
-    if(child.exitCode!==null) throw new Error('Quruvchi server exited early with code '+child.exitCode);
+    if(child.exitCode!==null) throw new Error('Quruvchi server exited early with code '+child.exitCode+'; output: '+output());
     try{const r=await fetch(url+'/healthz');if(r.ok)return;}catch{}
     await new Promise(resolve=>setTimeout(resolve,100));
   }
-  throw new Error('Quruvchi server did not start');
+  throw new Error('Quruvchi server did not start; output: '+output());
 }
 async function waitUntil(fn, timeout=7000) {
   const start=Date.now();
@@ -48,7 +48,7 @@ test('Quruvchi auth, CSRF, pairing, tool loop, cancellation history, and device 
   child.stdout.on('data',chunk=>childOutput+=chunk.toString());
   child.stderr.on('data',chunk=>childOutput+=chunk.toString());
   t.after(async()=>{child.kill('SIGTERM');await new Promise(resolve=>{if(child.exitCode!==null)return resolve();child.once('exit',resolve);setTimeout(()=>{if(child.exitCode===null)child.kill('SIGKILL');},1500);});await fake.close();await rm(dataDir,{recursive:true,force:true});});
-  await waitForServer(base,child);
+  await waitForServer(base,child,()=>childOutput);
 
   const missingOrigin=await post(base,'/api/register',{login:'tester_one',password:'correct-horse',invite:'test123'},{origin:null});
   assert.equal(missingOrigin.status,403,'Originless browser POST should fail CSRF check');
