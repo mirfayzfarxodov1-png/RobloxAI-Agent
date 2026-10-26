@@ -193,11 +193,16 @@ local function buildTree(parent, nodeData, warnings, pendingRefs, count)
     count.n += 1
     if count.n > MAX_TREE_NODES then error("Tree 400 ta obyekt limitidan oshdi") end
     if #nodeData.name > 100 or nodeData.name == "" then error("Obyekt nomi noto‘g‘ri") end
-    local existing = parent:FindFirstChild(nodeData.name)
-    if existing then existing:Destroy() end
-    local ok, instance = pcall(function() return Instance.new(nodeData.className) end)
-    if not ok then error("ClassName yaratilmadi: " .. tostring(nodeData.className)) end
-    instance.Name = nodeData.name
+    local instance = parent:FindFirstChild(nodeData.name)
+    if instance and instance.ClassName ~= nodeData.className then
+        error("Bir xil nomli obyekt boshqa class bilan mavjud: " .. nodeData.name .. ". Avval aniq o‘chirishni so‘rang.")
+    end
+    if not instance then
+        local ok, created = pcall(function() return Instance.new(nodeData.className) end)
+        if not ok then error("ClassName yaratilmadi: " .. tostring(nodeData.className)) end
+        instance = created
+        instance.Name = nodeData.name
+    end
     setSafeProperties(instance, nodeData.properties, warnings, pendingRefs)
     for key, value in pairs(nodeData.attributes or {}) do
         if typeof(key) == "string" and #key <= 100 then
