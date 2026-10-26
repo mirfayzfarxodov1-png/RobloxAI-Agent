@@ -8,16 +8,16 @@ Quruvchi is an Uzbek-first web application connecting a chat UI, Anthropic Claud
 - An Anthropic API key and a provider account with access to the configured model. Provider usage may cost money and has provider-side limits.
 - Roblox Studio.
 
-The application intentionally has **no external npm runtime dependencies**. It uses Node.js built-ins, including node:http, node:crypto, node:sqlite, and native fetch.
+The application intentionally has **no external npm runtime dependencies**. The web UI can start without an AI key; sending AI tasks requires a valid provider key. It uses Node.js built-ins, including node:http, node:crypto, node:sqlite, and native fetch.
 
 ## Local setup on Windows
 
 1. Install Node.js 22.13+.
 2. Clone or download this repository and open PowerShell in the project folder.
-3. Copy the environment template with **Copy-Item .env.example .env**, then open the file in Notepad.
-4. Set ANTHROPIC_API_KEY to your own provider key. Keep the real key in .env only. Leave PUBLIC_URL=http://localhost:3000 and COOKIE_SECURE=false for local HTTP.
-5. Start the server with **npm start**.
-6. Open **http://localhost:3000**. Create an account, then use **Studio ulash** to generate a one-time pairing code.
+3. Start the server with **npm start**. The website opens even if you have not configured AI yet.
+4. Open **http://localhost:3000**. If you only want to see the website, that is enough.
+5. To enable the AI, copy the environment template with **Copy-Item .env.example .env**, open `.env` in Notepad, and set `ANTHROPIC_API_KEY` to your own provider key. Keep the real key in `.env` only. Leave `PUBLIC_URL=http://localhost:3000` and `COOKIE_SECURE=false` for local HTTP.
+6. Restart `npm start`. Create an account, then use **Studio ulash** to generate a one-time pairing code.
 
 No npm install is required because the project has no external dependencies. SQLite database files are created under data/.
 
