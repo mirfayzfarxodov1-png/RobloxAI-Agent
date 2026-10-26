@@ -30,6 +30,8 @@ function bodyError(res, error) {
   json(res, status, { error: status === 413 ? 'So‘rov tanasi 64 KB dan oshmasin' : (error?.message || 'JSON formati noto‘g‘ri') });
 }
 async function getBody(req, res) {
+  const contentType = String(req.headers['content-type'] || '').toLowerCase();
+  if (!contentType.startsWith('application/json')) { json(res, 415, { error:'Content-Type application/json bo‘lishi shart' }); return null; }
   try { return await readJson(req); } catch (error) { bodyError(res, error); return null; }
 }
 function publicMessage(row) {
