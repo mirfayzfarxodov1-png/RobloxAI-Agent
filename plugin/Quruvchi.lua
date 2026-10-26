@@ -464,7 +464,11 @@ connectButton.Activated:Connect(function()
     local ok,result=pcall(function()
         return request("POST","/api/plugin/pair",{code=code,placeName=getPlaceName(),placeId=game.PlaceId})
     end)
-    if not ok then setStatus("error","Ulanmadi");log("Ulanish xatosi: "..tostring(result));return end
+    if not ok then
+        setStatus("error","Ulanmadi")
+        log("Ulanish xatosi: "..tostring(result).." · Server: "..SERVER.." · Server ishlayotganini va Studio’da HTTP Requests yoqilganini tekshiring.")
+        return
+    end
     token=result.token;plugin:SetSetting(TOKEN_KEY,token);connectButton.Text="Uzish"
     setStatus("ok","Ulandi · "..getPlaceName());log("Studio muvaffaqiyatli ulandi.")
     task.spawn(pollLoop)
