@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   Bot, Boxes, Check, ChevronDown, CircleHelp, Code2, Command, Copy,
   Cpu, Download, ExternalLink, Gamepad2, Github, Globe2, LoaderCircle,
@@ -93,7 +93,7 @@ export default function App() {
     return data;
   }
 
-  async function submitAuth(e: React.FormEvent) {
+  async function submitAuth(e: FormEvent) {
     e.preventDefault(); setNotice('');
     try {
       await api(authView === 'register' ? '/api/register' : '/api/login', { login, password, ...(authView === 'register' && invite ? { invite } : {}) });
