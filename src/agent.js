@@ -80,7 +80,7 @@ export async function startTask(user, text) {
   saveMessage(conversationId, 'user', textBlock(text));
   emit(user.id, 'message', { id: crypto.randomUUID(), kind: 'user', text });
   sendState(user.id, conversationId);
-  void runLoop(user.id, task).catch(error => {
+  task.done = runLoop(user.id, task).catch(error => {
     console.error('[Quruvchi agent]', error?.status || '', error?.message || error);
     if (error?.name !== 'AbortError') emit(user.id, 'message', { id: crypto.randomUUID(), kind: 'error', text: 'AI xizmati vaqtincha javob bermayapti. API sozlamalari va limitlarni tekshiring.' });
   }).finally(() => {
@@ -88,6 +88,7 @@ export async function startTask(user, text) {
     setUserRunning(user.id, false);
     sendState(user.id, conversationId);
   });
+  void task.done;
   return { ok: true, status: 202 };
 }
 async function runLoop(userId, task) {
@@ -164,14 +165,15 @@ async function runLoop(userId, task) {
     if (signal.aborted) emit(userId, 'message', { id: crypto.randomUUID(), kind:'info', text:'To‘xtatildi' });
   }
 }
-export function stopTask(userId) {
+export async function stopTask(userId) {
   const task = running.get(userId);
   if (!task) return false;
   task.controller.abort();
+  try { await task.done; } catch {}
   return true;
 }
-export function newConversation(userId) {
-  stopTask(userId);
+export async function newConversation(userId) {
+  await stopTask(userId);
   const current = db.prepare('SELECT id FROM conversations WHERE user_id=? AND archived=0 ORDER BY id DESC LIMIT 1').get(userId);
   db.exec('BEGIN IMMEDIATE');
   try {
