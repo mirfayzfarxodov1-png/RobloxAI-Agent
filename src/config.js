@@ -26,6 +26,7 @@ export const config = Object.freeze({
   dailyStepLimit: number('DAILY_STEP_LIMIT', 300, 1, 10000),
   maxSteps: number('MAX_STEPS', 60, 1, 500),
   commandTimeoutMs: number('COMMAND_TIMEOUT_MS', 60000, 1000, 300000),
+  apiTimeoutMs: number('API_TIMEOUT_MS', 90000, 1000, 300000),
   cookieSecure: process.env.COOKIE_SECURE !== 'false',
   trustProxy: process.env.TRUST_PROXY === 'true',
   isTest: process.env.NODE_ENV === 'test',
