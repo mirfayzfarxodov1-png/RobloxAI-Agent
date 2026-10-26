@@ -70,14 +70,14 @@ function reply(res, status, data) { if (!res.writableEnded) sendJson(res, status
 function sendIdle(waiter) {
   if (!waiter) return;
   clearTimeout(waiter.timer);
-  waiter.req.removeListener('close', waiter.onClose);
+  waiter.res.removeListener('close', waiter.onClose);
   reply(waiter.res, 200, { type: 'idle' });
 }
 function deliverNext(device) {
   if (!device.waiter || device.queue.length === 0) return;
   const waiter = device.waiter; device.waiter = null;
   const command = device.queue.shift();
-  clearTimeout(waiter.timer); waiter.req.removeListener('close', waiter.onClose);
+  clearTimeout(waiter.timer); waiter.res.removeListener('close', waiter.onClose);
   reply(waiter.res, 200, { type: 'command', id: command.id, name: command.name, input: command.input });
 }
 export function pollDevice(userId, deviceId, req, res, waitSeconds) {
@@ -97,7 +97,7 @@ export function pollDevice(userId, deviceId, req, res, waitSeconds) {
     clearTimeout(waiter.timer);
     if (device.waiter === waiter) device.waiter = null;
   };
-  req.on('close', waiter.onClose);
+  res.on('close', waiter.onClose);
   waiter.timer = setTimeout(() => {
     if (device.waiter === waiter) device.waiter = null;
     req.removeListener('close', waiter.onClose);
