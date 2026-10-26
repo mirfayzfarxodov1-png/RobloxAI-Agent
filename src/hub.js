@@ -87,7 +87,7 @@ export function pollDevice(userId, deviceId, req, res, waitSeconds) {
   const dbLast = db.prepare('SELECT last_seen_at FROM devices WHERE id=?').get(deviceId)?.last_seen_at || 0;
   if (now() - dbLast > 10000) db.prepare('UPDATE devices SET last_seen_at=? WHERE id=?').run(device.lastSeen, deviceId);
   updateStatus(userId);
-  if (device.waiter) sendIdle(device.waiter);
+  if (device.waiter) { const previous = device.waiter; device.waiter = null; sendIdle(previous); }
   if (device.queue.length) {
     const command = device.queue.shift();
     return reply(res, 200, { type: 'command', id: command.id, name: command.name, input: command.input });
