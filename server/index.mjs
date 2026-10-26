@@ -19,7 +19,7 @@ const PORT = Number(process.env.PORT || 8787);
 const JWT_SECRET = process.env.JWT_SECRET || 'local-development-secret-change-me';
 const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, '..', 'data', 'quruvchi.sqlite');
 const DAILY_LIMIT = Math.max(1, Number(process.env.DAILY_STEP_LIMIT || 300));
-const AI_MODEL = process.env.ANTHROPIC_MODEL || 'claude-3-7-sonnet-latest';
+const AI_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5';
 if (process.env.NODE_ENV === 'production' && (JWT_SECRET.length < 32 || JWT_SECRET === 'local-development-secret-change-me')) throw new Error('Productionda kamida 32 belgili noyob JWT_SECRET belgilang.');
 
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
@@ -63,6 +63,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 const authLimit = rateLimit({ windowMs: 900000, limit: 12, standardHeaders: 'draft-7', legacyHeaders: false, message: { error: 'Juda ko‘p urinish. 15 daqiqadan keyin qayta urinib ko‘ring.' } });
 const chatLimit = rateLimit({ windowMs: 60000, limit: 20, standardHeaders: 'draft-7', legacyHeaders: false, message: { error: 'Juda tez yuboryapsiz. Biroz kuting.' } });
+const pairLimit = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-7', legacyHeaders: false, message: { error: 'Ulash kodini ko‘p marta tekshirdingiz. Keyinroq urinib ko‘ring.' } });
 function setSession(res, user) {
   const token = jwt.sign({ sub: String(user.id), login: user.login }, JWT_SECRET, { expiresIn: '7d', issuer: 'quruvchi' });
   res.cookie('quruvchi_session', token, { httpOnly: true, secure: process.env.COOKIE_SECURE === 'true', sameSite: 'lax', maxAge: 604800000, path: '/' });
@@ -191,7 +192,7 @@ app.post('/api/pair', requireAuth, (req, res) => {
   db.prepare('INSERT INTO pair_codes(code_hash,user_id,expires_at,created_at) VALUES(?,?,?,?)').run(hash(code), req.user.id, expiresAt, now());
   res.json({ code, expiresAt });
 });
-app.post('/api/studio/pair', (req, res) => {
+app.post('/api/studio/pair', pairLimit, (req, res) => {
   const p = z.object({ code: z.string().regex(/^\d{8}$/), placeName: z.string().max(120).optional() }).safeParse(req.body);
   if (!p.success) return res.status(400).json({ error: 'Ulash kodi 8 ta raqam bo‘lishi kerak.' });
   const codeHash = hash(p.data.code), pair = db.prepare('SELECT user_id,expires_at FROM pair_codes WHERE code_hash=?').get(codeHash);
