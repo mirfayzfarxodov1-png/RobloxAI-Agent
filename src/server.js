@@ -73,7 +73,10 @@ const server = http.createServer(async (req, res) => {
       if (!fs.existsSync(pluginFile)) return json(res, 404, { error: 'Plugin fayli topilmadi' });
       const source = fs.readFileSync(pluginFile, 'utf8');
       if (!/^https?:\/\/[A-Za-z0-9._:/-]+$/.test(config.publicUrl)) return json(res, 500, { error: 'PUBLIC_URL noto‘g‘ri formatda' });
-      const rendered = source.replaceAll('__SERVER_URL__', config.publicUrl);
+      // Roblox Studio may fail to resolve localhost consistently; use the IPv4 loopback for local-only installs.
+      // The website may remain open at http://localhost:PORT; both addresses reach this same local server.
+      const pluginServerUrl = config.publicUrl.replace(/^http:\/\/localhost(?=:\d+|$)/, 'http://127.0.0.1');
+      const rendered = source.replaceAll('__SERVER_URL__', pluginServerUrl);
       res.writeHead(200, { 'Content-Type':'text/plain; charset=utf-8', 'Content-Disposition':'attachment; filename="Quruvchi.lua"', 'Cache-Control':'no-store' });
       return res.end(rendered);
     }
