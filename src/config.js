@@ -27,10 +27,10 @@ export const config = Object.freeze({
   maxSteps: number('MAX_STEPS', 60, 1, 500),
   commandTimeoutMs: number('COMMAND_TIMEOUT_MS', 60000, 1000, 300000),
   apiTimeoutMs: number('API_TIMEOUT_MS', 90000, 1000, 300000),
-  cookieSecure: process.env.COOKIE_SECURE !== 'false',
+  cookieSecure: process.env.COOKIE_SECURE === 'true' || (process.env.NODE_ENV === 'production' && process.env.COOKIE_SECURE !== 'false'),
   trustProxy: process.env.TRUST_PROXY === 'true',
   isTest: process.env.NODE_ENV === 'test',
   registrationInvite: process.env.INVITE_CODE || '',
 });
-if (!config.isTest && !config.anthropicApiKey) throw new Error('ANTHROPIC_API_KEY is required. Set it in .env; never put it in browser code.');
+if (!config.anthropicApiKey) console.warn('[Quruvchi] ANTHROPIC_API_KEY yo‘q: sayt ochiladi, lekin AI chat kalit kiritilmaguncha ishlamaydi.');
 if (!config.isTest && !process.env.CLAUDE_MODEL) console.warn('[Quruvchi] CLAUDE_MODEL was not set; using configured default claude-sonnet-5.');
