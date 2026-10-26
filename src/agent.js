@@ -1,0 +1,180 @@
+import crypto from 'node:crypto';
+import { config } from './config.js';
+import { db, currentConversation, saveMessage, getMessages, addUsage, getUsage } from './db.js';
+import { createMessage } from './claude.js';
+import { tools, truncateOutput, toolSummary } from './tools.js';
+import { systemPrompt } from './prompt.js';
+import { emit, sendCommand, statusForUser, setUserRunning, stateForUser } from './hub.js';
+
+const running = new Map();
+const MAX_HISTORY_CHARS = 400000;
+const MAX_TOOL_OUTPUTS = 6;
+
+function textBlock(text) { return [{ type: 'text', text }]; }
+function contentLength(content) { return JSON.stringify(content).length; }
+function repairHistory(rawMessages) {
+  const messages = rawMessages.map(m => ({ role: m.role, content: Array.isArray(m.content) ? m.content : textBlock(String(m.content ?? '')) }));
+  // A stopped agent must not leave orphaned tool_use blocks in the persisted conversation.
+  for (let i = 0; i < messages.length; i++) {
+    const message = messages[i];
+    if (message.role !== 'assistant') continue;
+    const uses = message.content.filter(b => b?.type === 'tool_use');
+    if (!uses.length) continue;
+    const next = messages[i + 1];
+    const results = new Set((next?.role === 'user' ? next.content : []).filter(b => b?.type === 'tool_result').map(b => b.tool_use_id));
+    const missing = uses.filter(b => !results.has(b.id));
+    if (missing.length) {
+      const repair = missing.map(b => ({ type: 'tool_result', tool_use_id: b.id, is_error: true, content: 'Foydalanuvchi to‘xtatdi yoki buyruq javobi yo‘q.' }));
+      if (next?.role === 'user') next.content = [...repair, ...next.content];
+      else messages.splice(i + 1, 0, { role: 'user', content: repair });
+      i++;
+    }
+  }
+  // Merge adjacent equal roles so the API receives alternating user/assistant messages.
+  const merged = [];
+  for (const message of messages) {
+    if (merged.length && merged[merged.length - 1].role === message.role) merged[merged.length - 1].content.push(...message.content);
+    else merged.push({ role: message.role, content: [...message.content] });
+  }
+  // Trim only at a normal user text boundary, never in the middle of a tool-use/result cycle.
+  while (merged.length > 2 && merged.reduce((n, m) => n + contentLength(m.content), 0) > MAX_HISTORY_CHARS) {
+    const cut = merged.findIndex((m, index) => index > 0 && m.role === 'user' && m.content.some(b => b.type === 'text'));
+    if (cut < 1) break;
+    merged.splice(0, cut);
+  }
+  if (merged.length && merged[0].role !== 'user') merged.shift();
+  // Compress old tool results in the API copy only; database history remains intact.
+  let seenResults = 0;
+  for (let i = merged.length - 1; i >= 0; i--) {
+    for (const block of merged[i].content) {
+      if (block?.type === 'tool_result') {
+        seenResults++;
+        if (seenResults > MAX_TOOL_OUTPUTS && typeof block.content === 'string' && block.content.length > 1500) block.content = block.content.slice(0, 1500) + '\n[eski natija qisqartirildi]';
+      }
+    }
+  }
+  return merged;
+}
+function emitText(userId, content) {
+  for (const block of content || []) {
+    if (block?.type === 'text' && block.text) emit(userId, 'message', { id: crypto.randomUUID(), kind: 'assistant', text: block.text });
+  }
+}
+function sendState(userId, conversationId) {
+  emit(userId, 'state', { ...stateForUser(userId), running: running.has(userId), conversationId });
+}
+export function isRunning(userId) { return running.has(userId); }
+
+export async function startTask(user, text) {
+  if (running.has(user.id)) return { ok: false, status: 409, error: 'Agent hali ishlayapti' };
+  const status = statusForUser(user.id);
+  if (!status.connected) return { ok: false, status: 412, error: 'Studio ulanmagan', needPairing: true };
+  if (!config.anthropicApiKey) return { ok: false, status: 503, error: 'AI provider sozlanmagan. Serverdagi .env fayliga ANTHROPIC_API_KEY kiriting.' };
+  if (text.length < 1 || text.length > 8000) return { ok: false, status: 400, error: 'Xabar 1–8000 belgi oralig‘ida bo‘lishi kerak.' };
+  const usage = getUsage(user.id);
+  if (usage.steps >= config.dailyStepLimit) return { ok: false, status: 429, error: 'Bugungi qadam limiti tugadi' };
+  const conversationId = currentConversation(user.id);
+  const controller = new AbortController();
+  const task = { controller, conversationId, startedAt: Date.now() };
+  running.set(user.id, task); setUserRunning(user.id, true);
+  saveMessage(conversationId, 'user', textBlock(text));
+  emit(user.id, 'message', { id: crypto.randomUUID(), kind: 'user', text });
+  sendState(user.id, conversationId);
+  void runLoop(user.id, task).catch(error => {
+    console.error('[Quruvchi agent]', error?.status || '', error?.message || error);
+    if (error?.name !== 'AbortError') emit(user.id, 'message', { id: crypto.randomUUID(), kind: 'error', text: 'AI xizmati vaqtincha javob bermayapti. API sozlamalari va limitlarni tekshiring.' });
+  }).finally(() => {
+    if (running.get(user.id) === task) running.delete(user.id);
+    setUserRunning(user.id, false);
+    sendState(user.id, conversationId);
+  });
+  return { ok: true, status: 202 };
+}
+async function runLoop(userId, task) {
+  let steps = 0, needsSummary = false;
+  const signal = task.controller.signal;
+  try {
+    while (!signal.aborted) {
+      const history = repairHistory(getMessages(task.conversationId));
+      const response = await createMessage({ messages: history, tools, system: systemPrompt, signal, maxTokens: needsSummary ? Math.min(config.maxTokens, 2000) : config.maxTokens });
+      const content = Array.isArray(response.content) ? response.content : textBlock('AI javobi noto‘g‘ri formatda keldi.');
+      saveMessage(task.conversationId, 'assistant', content);
+      emitText(userId, content);
+      const usage = response.usage || {};
+      if (usage.input_tokens || usage.output_tokens) addUsage(userId, 0, usage.input_tokens || 0, usage.output_tokens || 0);
+      if (response.stop_reason !== 'tool_use') break;
+
+      const toolUses = content.filter(block => block?.type === 'tool_use');
+      const results = [];
+      let limitReached = needsSummary;
+      for (const toolUse of toolUses) {
+        if (signal.aborted) {
+          results.push({ type:'tool_result', tool_use_id:toolUse.id, is_error:true, content:'Foydalanuvchi to‘xtatdi' });
+          continue;
+        }
+        const used = getUsage(userId).steps;
+        if (steps >= config.maxSteps || used >= config.dailyStepLimit || needsSummary) {
+          results.push({ type:'tool_result', tool_use_id:toolUse.id, is_error:true, content:'Qadam limiti tugadi. Yangi tool ishlatma, bajarilgan ishni xulosa qil.' });
+          limitReached = true;
+          continue;
+        }
+        steps++;
+        addUsage(userId, 1, 0, 0);
+        const summary = toolSummary(toolUse.name, toolUse.input);
+        emit(userId, 'message', { id: toolUse.id, kind:'tool', toolId:toolUse.id, name:toolUse.name, summary });
+        sendState(userId, task.conversationId);
+        let result;
+        try {
+          result = await sendCommand(userId, toolUse.name, toolUse.input || {}, signal);
+        } catch (error) {
+          result = { ok:false, output: error?.name === 'AbortError' ? 'Foydalanuvchi to‘xtatdi' : 'Tool bajarilmadi' };
+        }
+        const output = truncateOutput(result.output || '', 20000);
+        results.push({ type:'tool_result', tool_use_id:toolUse.id, is_error:!result.ok, content:output });
+        emit(userId, 'message', { id: crypto.randomUUID(), kind:'tool_result', toolId:toolUse.id, ok:!!result.ok, preview:output.slice(0, 300) });
+        if (result.cancelled) break;
+      }
+      if (results.length) saveMessage(task.conversationId, 'user', results);
+      if (signal.aborted) break;
+      if (limitReached || steps >= config.maxSteps || getUsage(userId).steps >= config.dailyStepLimit) {
+        needsSummary = true;
+        // One additional Claude call is allowed to summarize; stop if it requests more tools.
+        if (response.stop_reason === 'tool_use') {
+          const finalHistory = repairHistory(getMessages(task.conversationId));
+          const summaryResponse = await createMessage({ messages: finalHistory, tools: [], system: systemPrompt + '\nTool limiti tugadi. Endi tool chaqirma; bajarilgan ishni va qolgan ishni qisqa xulosa qil.', signal, maxTokens: 1800 });
+          if (summaryResponse.content) { saveMessage(task.conversationId, 'assistant', summaryResponse.content); emitText(userId, summaryResponse.content); }
+        }
+        break;
+      }
+    }
+  } finally {
+    // Ensure every stored tool_use has a matching result if a task was cancelled mid-command.
+    const raw = getMessages(task.conversationId);
+    const repaired = repairHistory(raw);
+    if (JSON.stringify(raw.map(m => m.content)) !== JSON.stringify(repaired.map(m => m.content))) {
+      // Add a repair user turn instead of mutating immutable history rows.
+      const last = repaired[repaired.length - 1];
+      if (last?.role === 'user' && last.content.some(b => b.type === 'tool_result')) saveMessage(task.conversationId, 'user', last.content.filter(b => b.type === 'tool_result'));
+    }
+    if (signal.aborted) emit(userId, 'message', { id: crypto.randomUUID(), kind:'info', text:'To‘xtatildi' });
+  }
+}
+export function stopTask(userId) {
+  const task = running.get(userId);
+  if (!task) return false;
+  task.controller.abort();
+  return true;
+}
+export function newConversation(userId) {
+  stopTask(userId);
+  const current = db.prepare('SELECT id FROM conversations WHERE user_id=? AND archived=0 ORDER BY id DESC LIMIT 1').get(userId);
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    if (current) db.prepare('UPDATE conversations SET archived=1 WHERE id=? AND user_id=?').run(current.id, userId);
+    const result = db.prepare('INSERT INTO conversations(user_id,created_at,archived) VALUES(?,?,0)').run(userId, Date.now());
+    db.exec('COMMIT');
+    emit(userId, 'reset', { conversationId: Number(result.lastInsertRowid) });
+    sendState(userId, Number(result.lastInsertRowid));
+    return Number(result.lastInsertRowid);
+  } catch (error) { db.exec('ROLLBACK'); throw error; }
+}
