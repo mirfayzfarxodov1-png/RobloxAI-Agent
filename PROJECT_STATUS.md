@@ -12,6 +12,6 @@ Implemented in source:
 
 Not claimed as verified:
 - The code has not been run against a real Roblox Studio session or real Anthropic API key in this editing session.
-- The end-to-end tests are committed, but their CI result must be checked after GitHub Actions finishes.
+- The GitHub Actions end-to-end test passed on commit 6980fbcbd25978d250ecb421095a8df00f886680 (Node.js 22.13.0; 1 test, 0 failures).
 - The project is not deployed to a public host by these commits.
 - AI-generated code can contain errors; actual Play-testing is manual.
