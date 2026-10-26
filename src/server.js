@@ -151,7 +151,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (method === 'POST' && pathname === '/api/plugin/disconnect') {
-      const bearer = String(req.headers.authorization || '').match(/^Bearer\\s+(.+)$/i)?.[1];
+      const bearer = String(req.headers.authorization || '').match(/^Bearer\s+(.+)$/i)?.[1];
       if (!bearer) return json(res, 401, { error:'Token talab qilinadi' });
       const device = db.prepare('SELECT id,user_id FROM devices WHERE token_hash=?').get(sha256(bearer));
       if (!device) return json(res, 401, { error:'Qurilma uzilgan' });
