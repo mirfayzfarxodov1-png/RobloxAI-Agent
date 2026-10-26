@@ -2,8 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 // Node.js 22.13+ supports loading .env without an external package.
-try { process.loadEnvFile(path.resolve(process.cwd(), '.env')); }
-catch (error) { if (error?.code !== 'ENOENT') throw error; }
+const envPath = path.resolve(process.cwd(), '.env');
+if (fs.existsSync(envPath)) process.loadEnvFile(envPath);
 
 const number = (name, fallback, min, max) => {
   const value = process.env[name] === undefined || process.env[name] === '' ? fallback : Number(process.env[name]);
