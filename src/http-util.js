@@ -23,13 +23,15 @@ export function sendJson(res, status, data, extraHeaders = {}) {
 }
 export function readJson(req, maxBytes = 64 * 1024) {
   return new Promise((resolve, reject) => {
-    const chunks = []; let size = 0;
+    const chunks = []; let size = 0, tooLarge = false;
     req.on('data', chunk => {
+      if (tooLarge) return;
       size += chunk.length;
-      if (size > maxBytes) { reject(Object.assign(new Error('Body juda katta'), { status: 413 })); req.destroy(); return; }
+      if (size > maxBytes) { tooLarge = true; chunks.length = 0; return; }
       chunks.push(chunk);
     });
     req.on('end', () => {
+      if (tooLarge) { reject(Object.assign(new Error('Body juda katta'), { status: 413 })); return; }
       if (!chunks.length) { resolve({}); return; }
       try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8'))); }
       catch { reject(Object.assign(new Error('JSON formati noto‘g‘ri'), { status: 400 })); }
