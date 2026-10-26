@@ -15,5 +15,10 @@ jobs:
           node-version: 22.13.0
       - name: Verify Node version
         run: node --version
-      - name: Test
+      - name: Syntax check browser script
+        run: node --check public/app.js
+      - name: Syntax check server modules
+        run: |
+          for file in src/*.js test/*.js; do node --check "$file"; done
+      - name: End-to-end tests
         run: npm test
