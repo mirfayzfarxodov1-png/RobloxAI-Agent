@@ -38,7 +38,7 @@ function repairHistory(rawMessages) {
   }
   // Trim only at a normal user text boundary, never in the middle of a tool-use/result cycle.
   while (merged.length > 2 && merged.reduce((n, m) => n + contentLength(m.content), 0) > MAX_HISTORY_CHARS) {
-    const cut = merged.findIndex((m, index) => index > 0 && m.role === 'user' && m.content.some(b => b.type === 'text'));
+    const cut = merged.findIndex((m, index) => index > 0 && m.role === 'user' && m.content.some(b => b.type === 'text') && !m.content.some(b => b.type === 'tool_result'));
     if (cut < 1) break;
     merged.splice(0, cut);
   }
