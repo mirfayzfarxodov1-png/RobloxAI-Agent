@@ -7,4 +7,4 @@ COPY --chown=node:node . .
 RUN mkdir -p /data && chown node:node /data
 USER node
 EXPOSE 3000
-CMD ["node", "src/server.js"]
+CMD ["node", "--experimental-sqlite", "src/server.js"]
