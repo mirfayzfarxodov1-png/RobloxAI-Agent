@@ -1,24 +1,21 @@
-# Roadmap
+# Quruvchi roadmap
 
-## Milestone 1 — Desktop scaffold
-- [x] Electron + React + TypeScript shell
-- [x] Safe local export of starter Luau template
-- [x] Starter Meadow gameplay foundation
-- [x] Windows CI workflow
+## Current implementation
+- [x] Responsive static website and authenticated chat
+- [x] Native Node.js HTTP server with SQLite persistence
+- [x] Scrypt password hashing, hashed session/device tokens, Origin checks and rate limits
+- [x] Claude Messages API tool-use loop with timeout, retry, cancellation and history repair
+- [x] Authenticated Roblox Studio plugin bridge with one-time pairing
+- [x] Tool handlers for hierarchy, scripts, properties, deletion, opt-in code execution and logs
+- [x] Fake provider/plugin end-to-end test and GitHub Actions check
+- [x] Docker and Render deployment templates
 
-## Milestone 2 — AI generation
-- [ ] Provider interface and secure API-key configuration
-- [ ] Structured plans, file-path validation, Luau output checks
-- [ ] Diffs and approval for risky edits
+## Next steps
+- [ ] Run a manual session with a real Anthropic key and a disposable Roblox Studio place
+- [ ] Add Luau static analysis where a reliable, maintainable checker is available
+- [ ] Add diff/approval UI for destructive or broad changes
+- [ ] Add shared rate-limit and command state if horizontal scaling is ever required
+- [ ] Add backup/restore drill for the persistent SQLite database
+- [ ] Add browser accessibility and real mobile-device testing
 
-## Milestone 3 — Roblox Studio bridge
-- [ ] Studio plugin with authenticated local bridge
-- [ ] Transfer files and collect Studio Output logs
-- [ ] Explicit user-controlled play-test action
-
-## Milestone 4 — Test and repair
-- [ ] Static Luau checks
-- [ ] Reproducible scenarios and log parsing
-- [ ] Bounded repair attempts, backups, diffs, rollback
-
-The app must never claim a game was tested or published unless the action actually succeeded.
+The app must never claim a game was tested or published unless the action actually succeeded. Generated Luau still needs a real Studio Play-test.
