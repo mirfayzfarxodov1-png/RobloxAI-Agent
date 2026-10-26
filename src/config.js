@@ -21,7 +21,7 @@ export const config = Object.freeze({
   publicUrl: parsedUrl.origin,
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
   anthropicBaseUrl: (process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com').replace(/\/+$/, ''),
-  claudeModel: process.env.CLAUDE_MODEL || 'claude-sonnet-5-5',
+  claudeModel: process.env.CLAUDE_MODEL || 'claude-sonnet-5',
   maxTokens: number('MAX_TOKENS', 8000, 256, 64000),
   dailyStepLimit: number('DAILY_STEP_LIMIT', 300, 1, 10000),
   maxSteps: number('MAX_STEPS', 60, 1, 500),
@@ -32,4 +32,4 @@ export const config = Object.freeze({
   registrationInvite: process.env.INVITE_CODE || '',
 });
 if (!config.isTest && !config.anthropicApiKey) throw new Error('ANTHROPIC_API_KEY is required. Set it in .env; never put it in browser code.');
-if (!config.isTest && !process.env.CLAUDE_MODEL) console.warn('[Quruvchi] CLAUDE_MODEL was not set; using configured default claude-sonnet-5-5.');
+if (!config.isTest && !process.env.CLAUDE_MODEL) console.warn('[Quruvchi] CLAUDE_MODEL was not set; using configured default claude-sonnet-5.');
