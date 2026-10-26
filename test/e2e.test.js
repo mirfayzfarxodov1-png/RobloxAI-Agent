@@ -72,7 +72,9 @@ test('Quruvchi auth, CSRF, pairing, tool loop, cancellation history, and device 
   assert.match(await home.text(),/Quruvchi/);
   const pluginDownload=await fetch(base+'/plugin.lua');
   assert.equal(pluginDownload.status,200);
-  assert.ok(!(await pluginDownload.text()).includes('__SERVER_URL__'));
+  const downloadedPlugin=await pluginDownload.text();
+  assert.ok(!downloadedPlugin.includes('__SERVER_URL__'));
+  assert.ok(downloadedPlugin.includes('local SERVER = \"'+base+'\"'),'plugin download must contain the configured server URL');
 
   const noStudio=await post(base,'/api/chat',{text:'Workspace ichida papka yarat'},{cookie});
   assert.equal(noStudio.status,412);

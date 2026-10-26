@@ -23,6 +23,6 @@ After deploy, check /healthz, register a test account, connect a disposable Stud
 - Startup says ANTHROPIC_API_KEY is required: set the key in server environment or .env.
 - Browser POST gets Origin error: open the exact PUBLIC_URL and ensure it matches the page origin, including localhost vs 127.0.0.1.
 - Studio pairing fails: create a fresh code; it expires after ten minutes and is single-use.
-- Studio says HTTP request failed: verify the public server URL, HTTPS certificate, and Roblox HTTP-request setting.
+- Studio says HTTP request failed: verify the server is still running, enable HTTP Requests in Studio settings, and re-download `/plugin.lua` after changing `PUBLIC_URL`. For local installs, the download uses `127.0.0.1` when `PUBLIC_URL` is `localhost` to avoid loopback name-resolution issues. The browser can still use `http://localhost:3000`.
 - AI tool times out: check Studio connection, server logs, provider access, and the command timeout.
 - DataStore calls fail in Studio: enable Studio Access to API Services in Game Settings → Security and test carefully.
