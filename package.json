@@ -8,7 +8,7 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "start": "node src/server.js",
+    "start": "node --experimental-sqlite src/server.js",
     "test": "node --test test/*.test.js"
   },
   "dependencies": {}
