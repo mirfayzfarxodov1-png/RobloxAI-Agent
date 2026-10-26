@@ -37,7 +37,7 @@ export default function App() {
 
   useEffect(() => {
     let alive = true;
-    fetch('/healthz').then(r => { if (!alive) return; setBackend(r.ok ? 'online' : 'offline'); })
+    fetch('/healthz').then(async r => { if (!alive) return; const type = r.headers.get('content-type') || ''; setBackend(r.ok && type.includes('application/json') ? 'online' : 'offline'); })
       .catch(() => { if (alive) setBackend('offline'); });
     fetch('/api/me', { credentials: 'same-origin' }).then(async r => {
       if (!alive) return;
