@@ -64,7 +64,7 @@ export function attachSse(userId, req, res) {
   res.write('event: status\ndata: ' + JSON.stringify(statusForUser(userId)) + '\n\n');
   hub.sseClients.add(res);
   const heartbeat = setInterval(() => { try { res.write(': ping\n\n'); } catch {} }, 20000);
-  req.on('close', () => { clearInterval(heartbeat); hub.sseClients.delete(res); });
+  res.on('close', () => { clearInterval(heartbeat); hub.sseClients.delete(res); });
 }
 function reply(res, status, data) { if (!res.writableEnded) sendJson(res, status, data); }
 function sendIdle(waiter) {
@@ -100,7 +100,7 @@ export function pollDevice(userId, deviceId, req, res, waitSeconds) {
   res.on('close', waiter.onClose);
   waiter.timer = setTimeout(() => {
     if (device.waiter === waiter) device.waiter = null;
-    req.removeListener('close', waiter.onClose);
+    res.removeListener('close', waiter.onClose);
     reply(res, 200, { type: 'idle' });
   }, Math.max(0, Math.min(20, waitSeconds)) * 1000);
   device.waiter = waiter;
