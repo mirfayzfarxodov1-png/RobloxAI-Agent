@@ -5,6 +5,7 @@ import { sendJson } from './http-util.js';
 
 const hubs = new Map();
 const runningUsers = new Set();
+export function setUserRunning(userId, running) { if (running) runningUsers.add(userId); else runningUsers.delete(userId); }
 const now = () => Date.now();
 function userHub(userId) {
   let hub = hubs.get(userId);
