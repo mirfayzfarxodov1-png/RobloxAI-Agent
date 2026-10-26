@@ -208,11 +208,11 @@ const server = http.createServer(async (req, res) => {
         return json(res, 202, { ok:true });
       }
       if (method === 'POST' && pathname === '/api/stop') {
-        stopTask(user.id);
+        await stopTask(user.id);
         return json(res, 200, { ok:true });
       }
       if (method === 'POST' && pathname === '/api/chat/new') {
-        const conversationId = newConversation(user.id);
+        const conversationId = await newConversation(user.id);
         return json(res, 200, { ok:true, conversationId });
       }
       if (method === 'GET' && pathname === '/api/chat/history') {
