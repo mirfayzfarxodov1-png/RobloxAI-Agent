@@ -2,7 +2,7 @@ const root = document.getElementById('app');
 const state = {
   user:null,messages:[],busy:false,paused:null,status:{connected:false,placeName:'',deviceId:null},
   steps:{used:0,limit:300},modal:null,authMode:'login',login:'',password:'',invite:'',
-  notice:'',prompt:'',code:'',expiresAt:0,devices:[],serverOnline:false,mobileMenu:false
+  notice:'',prompt:'',code:'',expiresAt:0,devices:[],serverOnline:false,mobileMenu:false,ownerServerUrl:location.origin
 };
 let stream=null,codeTicker=null,pauseReadyState=null;
 function node(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined&&text!==null)n.textContent=String(text);return n;}
@@ -129,6 +129,14 @@ function renderModal(shell){
   if(state.modal==='pair'){
     card.append(node('div','modal-icon','▣'),node('h2','','Roblox Studio’ni ulash'),node('p','modal-subtitle','Sayt va Studio pluginini bir martalik kod orqali bog‘lang.'));
     const steps=node('div','pair-steps');for(const [n,title,desc] of [['1','Pluginni oling','Quyidagi yuklab olish havolasini bosing; fayl nomi Quruvchi.lua bo‘ladi.'],['2','Studio’da ishga tushiring','Windows: %LOCALAPPDATA%\\Roblox\\Plugins papkasiga joylang, keyin Studio’ni qayta ishga tushiring. Game Settings → Security’da HTTP so‘roviga ruxsat bering.'],['3','Kodni kiriting','Panelda server URL va quyidagi kodni kiriting.']]){const row=node('div');row.append(node('b','',n));const span=node('span');span.append(node('strong','',title),node('small','',desc));row.append(span);steps.append(row);}card.append(steps);
+    const serverAddress=node('div','server-address-card');
+    serverAddress.append(node('strong','','Server egasining manzili'));
+    const serverAddressRow=node('div','server-address-row');
+    const serverAddressText=node('code','server-address-value',state.ownerServerUrl||location.origin);
+    serverAddressRow.append(serverAddressText,iconButton('Server manzilini nusxalash','▣',async()=>{try{await navigator.clipboard.writeText(state.ownerServerUrl||location.origin);state.notice='Server manzili nusxalandi';}catch{state.notice='Nusxalab bo‘lmadi';}render();}));
+    serverAddressCardWarning(serverAddress,state.ownerServerUrl||location.origin);
+    serverAddress.append(serverAddressRow);
+    card.append(serverAddress);
     const code=node('div','pair-code'),codeText=state.code?state.code.slice(0,4)+'-'+state.code.slice(4):'••••-••••';code.append(node('strong','',codeText),iconButton('Kodni nusxalash','▣',async()=>{if(!state.code)return;try{await navigator.clipboard.writeText(state.code);state.notice='Kod nusxalandi';}catch{state.notice='Nusxalab bo‘lmadi';}render();}));card.append(code);
     const remaining=Math.max(0,Math.ceil((state.expiresAt-Date.now())/1000));card.append(node('div','pair-timer',state.code?(remaining?'Kod muddati: '+Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0'):'Kod muddati tugagan'):'Kod olish uchun tugmani bosing'),button(state.code?'Yangi kod olish':'Ulash kodini olish','primary-button full',createPair),link('Plugin faylini yuklab olish','/plugin.lua','plugin-download'));
     const list=node('div','device-list');for(const d of state.devices){const item=node('div','device-item');item.append(node('span','device-status'+(d.connected?' connected':'')));const info=node('div');info.append(node('strong','',d.placeName||'Roblox Studio'),node('small','',d.connected?'Ulangan':'Uzilgan'));item.append(info,button('O‘chirish','device-delete',async()=>{if(!confirm('Ushbu Studio qurilmasini uzasizmi?'))return;try{await api('/api/devices/'+d.id,undefined,'DELETE');await loadDevices();render();}catch(e){state.notice=e.message;render();}}));list.append(item);}card.append(list);
@@ -142,8 +150,12 @@ function renderModal(shell){
   }
   backdrop.append(card);shell.append(backdrop);
 }
+function serverAddressCardWarning(parent,url){
+  const local=/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(url);
+  parent.append(node('p','modal-footnote',local?'Diqqat: localhost faqat shu kompyuterda ishlaydi. Boshqa kompyuter uchun .env ichida PUBLIC_URL ni server egasining LAN IP manziliga o‘zgartiring; boshqa tarmoqdan ulanish uchun server ommaviy HTTPS manzilda bo‘lishi kerak.':'Sherik shu manzil orqali server egasining API’siga ulanadi. Manzil sherikka yetib borishi va server porti firewall’da ruxsat etilgan bo‘lishi kerak.'));
+}
 function closeModal(){state.modal=null;state.notice='';if(codeTicker){clearInterval(codeTicker);codeTicker=null;}render();}
-async function openPair(){state.modal='pair';state.notice='';render();await loadDevices();if(state.modal==='pair')render();if(codeTicker)clearInterval(codeTicker);codeTicker=setInterval(()=>{if(state.modal==='pair')render();else{clearInterval(codeTicker);codeTicker=null;}},1000);}
+async function openPair(){state.modal='pair';state.notice='';try{const info=await api('/server-info');state.ownerServerUrl=info.serverUrl||location.origin;}catch{state.ownerServerUrl=location.origin;}render();await loadDevices();if(state.modal==='pair')render();if(codeTicker)clearInterval(codeTicker);codeTicker=setInterval(()=>{if(state.modal==='pair')render();else{clearInterval(codeTicker);codeTicker=null;}},1000);}
 async function createPair(){try{const d=await api('/api/pair',{});state.code=d.code;state.expiresAt=d.expiresAt;state.notice='';render();}catch(e){state.notice=e.message;render();}}
 async function loadDevices(){try{state.devices=await api('/api/devices');}catch{state.devices=[];}}
 async function loadHistory(){try{const d=await api('/api/chat/history');state.messages=(d.messages||[]).map(m=>({...m,role:m.role==='user'?'user':'assistant'}));}catch{}}
