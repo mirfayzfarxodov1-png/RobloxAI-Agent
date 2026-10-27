@@ -9,6 +9,7 @@ local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local ScriptEditorService = game:GetService("ScriptEditorService")
 local LogService = game:GetService("LogService")
 local MarketplaceService = game:GetService("MarketplaceService")
+local Selection = game:GetService("Selection")
 
 local TOKEN_KEY = "quruvchi_token"
 local RUN_CODE_KEY = "quruvchi_runcode"
@@ -332,6 +333,95 @@ local function deleteInstance(input)
         return { deleted=path }
     end)
 end
+local function safeName(value)
+    if typeof(value) ~= "string" then error("Name matn bo‘lishi kerak") end
+    value = value:match("^%s*(.-)%s*$")
+    if #value < 1 or #value > 100 or value:find("/",1,true) or value:find("\\",1,true) then
+        error("Name 1–100 belgi bo‘lsin va / yoki \\ bo‘lmasin")
+    end
+    return value
+end
+local function getSelection()
+    local out = {}
+    for _, instance in ipairs(Selection:Get()) do
+        table.insert(out,{path=instance:GetFullName(),name=instance.Name,className=instance.ClassName})
+        if #out >= 100 then break end
+    end
+    return {count=#out,items=out}
+end
+local function searchInstances(input)
+    local root = input.path and input.path ~= "" and resolvePath(input.path) or workspace
+    local nameNeedle = string.lower(tostring(input.nameContains or "")):sub(1,100)
+    local classNeedle = tostring(input.className or ""):sub(1,80)
+    local limit = math.clamp(tonumber(input.maxResults) or 40,1,100)
+    local found, scanned = {},0
+    for _, instance in ipairs(root:GetDescendants()) do
+        scanned += 1
+        if scanned > 5000 then break end
+        local nameMatch = nameNeedle == "" or string.find(string.lower(instance.Name),nameNeedle,1,true) ~= nil
+        local classMatch = classNeedle == "" or instance.ClassName == classNeedle
+        if nameMatch and classMatch then
+            table.insert(found,{path=instance:GetFullName(),name=instance.Name,className=instance.ClassName})
+            if #found >= limit then break end
+        end
+    end
+    return {root=root:GetFullName(),scanned=scanned,results=found,truncated=scanned>5000 or #found>=limit}
+end
+local function inspectInstance(input)
+    local instance = resolvePath(input.path)
+    local properties = {}
+    for _, key in ipairs({"Name","ClassName","Archivable","Parent","Position","Size","Anchored","CanCollide","Transparency","Material","Color","Visible","Enabled","Text","Value","LayoutOrder"}) do
+        local ok, value = pcall(function() return instance[key] end)
+        if ok then properties[key] = key == "Parent" and (value and value:GetFullName() or nil) or tostring(value) end
+    end
+    local attributes = {}
+    for key, value in pairs(instance:GetAttributes()) do
+        if #attributes >= 40 then break end
+        attributes[key] = tostring(value)
+    end
+    local children = {}
+    for _, child in ipairs(instance:GetChildren()) do
+        table.insert(children,{name=child.Name,className=child.ClassName})
+        if #children >= 60 then break end
+    end
+    return {path=instance:GetFullName(),properties=properties,attributes=attributes,children=children}
+end
+local function renameInstance(input)
+    return recordWaypoint("rename_instance",function()
+        local instance = resolvePath(input.path)
+        if protectedService(instance) then error("Service nomini o‘zgartirib bo‘lmaydi") end
+        local name = safeName(input.name)
+        local old = instance.Name
+        instance.Name = name
+        return {path=instance:GetFullName(),oldName=old,newName=name}
+    end)
+end
+local function duplicateInstance(input)
+    return recordWaypoint("duplicate_instance",function()
+        local source = resolvePath(input.path)
+        if protectedService(source) then error("Service yoki himoyalangan obyektni nusxalab bo‘lmaydi") end
+        local clone = source:Clone()
+        if not clone then error("Obyekt Archivable emas; nusxa olinmadi") end
+        if input.name and input.name ~= "" then clone.Name = safeName(input.name) end
+        local parent = input.parent and input.parent ~= "" and resolvePath(input.parent) or source.Parent
+        if not parent then error("Yangi parent topilmadi") end
+        clone.Parent = parent
+        return {path=clone:GetFullName(),className=clone.ClassName,name=clone.Name}
+    end)
+end
+local function selectInstances(input)
+    local items = {}
+    for _, path in ipairs(input.paths or {}) do
+        if #items >= 100 then break end
+        table.insert(items,resolvePath(path))
+    end
+    Selection:Set(items)
+    return {selected=#items,items=(function()
+        local out={}
+        for _, instance in ipairs(items) do table.insert(out,{path=instance:GetFullName(),className=instance.ClassName}) end
+        return out
+    end)()}
+end
 local function runCode(input)
     if not runCodeEnabled then error("Foydalanuvchi run_code’ga ruxsat bermagan") end
     if typeof(input.code)~="string" or #input.code>20000 then error("Kod bo‘sh yoki juda katta") end
@@ -369,7 +459,7 @@ local function getLogs(input)
     if input.clear then table.clear(logs);for _,label in ipairs(logLabels) do label:Destroy() end;table.clear(logLabels) end
     return table.concat(out,"\n"):sub(1,20000)
 end
-local handlers={get_tree=getTree,create_tree=createTree,create_script=createScript,read_script=readScript,set_properties=setProperties,delete_instance=deleteInstance,run_code=runCode,get_logs=getLogs}
+local handlers={get_tree=getTree,create_tree=createTree,create_script=createScript,read_script=readScript,set_properties=setProperties,delete_instance=deleteInstance,run_code=runCode,get_logs=getLogs,get_selection=getSelection,search_instances=searchInstances,inspect_instance=inspectInstance,rename_instance=renameInstance,duplicate_instance=duplicateInstance,select_instances=selectInstances}
 local function execute(command)
     local handler=handlers[command.name]
     if not handler then error("Noma’lum tool: "..tostring(command.name)) end
@@ -509,6 +599,47 @@ quickButton("Tozalash",0.75,0.25,function()
     table.clear(logLabels)
     log("Jurnal tozalandi.")
 end)
+local quickTools2=make("Frame",{Size=UDim2.new(1,0,0,36),BackgroundTransparency=1,LayoutOrder=7},root)
+local function quickButton2(text,x,w,callback)
+    local b=make("TextButton",{Size=UDim2.new(w,-4,1,0),Position=UDim2.new(x,0,0,0),BackgroundColor3=Color3.fromRGB(22,34,55),TextColor3=Color3.fromRGB(192,215,255),Text=text,Font=Enum.Font.GothamMedium,TextSize=10,AutoButtonColor=true},quickTools2)
+    make("UICorner",{CornerRadius=UDim.new(0,8)},b)
+    make("UIStroke",{Color=Color3.fromRGB(48,71,108),Transparency=0.35,Thickness=1},b)
+    b.Activated:Connect(callback)
+    return b
+end
+quickButton2("Tanlov",0,0.25,function()
+    local result=getSelection()
+    log("TANLANGAN OBYEKTLAR · "..tostring(result.count))
+    for _,item in ipairs(result.items) do log(item.path.." ["..item.className.."]") end
+    if result.count==0 then log("Studio’da obyekt tanlanmagan.") end
+end)
+quickButton2("Skriptlar",0.25,0.25,function()
+    local result=searchInstances({path="game",className="Script",maxResults=35})
+    local locals=searchInstances({path="game",className="LocalScript",maxResults=35})
+    local modules=searchInstances({path="game",className="ModuleScript",maxResults=35})
+    log("SKRIPTLAR · Script "..#result.results.." · LocalScript "..#locals.results.." · ModuleScript "..#modules.results)
+    for _,item in ipairs(result.results) do log(item.path) end
+    for _,item in ipairs(locals.results) do log(item.path) end
+    for _,item in ipairs(modules.results) do log(item.path) end
+end)
+quickButton2("Statistika",0.5,0.25,function()
+    local all=game:GetDescendants()
+    local parts,scripts,uis=0,0,0
+    for _,item in ipairs(all) do
+        if item:IsA("BasePart") then parts+=1 end
+        if item:IsA("LuaSourceContainer") then scripts+=1 end
+        if item:IsA("GuiObject") then uis+=1 end
+    end
+    log("LOYIHA STATISTIKASI · "..#all.." descendants · "..parts.." parts · "..scripts.." scripts · "..uis.." UI")
+end)
+quickButton2("Yordam",0.75,0.25,function()
+    log("QURUVCHI LUA · Explorer / Xatolar / Loyiha / Tozalash / Tanlov / Skriptlar / Statistika")
+    log("AI: internet tadqiqoti, obyekt qidiruvi, inspect, rename, duplicate, select va skript boshqaruvi")
+    log("Katta o‘zgarishdan oldin nusxa oling va Play-test qiling.")
+end)
+local logTitle=make("TextLabel",{Size=UDim2.new(1,0,0,20),BackgroundTransparency=1,Text="FAOLIYAT JURNALI  ·  LOGS",TextColor3=Color3.fromRGB(166,184,255),Font=Enum.Font.GothamBold,TextSize=10,TextXAlignment=Enum.TextXAlignment.Left,LayoutOrder=8},root)
+logFrame.LayoutOrder=9
+logFrame.Size=UDim2.new(1,0,1,-330)
 for _,line in ipairs(logs) do log(line) end
 
 connectButton.Activated:Connect(function()
