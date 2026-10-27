@@ -171,6 +171,7 @@ async function stop(){try{await api('/api/stop',{});}catch(e){addMessage({role:'
 async function newChat(){try{await api('/api/chat/new',{});state.messages=[];state.prompt='';state.busy=false;state.paused=null;render();}catch(e){addMessage({role:'error',text:e.message});}}
 async function logout(){try{await api('/api/logout',{});}catch{}if(stream){stream.close();stream=null;}state.user=null;state.messages=[];state.password='';state.notice='';state.modal=null;render();}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.modal)closeModal();});
+setInterval(()=>{const ready=state.paused?(!state.paused.retryAt||state.paused.retryAt<=Date.now()):null;if(ready!==pauseReadyState){pauseReadyState=ready;if(state.user)render();}},1000);
 (async function boot(){try{const me=await api('/api/me');state.user={login:me.login};state.steps=me.steps||state.steps;state.status=me.status||state.status;state.serverOnline=true;state.busy=!!me.running;state.paused=me.paused||null;await loadHistory();connectStream();}catch{state.user=null;try{const r=await fetch('/healthz');state.serverOnline=r.ok;if(!r.ok)state.notice='Server javob bermadi.';}catch{state.serverOnline=false;state.notice='Server ishga tushmagan. PowerShell’da npm start buyrug‘ini bajaring.';}}render();})();
 
 
