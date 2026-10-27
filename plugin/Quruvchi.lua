@@ -383,9 +383,10 @@ local function inspectInstance(input)
         local ok, value = pcall(function() return instance[key] end)
         if ok then properties[key] = key == "Parent" and (value and instancePath(value) or nil) or tostring(value) end
     end
-    local attributes = {}
+    local attributes, attributeCount = {},0
     for key, value in pairs(instance:GetAttributes()) do
-        if #attributes >= 40 then break end
+        attributeCount += 1
+        if attributeCount > 40 then break end
         attributes[key] = tostring(value)
     end
     local children = {}
