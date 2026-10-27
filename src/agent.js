@@ -101,7 +101,7 @@ export async function startTask(user, text) {
     emit(user.id, 'message', { id: crypto.randomUUID(), kind: 'user', text });
     const pause = pauseTaskForUser(user.id, conversationId, 'daily_step_limit', nextUtcMidnight(), 'Kunlik ichki qadam limiti');
     emit(user.id, 'message', { id: crypto.randomUUID(), kind: 'pause', text: pauseMessage(pause) });
-    return { ok: true, status: 202, paused: true };
+    return { ok: true, status: 202, paused: pause };
   }
   const controller = new AbortController();
   const task = { controller, conversationId, startedAt: Date.now() };
