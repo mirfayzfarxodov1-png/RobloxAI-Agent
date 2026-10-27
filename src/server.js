@@ -212,7 +212,7 @@ const server = http.createServer(async (req, res) => {
         const input = await getBody(req, res); if (!input) return;
         const result = await startTask(user, String(input.text || '').trim());
         if (!result.ok) return json(res, result.status, { error:result.error, ...(result.needPairing ? { needPairing:true } : {}) });
-        return json(res, 202, { ok:true });
+        return json(res, 202, { ok:true, paused:Boolean(result.paused), pause:result.paused || null });
       }
       if (method === 'POST' && pathname === '/api/resume') {
         const result = await resumeTask(user);
