@@ -2,7 +2,8 @@
 -- Install from the website's /plugin.lua endpoint. This plugin works only in Edit mode.
 if not game:GetService("RunService"):IsEdit() then return end
 
-local SERVER_KEY = "quruvchi_server_url"\nlocal SERVER = plugin:GetSetting(SERVER_KEY) or "__SERVER_URL__"
+local SERVER_KEY = "quruvchi_server_url"
+local SERVER = plugin:GetSetting(SERVER_KEY) or "__SERVER_URL__"
 local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
@@ -958,8 +959,8 @@ auditButton.Activated:Connect(function()
     setStatus(token and "ok" or "idle",token and "Ulangan · "..getPlaceName() or "Ulanmagan")
 end)
 local logTitle=make("TextLabel",{Size=UDim2.new(1,0,0,20),BackgroundTransparency=1,Text="FAOLIYAT JURNALI  ·  LOGS",TextColor3=Color3.fromRGB(166,184,255),Font=Enum.Font.GothamBold,TextSize=10,TextXAlignment=Enum.TextXAlignment.Left,LayoutOrder=10},root)
-logFrame.LayoutOrder=10
-logFrame.Size=UDim2.new(1,0,1,-375)
+logFrame.LayoutOrder=11
+logFrame.Size=UDim2.new(1,0,1,-410)
 for _,line in ipairs(logs) do log(line) end
 
 connectButton.Activated:Connect(function()
