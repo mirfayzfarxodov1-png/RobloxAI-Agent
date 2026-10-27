@@ -163,6 +163,7 @@ async function resumeBuild(){
     await api('/api/resume',{});
     state.paused=null;state.busy=true;render();
   }catch(error){
+    if(error.status===412||error.data?.needPairing){openPair();}
     if(error.data?.paused)state.paused=error.data.paused;
     addMessage({role:'error',text:error.message||'Davom ettirib bo‘lmadi.'});render();
   }
