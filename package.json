@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Quruvchi — dependency-free Roblox Studio AI builder",
   "engines": {
-    "node": "22.13.x || >=23"
+    "node": ">=22.13.0"
   },
   "scripts": {
     "start": "node --experimental-sqlite src/server.js",
