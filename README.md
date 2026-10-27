@@ -33,6 +33,10 @@ No npm install is required because the project has no external dependencies. SQL
 
 The plugin uses long-polling with bearer-token authentication. Pairing codes expire after ten minutes and can only be used once. You can revoke a device from the website.
 
+## Large-project planning
+
+The AI agent has a server-side `create_project_plan` tool for multi-system Roblox projects. It creates a bounded Markdown plan with gameplay loop, features, phased implementation, acceptance criteria, and safety guardrails without mutating Studio. The agent should plan first, then inspect Studio and implement small verified batches. This is a planning aid, not a guarantee that every listed system is already implemented or tested in Roblox Studio.
+
 ## Tests
 
 Run **npm test**.
