@@ -474,7 +474,7 @@ local function auditProject(input)
     local maxNodes = math.clamp(tonumber(input.maxNodes) or 8000, 100, 10000)
     local root = input.path and input.path ~= "" and resolvePath(input.path) or game
     local descendants = root:GetDescendants()
-    local counts = {instances=0,parts=0,unanchoredParts=0,scripts=0,emptyScripts=0,longScripts=0,disabledScripts=0,remotes=0,guiObjects=0}
+    local counts = {instances=0,parts=0,unanchoredParts=0,scripts=0,emptyScripts=0,longScripts=0,disabledScripts=0,remotes=0,guiObjects=0,lights=0,particleEmitters=0,trailsAndBeams=0,sounds=0}
     local findings, seenParents = {}, {}
     local scanned, truncated = 0, false
     local function finding(level, code, path, message)
@@ -516,6 +516,10 @@ local function auditProject(input)
         end
         if instance:IsA("RemoteEvent") or instance:IsA("RemoteFunction") or instance:IsA("UnreliableRemoteEvent") then counts.remotes += 1 end
         if instance:IsA("GuiObject") then counts.guiObjects += 1 end
+        if instance:IsA("Light") then counts.lights += 1 end
+        if instance:IsA("ParticleEmitter") then counts.particleEmitters += 1 end
+        if instance:IsA("Trail") or instance:IsA("Beam") then counts.trailsAndBeams += 1 end
+        if instance:IsA("Sound") then counts.sounds += 1 end
         local parent = instance.Parent
         if parent and not seenParents[parent] then
             seenParents[parent] = true
@@ -530,6 +534,9 @@ local function auditProject(input)
         end
     end
     if counts.parts > 1500 then finding("warning","many_parts",instancePath(root),"Hududda "..counts.parts.." ta BasePart bor; lag uchun profil va streaming/instancingni tekshir.") end
+    if counts.particleEmitters > 100 then finding("warning","many_particle_emitters",instancePath(root),counts.particleEmitters.." ta ParticleEmitter topildi; uzoq masofada effektlarni o‘chirib turish yoki emission rate’ni kamaytirishni ko‘rib chiq.") end
+    if counts.lights > 120 then finding("warning","many_lights",instancePath(root),counts.lights.." ta Light topildi; soya va range sozlamalarini optimallashtir.") end
+    if counts.sounds > 150 then finding("info","many_sounds",instancePath(root),counts.sounds.." ta Sound topildi; bir vaqtda chalinadigan ovozlar va cleanup’ni tekshir.") end
     if counts.unanchoredParts > 150 then finding("warning","many_unanchored_parts",instancePath(root),counts.unanchoredParts.." ta unanchored part topildi; fizik yukni tekshir.") end
     if truncated then finding("warning","audit_truncated",instancePath(root),"Audit "..maxNodes.." obyekt bilan cheklangan; to‘liqroq tekshiruv uchun kichikroq path tanla.") end
     return {scope=instancePath(root),scanned=scanned,truncated=truncated,counts=counts,findings=findings}
@@ -698,7 +705,44 @@ local function restoreSnapshot(input)
     end)
 end
 
-local handlers={preview_tree=previewTree,create_gui_template=createGuiTemplate,snapshot_instance=snapshotInstance,restore_snapshot=restoreSnapshot,get_tree=getTree,create_tree=createTree,create_script=createScript,read_script=readScript,set_properties=setProperties,delete_instance=deleteInstance,run_code=runCode,get_logs=getLogs,get_selection=getSelection,search_instances=searchInstances,inspect_instance=inspectInstance,rename_instance=renameInstance,duplicate_instance=duplicateInstance,select_instances=selectInstances,audit_project=auditProject}
+
+local function performanceAudit(input)
+    local report = auditProject(input)
+    report.mode = "performance"
+    report.performance = {
+        parts=report.counts.parts,
+        unanchoredParts=report.counts.unanchoredParts,
+        lights=report.counts.lights,
+        particleEmitters=report.counts.particleEmitters,
+        trailsAndBeams=report.counts.trailsAndBeams,
+        sounds=report.counts.sounds
+    }
+    report.note = "Statik taxminiy audit; FPS/profiler yoki Play-test natijasi emas."
+    return report
+end
+
+local function checkAssetIds(input)
+    local ids = input.ids
+    if typeof(ids) ~= "table" or #ids < 1 or #ids > 20 then error("1–20 ta asset ID yuboring") end
+    local results = {}
+    for _, rawId in ipairs(ids) do
+        local id = tonumber(rawId)
+        if not id or id <= 0 or id % 1 ~= 0 or id > 9007199254740991 then
+            table.insert(results,{id=tostring(rawId),validFormat=false,exists=false,error="Asset ID musbat butun son bo‘lishi kerak"})
+        else
+            local ok, info = pcall(function() return MarketplaceService:GetProductInfo(id, Enum.InfoType.Asset) end)
+            if ok and typeof(info) == "table" then
+                table.insert(results,{id=id,validFormat=true,exists=true,name=tostring(info.Name or ""),assetTypeId=info.AssetTypeId,creator=info.Creator and tostring(info.Creator.Name or "") or "",creatorId=info.Creator and info.Creator.Id or nil,price=info.PriceInRobux,availability="API info qaytdi; tajriba ichida foydalanish ruxsati va moderation holati alohida tekshirilishi kerak"})
+            else
+                table.insert(results,{id=id,validFormat=true,exists=false,error=tostring(info):sub(1,240),availability="Topilmadi yoki API/ruxsat cheklovi bo‘lishi mumkin"})
+            end
+            task.wait(0.1)
+        end
+    end
+    return {checked=#results,results=results,note="Asset mavjudligi tekshiruvi permission yoki tajribada foydalanish huquqini kafolatlamaydi."}
+end
+
+local handlers={preview_tree=previewTree,create_gui_template=createGuiTemplate,snapshot_instance=snapshotInstance,restore_snapshot=restoreSnapshot,performance_audit=performanceAudit,check_asset_ids=checkAssetIds,get_tree=getTree,create_tree=createTree,create_script=createScript,read_script=readScript,set_properties=setProperties,delete_instance=deleteInstance,run_code=runCode,get_logs=getLogs,get_selection=getSelection,search_instances=searchInstances,inspect_instance=inspectInstance,rename_instance=renameInstance,duplicate_instance=duplicateInstance,select_instances=selectInstances,audit_project=auditProject}
 local function execute(command)
     local handler=handlers[command.name]
     if not handler then error("Noma’lum tool: "..tostring(command.name)) end
