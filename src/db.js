@@ -38,6 +38,15 @@ CREATE TABLE IF NOT EXISTS usage (
  steps INTEGER NOT NULL DEFAULT 0, input_tokens INTEGER NOT NULL DEFAULT 0,
  output_tokens INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(user_id,day)
 );
+CREATE TABLE IF NOT EXISTS task_pauses (
+ user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+ conversation_id INTEGER NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+ reason TEXT NOT NULL,
+ retry_at INTEGER,
+ details TEXT,
+ created_at INTEGER NOT NULL,
+ updated_at INTEGER NOT NULL
+);
 CREATE INDEX IF NOT EXISTS idx_messages_conv ON messages(conversation_id,id);
 CREATE INDEX IF NOT EXISTS idx_devices_user ON devices(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_expiry ON sessions(expires_at);
@@ -71,6 +80,21 @@ export function addUsage(userId, steps = 0, inputTokens = 0, outputTokens = 0) {
 export function getUsage(userId) {
   const day = new Date().toISOString().slice(0, 10);
   return db.prepare('SELECT steps,input_tokens,output_tokens FROM usage WHERE user_id=? AND day=?').get(userId, day) || { steps: 0, input_tokens: 0, output_tokens: 0 };
+}
+export function getTaskPause(userId) {
+  const row = db.prepare('SELECT conversation_id,reason,retry_at,details,created_at,updated_at FROM task_pauses WHERE user_id=?').get(userId);
+  return row ? { conversationId: row.conversation_id, reason: row.reason, retryAt: row.retry_at, details: row.details || '', createdAt: row.created_at, updatedAt: row.updated_at } : null;
+}
+export function setTaskPause(userId, conversationId, reason, retryAt = null, details = '') {
+  const timestamp = Date.now();
+  db.prepare(`INSERT INTO task_pauses(user_id,conversation_id,reason,retry_at,details,created_at,updated_at)
+    VALUES(?,?,?,?,?,?,?)
+    ON CONFLICT(user_id) DO UPDATE SET conversation_id=excluded.conversation_id,reason=excluded.reason,retry_at=excluded.retry_at,details=excluded.details,updated_at=excluded.updated_at`)
+    .run(userId, conversationId, reason, retryAt, String(details).slice(0, 500), timestamp, timestamp);
+  return getTaskPause(userId);
+}
+export function clearTaskPause(userId) {
+  db.prepare('DELETE FROM task_pauses WHERE user_id=?').run(userId);
 }
 export function cleanupExpired() {
   const now = Date.now();
