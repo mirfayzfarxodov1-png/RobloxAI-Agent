@@ -132,3 +132,37 @@ body::before{opacity:.055;background-size:64px 64px}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 }
+
+/* Quruvchi refresh: vivid studio-grade surfaces without expensive continuous effects. */
+:root{--bg:#0b1020;--bg2:#111a2d;--panel:#121b30;--panel2:#17233b;--line:#293956;--text:#edf3ff;--muted:#9eacc7;--accent:#8b9cff;--accent2:#6378f2;--brick:#f4c96b;--ok:#55d6b0}
+body{background:radial-gradient(ellipse at 76% -12%,rgba(83,101,208,.22),transparent 37%),radial-gradient(ellipse at 0% 65%,rgba(37,109,142,.10),transparent 35%),var(--bg)}
+.sidebar{background:#0c1425;border-color:#22304a}
+.brand-mark{background:linear-gradient(145deg,#667af4,#283b72);border-color:#8b9cff;color:white;box-shadow:0 6px 18px rgba(73,98,220,.16)}
+.new-chat{background:linear-gradient(110deg,#273c77,#292e60);border-color:#455aa0}
+.new-chat:hover,.side-link:hover,.side-link.active{background:#1b2943;border-color:#435780}
+.usage-card,.composer,.message-body,.tool-row,.suggestion-card,.modal-card,.auth-card{background:#111b2e;border-color:#2a3a58;box-shadow:none}
+.topbar{background:rgba(11,16,32,.92);border-color:#202e46}
+.backend-pill,.studio-pill,.heading-chip{background:#131f34;border-color:#2d405e}
+.chat-heading h1 span{background:linear-gradient(90deg,#aab6ff,#70d4e7);-webkit-background-clip:text;background-clip:text;color:transparent}
+.eyebrow{color:#a5b2ff}
+.suggestion-card{min-height:148px;position:relative;overflow:hidden}
+.suggestion-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(#8b9cff,#59c7d9);opacity:.7}
+.suggestion-card:hover{border-color:#7186c7;background:#17243b;transform:translateY(-2px)}
+.suggestion-card strong{color:#f4f7ff}
+.suggestion-card>span:not(.suggestion-emoji){color:#a7b6d0}
+.suggestion-emoji{display:inline-grid;place-items:center;width:34px;height:34px;border:1px solid #34496e;border-radius:10px;background:#1a2a45}
+.composer{background:#111b2e;border-color:#34496b}
+.composer:focus-within{border-color:#8196ff}
+.send-button,.primary-button{background:linear-gradient(115deg,#7186ff,#5365d8);border-color:#8ea0ff;box-shadow:0 5px 15px rgba(72,94,204,.14)}
+.message-user .message-body{background:#1c2b4a;border-color:#3e5583}
+.message-avatar{background:#1a2947;border-color:#354b73}
+.message-user .message-avatar{background:#314c85}
+.art-cube{background:linear-gradient(145deg,#263b73,#172541);border-color:#6079d6;box-shadow:0 0 22px rgba(102,121,237,.12)}
+.floating-icon{background:#172541;border-color:#3b527c}
+.modal-backdrop{background:rgba(4,8,17,.82);backdrop-filter:none}
+.modal-card{background:#111b2e;border-color:#334664}
+.auth-page{background:radial-gradient(ellipse at 50% 10%,rgba(76,99,198,.22),transparent 44%),var(--bg)}
+.auth-card{background:#111b2e;border-color:#334664}
+.form-label input,.auth-tabs,.pair-code,.device-item{background:#0d1628;border-color:#2c3d5b}
+@media(max-width:640px){.suggestion-card{min-height:94px}.suggestion-emoji{width:30px;height:30px}}
+@media(prefers-reduced-motion:reduce){.suggestion-card:hover{transform:none}}
