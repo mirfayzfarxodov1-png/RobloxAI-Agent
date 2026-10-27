@@ -584,8 +584,9 @@ end
 local function createGuiTemplate(input)
     local parentPath = input.parent or "StarterGui"
     local parent = resolveParent(parentPath)
-    if parent ~= game and protectedService(parent) and parent ~= findService("StarterGui") then
-        error("GUI uchun StarterGui yoki uning ichidagi GUI rootini tanlang")
+    local starterGui = findService("StarterGui")
+    if not starterGui or (parent ~= starterGui and not parent:IsDescendantOf(starterGui)) then
+        error("GUI faqat StarterGui yoki uning ichidagi obyektga yaratilishi mumkin")
     end
     local guiName = tostring(input.name or "QuruvchiInterface")
     if guiName == "" or #guiName > 80 then error("GUI nomi noto‘g‘ri") end
@@ -598,8 +599,7 @@ local function createGuiTemplate(input)
     return recordWaypoint("create_gui_template",function()
         local old = parent:FindFirstChild(guiName)
         if old then
-            if not old:IsA("ScreenGui") then error(guiName.." nomli obyekt bor, lekin ScreenGui emas") end
-            old:Destroy()
+            error(guiName.." nomli obyekt allaqachon mavjud. Uni o‘chirmaslik uchun boshqa nom tanlang yoki avval snapshot oling.")
         end
         local gui=Instance.new("ScreenGui");gui.Name=guiName;gui.ResetOnSpawn=false;gui.IgnoreGuiInset=false;gui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
         local frame=Instance.new("Frame");frame.Name="Main";frame.AnchorPoint=Vector2.new(0.5,0.5);frame.Position=UDim2.fromScale(0.5,0.5);frame.Size=UDim2.new(0.82,0,0.72,0);frame.BackgroundColor3=Color3.fromRGB(17,20,38);frame.BorderSizePixel=0;frame.Parent=gui
