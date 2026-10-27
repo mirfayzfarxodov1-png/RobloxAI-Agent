@@ -15,6 +15,7 @@ export const tools = [
   { name: 'set_properties', description: 'Mavjud obyekt xossalari va atributlarini o‘zgartirish.', input_schema: {type:'object',required:['path'],properties:{path:{type:'string'},properties:{type:'object'},attributes:{type:'object'}}} },
   { name: 'delete_instance', description: 'Obyektni o‘chirish. Himoyalangan servislarni o‘chirib bo‘lmaydi.', input_schema: {type:'object',required:['path'],properties:{path:{type:'string'}}} },
   { name: 'run_code', description: 'Studio edit rejimida Luau bajarish. Faqat foydalanuvchi plugin ichida alohida ruxsat berganda ishlaydi; sukut bo‘yicha o‘chiq.', input_schema: {type:'object',required:['code'],properties:{code:{type:'string'}}} },
+  { name: 'audit_project', description: 'Roblox Studio loyihasini statik audit qiladi: obyekt/script/GUI/remote soni, bo‘sh yoki juda uzun scriptlar, Disabled scriptlar, bir parentdagi takroriy nomlar va katta/unanchored partlar bo‘yicha ogohlantirish beradi. Play-test o‘rnini bosmaydi.', input_schema: {type:'object',properties:{path:{type:'string',description:'Audit scope, masalan game, Workspace yoki ServerScriptService'},maxNodes:{type:'integer',minimum:100,maximum:10000,default:8000}}} },
   { name: 'get_logs', description: 'Studio Output jurnalini o‘qish. Foydalanuvchi logs desa chaqir.', input_schema: {type:'object',properties:{limit:{type:'integer',minimum:1,maximum:500,default:200},onlyErrors:{type:'boolean',default:false},clear:{type:'boolean',default:false}}} },
 ];
 export function truncateOutput(value, limit = 20000) {
