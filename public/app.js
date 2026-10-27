@@ -135,3 +135,30 @@ async function newChat(){try{await api('/api/chat/new',{});state.messages=[];sta
 async function logout(){try{await api('/api/logout',{});}catch{}if(stream){stream.close();stream=null;}state.user=null;state.messages=[];state.password='';state.notice='';state.modal=null;render();}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.modal)closeModal();});
 (async function boot(){try{const me=await api('/api/me');state.user={login:me.login};state.steps=me.steps||state.steps;state.status=me.status||state.status;state.serverOnline=true;state.busy=!!me.running;await loadHistory();connectStream();}catch{state.user=null;try{const r=await fetch('/healthz');state.serverOnline=r.ok;if(!r.ok)state.notice='Server javob bermadi.';}catch{state.serverOnline=false;state.notice='Server ishga tushmagan. PowerShell’da npm start buyrug‘ini bajaring.';}}render();})();
+
+
+// Premium motion layer: intentionally dependency-free and respects reduced-motion preferences.
+(function installQuruvchiMotion(){
+  const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const finePointer=window.matchMedia&&window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const progress=document.createElement('div');progress.className='q-scroll-progress';progress.setAttribute('aria-hidden','true');progress.appendChild(document.createElement('span'));document.body.appendChild(progress);
+  let glow=null, targetX=-400,targetY=-400,currentX=-400,currentY=-400,raf=0;
+  if(finePointer&&!reduced){
+    glow=document.createElement('div');glow.className='q-cursor-glow';glow.setAttribute('aria-hidden','true');document.body.appendChild(glow);
+    document.addEventListener('pointermove',e=>{targetX=e.clientX;targetY=e.clientY;if(!raf)raf=requestAnimationFrame(moveGlow);},{passive:true});
+    document.addEventListener('pointerleave',()=>{if(glow)glow.style.opacity='0';});
+    document.addEventListener('pointerenter',()=>{if(glow)glow.style.opacity='1';});
+  }
+  function moveGlow(){raf=0;currentX+=(targetX-currentX)*.16;currentY+=(targetY-currentY)*.16;if(glow)glow.style.transform='translate3d('+(currentX-150)+'px,'+(currentY-150)+'px,0)';if(Math.abs(targetX-currentX)+Math.abs(targetY-currentY)>0.6)raf=requestAnimationFrame(moveGlow);}
+  function updateProgress(){const scrollEl=document.querySelector('.chat-scroll');const max=scrollEl?scrollEl.scrollHeight-scrollEl.clientHeight:document.documentElement.scrollHeight-window.innerHeight;const now=scrollEl?scrollEl.scrollTop:window.scrollY;progress.firstElementChild.style.width=(max>0?Math.min(100,Math.max(0,now/max*100)):0)+'%';}
+  document.addEventListener('scroll',updateProgress,{passive:true,capture:true});window.addEventListener('resize',updateProgress,{passive:true});
+  const seen=new WeakSet();
+  function decorate(scope){
+    if(!scope||scope.nodeType!==1)return;
+    const selectors='.chat-heading,.welcome-art,.welcome-block h2,.welcome-block>p,.suggestion-card,.message,.composer,.usage-card,.profile-row,.modal-card,.device-item,.settings-section';
+    if(scope.matches&&scope.matches(selectors)&&!seen.has(scope)){seen.add(scope);if(!reduced)scope.classList.add('q-reveal');}
+    if(scope.querySelectorAll)scope.querySelectorAll(selectors).forEach(el=>{if(!seen.has(el)){seen.add(el);if(!reduced)el.classList.add('q-reveal');}});
+  }
+  const root=document.getElementById('app');if(root){new MutationObserver(records=>{for(const record of records)for(const el of record.addedNodes)decorate(el);updateProgress();}).observe(root,{childList:true,subtree:true});decorate(root);}
+  updateProgress();
+})();
