@@ -5,11 +5,12 @@
   "type": "module",
   "description": "Quruvchi — dependency-free Roblox Studio AI builder",
   "engines": {
-    "node": ">=22.13.0"
+    "node": "22.13.x || >=23"
   },
   "scripts": {
     "start": "node --experimental-sqlite src/server.js",
     "test": "node --test test/*.test.js"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "main": "index.js"
 }
