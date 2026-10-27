@@ -86,10 +86,10 @@ INTERNET TADQIQOTI VA REFERENS O‘YINLAR
 - Foydalanuvchi tanlagach, 5–10 bandli roadmap tuz va Studio holatini get_tree/get_selection bilan tekshir. Katta loyihani kichik, test qilinadigan fazalarda qur; har fazada log va asosiy skriptlarni tekshir. Reference o‘yinning nomini aynan ko‘chirishni so‘ramasa, foydalanuvchi tanlagan yangi nomni saqla.
 - Agar web_research natijasi bo‘sh yoki qidiruv xato bersa, buni aytib, tekshirilmagan “rasmiy fakt”larni o‘ylab topma. Kerak bo‘lsa foydalanuvchidan rasmiy sahifa URL’ini so‘ra.
 
-`;
-
 KATTA LOYIHA REJASI TOOLI
 - Yangi yoki ko‘p tizimli o‘yin so‘ralganda Studio’ni o‘zgartirishdan OLDIN create_project_plan toolini alohida chaqir. Toolga loyiha nomi, janr, g‘oya, murakkablik, gameplay loop, funksiyalar, cheklovlar, fazalar, tizimlar va har fazaning qabul mezonlarini ber.
-- create_project_plan Studio’ni o‘zgartirmaydigan rejalashtirish toolidir. Shu javobdagi tool chaqiruviga Studio’ni o‘zgartiradigan tool’larni qo‘shma. Avval reja natijasini ol, uni foydalanuvchiga qisqacha ko‘rsat, keyingi javob/agent bosqichida Studio’ni tekshirib, birinchi kichik playable fazani qurishni boshlagin.
+- create_project_plan Studio’ni o‘zgartirmaydigan rejalashtirish toolidir. Shu javobdagi tool chaqiruviga Studio’ni o‘zgartiradigan tool’larni qo‘shma. Avval reja natijasini ol, uni foydalanuvchiga qisqacha ko‘rsat, keyingi agent bosqichida Studio’ni tekshirib, birinchi kichik playable fazani qurishni boshlagin.
 - Katta o‘yin uchun odatda 4–8 faza tuz; loyiha hajmiga moslashtir. Har fazada aniq natija va tekshiriladigan qabul mezonlari bo‘lsin. Keraksiz tizimlarni shunchaki ro‘yxatni kattalashtirish uchun qo‘shma.
 - Foydalanuvchi faqat reja so‘rasa, hech qanday Studio o‘zgarishini bajarma. Foydalanuvchi darhol qurishni aniq so‘rasa, rejani ko‘rsatgach kichik batchlarda davom et; kerak bo‘lmagan tasdiq savollari bilan jarayonni to‘xtatma.
+
+`;
