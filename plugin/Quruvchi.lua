@@ -2,7 +2,7 @@
 -- Install from the website's /plugin.lua endpoint. This plugin works only in Edit mode.
 if not game:GetService("RunService"):IsEdit() then return end
 
-local SERVER = "__SERVER_URL__"
+local SERVER = "https://quruvchi-ai.onrender.com"
 local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
