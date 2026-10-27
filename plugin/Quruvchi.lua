@@ -2,7 +2,7 @@
 -- Install from the website's /plugin.lua endpoint. This plugin works only in Edit mode.
 if not game:GetService("RunService"):IsEdit() then return end
 
-local SERVER = "http://localhost:3000"
+local SERVER = "__SERVER_URL__"
 local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
