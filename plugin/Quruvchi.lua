@@ -534,7 +534,173 @@ local function auditProject(input)
     if truncated then finding("warning","audit_truncated",instancePath(root),"Audit "..maxNodes.." obyekt bilan cheklangan; to‘liqroq tekshiruv uchun kichikroq path tanla.") end
     return {scope=instancePath(root),scanned=scanned,truncated=truncated,counts=counts,findings=findings}
 end
-local handlers={get_tree=getTree,create_tree=createTree,create_script=createScript,read_script=readScript,set_properties=setProperties,delete_instance=deleteInstance,run_code=runCode,get_logs=getLogs,get_selection=getSelection,search_instances=searchInstances,inspect_instance=inspectInstance,rename_instance=renameInstance,duplicate_instance=duplicateInstance,select_instances=selectInstances,audit_project=auditProject}
+
+local function previewTree(input)
+    local parentPath = input.parent or "Workspace"
+    local parent = resolveParent(parentPath)
+    if typeof(input.tree) ~= "table" then error("tree obyekt bo‘lishi kerak") end
+    local summary = {create=0,update=0,conflict=0,nodes=0,items={}}
+    local function walk(container,node,path,depth)
+        if depth > 30 then error("Tree chuqurligi 30 dan oshdi") end
+        if typeof(node) ~= "table" or typeof(node.name) ~= "string" or typeof(node.className) ~= "string" then error("Tree node formati noto‘g‘ri") end
+        if node.name == "" or #node.name > 100 then error("Obyekt nomi noto‘g‘ri: "..tostring(node.name)) end
+        summary.nodes += 1
+        if summary.nodes > MAX_TREE_NODES then error("Preview 400 ta obyekt limitidan oshdi") end
+        local existing = container:FindFirstChild(node.name)
+        local action = "create"
+        if existing then
+            if existing.ClassName == node.className then action = "update" else action = "conflict" end
+        end
+        summary[action] += 1
+        if #summary.items < 120 then
+            table.insert(summary.items,{path=path.."/"..node.name,className=node.className,action=action})
+        end
+        if action == "conflict" then return end
+        local nextContainer = existing
+        if not nextContainer then
+            local ok, created = pcall(function() return Instance.new(node.className) end)
+            if not ok then
+                summary.conflict += 1
+                summary.create -= 1
+                if #summary.items < 120 then table.insert(summary.items,{path=path.."/"..node.name,className=node.className,action="invalid_class"}) end
+                return
+            end
+            nextContainer = created
+            created:Destroy()
+        end
+        for _,child in ipairs(node.children or {}) do walk(nextContainer,child,path.."/"..node.name,depth+1) end
+    end
+    walk(parent,input.tree,parentPath,1)
+    return {parent=parentPath,nodes=summary.nodes,create=summary.create,update=summary.update,conflict=summary.conflict,items=summary.items,mutated=false,note="Faqat oldindan ko‘rish; Studio o‘zgartirilmadi."}
+end
+
+local function createGuiTemplate(input)
+    local parentPath = input.parent or "StarterGui"
+    local parent = resolveParent(parentPath)
+    if parent ~= game and protectedService(parent) and parent ~= findService("StarterGui") then
+        error("GUI uchun StarterGui yoki uning ichidagi GUI rootini tanlang")
+    end
+    local guiName = tostring(input.name or "QuruvchiInterface")
+    if guiName == "" or #guiName > 80 then error("GUI nomi noto‘g‘ri") end
+    local titleText = tostring(input.title or "YANGI INTERFEYS"):sub(1,100)
+    local buttonNames = typeof(input.buttons) == "table" and input.buttons or {"Asosiy amal","Sozlamalar"}
+    if #buttonNames > 8 then error("Ko‘pi bilan 8 ta action tugmasi mumkin") end
+    for _,label in ipairs(buttonNames) do
+        if typeof(label) ~= "string" or #label < 1 or #label > 40 then error("Tugma nomi 1–40 belgi bo‘lishi kerak") end
+    end
+    return recordWaypoint("create_gui_template",function()
+        local old = parent:FindFirstChild(guiName)
+        if old then
+            if not old:IsA("ScreenGui") then error(guiName.." nomli obyekt bor, lekin ScreenGui emas") end
+            old:Destroy()
+        end
+        local gui=Instance.new("ScreenGui");gui.Name=guiName;gui.ResetOnSpawn=false;gui.IgnoreGuiInset=false;gui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
+        local frame=Instance.new("Frame");frame.Name="Main";frame.AnchorPoint=Vector2.new(0.5,0.5);frame.Position=UDim2.fromScale(0.5,0.5);frame.Size=UDim2.new(0.82,0,0.72,0);frame.BackgroundColor3=Color3.fromRGB(17,20,38);frame.BorderSizePixel=0;frame.Parent=gui
+        local size=Instance.new("UISizeConstraint");size.MinSize=Vector2.new(280,240);size.MaxSize=Vector2.new(760,620);size.Parent=frame
+        local aspect=Instance.new("UIAspectRatioConstraint");aspect.AspectRatio=1.18;aspect.DominantAxis=Enum.DominantAxis.Width;aspect.Parent=frame
+        local corner=Instance.new("UICorner");corner.CornerRadius=UDim.new(0,16);corner.Parent=frame
+        local stroke=Instance.new("UIStroke");stroke.Color=Color3.fromRGB(106,91,220);stroke.Thickness=1.5;stroke.Transparency=0.15;stroke.Parent=frame
+        local header=Instance.new("Frame");header.Name="Header";header.Size=UDim2.new(1,0,0,58);header.BackgroundColor3=Color3.fromRGB(35,31,70);header.BorderSizePixel=0;header.Parent=frame
+        local headerCorner=Instance.new("UICorner");headerCorner.CornerRadius=UDim.new(0,16);headerCorner.Parent=header
+        local title=Instance.new("TextLabel");title.Name="Title";title.BackgroundTransparency=1;title.Position=UDim2.fromOffset(20,0);title.Size=UDim2.new(1,-80,1,0);title.Font=Enum.Font.GothamBold;title.TextSize=18;title.TextColor3=Color3.fromRGB(246,244,255);title.TextXAlignment=Enum.TextXAlignment.Left;title.Text=titleText;title.Parent=header
+        local close=Instance.new("TextButton");close.Name="Close";close.AnchorPoint=Vector2.new(1,0.5);close.Position=UDim2.new(1,-14,0.5,0);close.Size=UDim2.fromOffset(34,34);close.BackgroundColor3=Color3.fromRGB(79,62,120);close.Text="×";close.TextSize=24;close.Font=Enum.Font.GothamBold;close.TextColor3=Color3.new(1,1,1);close.Parent=header
+        local closeCorner=Instance.new("UICorner");closeCorner.CornerRadius=UDim.new(0,10);closeCorner.Parent=close
+        local body=Instance.new("Frame");body.Name="Content";body.BackgroundTransparency=1;body.Position=UDim2.new(0,18,0,72);body.Size=UDim2.new(1,-36,1,-88);body.Parent=frame
+        local layout=Instance.new("UIListLayout");layout.Padding=UDim.new(0,10);layout.SortOrder=Enum.SortOrder.LayoutOrder;layout.Parent=body
+        local status=Instance.new("TextLabel");status.Name="Status";status.BackgroundTransparency=1;status.Size=UDim2.new(1,0,0,30);status.Font=Enum.Font.Gotham;status.TextSize=13;status.TextColor3=Color3.fromRGB(180,190,226);status.TextXAlignment=Enum.TextXAlignment.Left;status.Text="Tizim tayyor";status.LayoutOrder=1;status.Parent=body
+        local event=Instance.new("BindableEvent");event.Name="ActionRequested";event.Parent=gui
+        for index,label in ipairs(buttonNames) do
+            local button=Instance.new("TextButton");button.Name="Action"..index;button.Size=UDim2.new(1,0,0,42);button.BackgroundColor3=Color3.fromRGB(86,75,190);button.TextColor3=Color3.new(1,1,1);button.Font=Enum.Font.GothamSemibold;button.TextSize=14;button.Text=label;button.LayoutOrder=index+1;button.Parent=body
+            local bc=Instance.new("UICorner");bc.CornerRadius=UDim.new(0,10);bc.Parent=button
+            local action=Instance.new("StringValue");action.Name="ActionKey";action.Value=label;action.Parent=button
+        end
+        local localScript=Instance.new("LocalScript");localScript.Name="UIController"
+        localScript.Source=[[
+local gui = script.Parent
+local main = gui:WaitForChild("Main")
+local header = main:WaitForChild("Header")
+header:WaitForChild("Close").Activated:Connect(function()
+    gui.Enabled = false
+end)
+local content = main:WaitForChild("Content")
+local status = content:WaitForChild("Status")
+local event = gui:WaitForChild("ActionRequested")
+for _, button in ipairs(content:GetChildren()) do
+    if button:IsA("TextButton") and button.Name:match("^Action%d+$") then
+        button.Activated:Connect(function()
+            local key = button:FindFirstChild("ActionKey")
+            status.Text = "Tanlandi: " .. (key and key.Value or button.Text)
+            event:Fire(key and key.Value or button.Text)
+        end)
+    end
+end
+]]
+        localScript.Parent=gui
+        gui.Parent=parent
+        return {created=true,path=parentPath.."/"..guiName,buttons=#buttonNames,actionEvent=parentPath.."/"..guiName.."/ActionRequested",note="Close va action tugmalari ulangan; ActionRequested BindableEvent'ni boshqa LocalScript tinglashi mumkin. O‘yin logikasiga avtomatik bog‘lanmagan."}
+    end)
+end
+
+local function snapshotInstance(input)
+    local path = input.path
+    if typeof(path) ~= "string" or path == "" then error("Snapshot uchun path talab qilinadi") end
+    local target = resolvePath(path)
+    if target == game or protectedService(target) or target:IsDescendantOf(findService("ServerStorage") or game) then
+        error("Service root yoki backup papkasini snapshot qilish mumkin emas; aniq obyektni tanlang")
+    end
+    local name = tostring(input.name or (target.Name.."_backup_"..os.date("%Y%m%d_%H%M%S")))
+    if not name:match("^[%w_%-]+$") or #name > 80 then error("Snapshot nomida faqat harf, son, _ va - ishlatiladi") end
+    local storage=findService("ServerStorage")
+    if not storage then error("ServerStorage topilmadi") end
+    local folder=storage:FindFirstChild("QuruvchiSnapshots")
+    if not folder then folder=Instance.new("Folder");folder.Name="QuruvchiSnapshots";folder.Parent=storage end
+    if folder:FindFirstChild(name) then error("Bu nomli snapshot mavjud: "..name) end
+    local ok,clone=pcall(function() return target:Clone() end)
+    if not ok or not clone then error("Obyektni Clone qilib bo‘lmadi. Archivable va class’ni tekshiring.") end
+    clone.Name=name
+    clone:SetAttribute("__QuruvchiOriginalName",target.Name)
+    clone:SetAttribute("__QuruvchiOriginalParent",instancePath(target.Parent))
+    clone:SetAttribute("__QuruvchiSnapshotPath",path)
+    clone:SetAttribute("__QuruvchiSnapshotTime",os.time())
+    clone.Parent=folder
+    local backups=folder:GetChildren()
+    if #backups>10 then
+        table.sort(backups,function(a,b) return (a:GetAttribute("__QuruvchiSnapshotTime") or 0) < (b:GetAttribute("__QuruvchiSnapshotTime") or 0) end)
+        while #backups>10 do local old=table.remove(backups,1);if old then old:Destroy() end end
+    end
+    return {created=true,name=name,path=path,storedAt="ServerStorage/QuruvchiSnapshots/"..name,backupsKept=math.min(#folder:GetChildren(),10),note="Snapshot joriy place ichida saqlanadi; o‘yinni Publish/Save qilsangiz backup ham saqlanadi."}
+end
+
+local function restoreSnapshot(input)
+    if input.confirm ~= true then error("Tiklash eski obyektni almashtiradi. Faqat foydalanuvchi aniq tasdiqlagach confirm=true yuboring.") end
+    local name=tostring(input.name or "")
+    if not name:match("^[%w_%-]+$") or #name>80 then error("Snapshot nomi noto‘g‘ri") end
+    local folder=(findService("ServerStorage") or game):FindFirstChild("QuruvchiSnapshots")
+    local backup=folder and folder:FindFirstChild(name)
+    if not backup then error("Snapshot topilmadi: "..name) end
+    local parentPath=backup:GetAttribute("__QuruvchiOriginalParent")
+    local originalName=backup:GetAttribute("__QuruvchiOriginalName")
+    if typeof(parentPath)~="string" or typeof(originalName)~="string" then error("Snapshot metadata yo‘q; xavfsiz tiklash mumkin emas") end
+    local parent=resolvePath(parentPath)
+    if protectedService(parent) and parent~=findService("Workspace") and parent~=findService("StarterGui") and parent~=findService("ReplicatedStorage") and parent~=findService("ServerStorage") then
+        error("Himoyalangan parentga tiklash taqiqlangan")
+    end
+    return recordWaypoint("restore_snapshot",function()
+        local ok,restored=pcall(function() return backup:Clone() end)
+        if not ok or not restored then error("Snapshot nusxasi olinmadi") end
+        restored.Name=originalName
+        restored:SetAttribute("__QuruvchiOriginalName",nil)
+        restored:SetAttribute("__QuruvchiOriginalParent",nil)
+        restored:SetAttribute("__QuruvchiSnapshotPath",nil)
+        restored:SetAttribute("__QuruvchiSnapshotTime",nil)
+        local current=parent:FindFirstChild(originalName)
+        if current then current:Destroy() end
+        restored.Parent=parent
+        return {restored=true,name=originalName,path=parentPath.."/"..originalName,replacedExisting=current~=nil,warning="Restore joriy obyektni almashtiradi. Roblox Studio Undo bilan qaytarish mumkin."}
+    end)
+end
+
+local handlers={preview_tree=previewTree,create_gui_template=createGuiTemplate,snapshot_instance=snapshotInstance,restore_snapshot=restoreSnapshot,get_tree=getTree,create_tree=createTree,create_script=createScript,read_script=readScript,set_properties=setProperties,delete_instance=deleteInstance,run_code=runCode,get_logs=getLogs,get_selection=getSelection,search_instances=searchInstances,inspect_instance=inspectInstance,rename_instance=renameInstance,duplicate_instance=duplicateInstance,select_instances=selectInstances,audit_project=auditProject}
 local function execute(command)
     local handler=handlers[command.name]
     if not handler then error("Noma’lum tool: "..tostring(command.name)) end
