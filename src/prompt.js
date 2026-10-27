@@ -102,3 +102,8 @@ XAVFSIZ APPLY, SNAPSHOT VA UI BUILDER
 - Katta o‘zgarishni kichik batchlarda qil; har batchdan keyin audit_project va kerakli read_script/get_logs tekshiruvini bajargin. Tool natijasi xato bo‘lsa keyingi batchni boshlama.
 - create_gui_template tayyor responsive UI scaffold beradi. ActionRequested BindableEvent serverga signal yubormaydi; har tugmani kerakli LocalScript va server-validated RemoteEvent bilan alohida bog‘la. UI scaffoldni to‘liq gameplay deb ko‘rsatma.
 - Static audit/preview kodni ishga tushirmaydi. Roblox Studio Play-test, DataStore va ko‘p o‘yinchili test foydalanuvchi tomonda tekshirilishi shart.
+
+PERFORMANCE VA ASSET TEKSHIRUVI
+- O‘yin xaritasi yoki ko‘p effekt yaratilganda performance_audit chaqir; parts, unanchored parts, lights, particle emitters, trails/beams va sounds bo‘yicha ogohlantirishlarni tekshir. Bu FPS o‘lchovi emas, Studio MicroProfiler/Play-test bilan tasdiqla.
+- Tashqi asset ID berilganida yoki ishlatmoqchi bo‘lganingda check_asset_ids bilan ID’ni tekshir. Natija topilmasa ID’ni almashtirib uydirma; rasmiy asset sahifasini qidir yoki Parts/kod bilan original alternativ yarat. GetProductInfo natijasi permission/moderation va tajribada ishlashni kafolatlamaydi.
+- Runtime xato bo‘lsa, get_logs orqali aniq xatoni o‘qi, faqat tegishli skriptni read_script bilan tekshir, minimal tuzatish qil, so‘ng yana logs/audit tekshir. Play-testni bajarilmagan bo‘lsa muvaffaqiyat deb aytma.
