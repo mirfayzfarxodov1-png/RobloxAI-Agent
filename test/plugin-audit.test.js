@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { tools } from '../src/tools.js';
 
 const plugin = await readFile(new URL('../plugin/Quruvchi.lua', import.meta.url), 'utf8');
+const prompt = await readFile(new URL('../src/prompt.js', import.meta.url), 'utf8');
 
 test('audit_project is exposed to the agent and implemented by the Studio plugin', () => {
   const auditTool = tools.find((tool) => tool.name === 'audit_project');
