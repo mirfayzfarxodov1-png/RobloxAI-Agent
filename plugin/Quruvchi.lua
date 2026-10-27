@@ -102,7 +102,7 @@ local function resolvePath(path)
     path = path:gsub("^/+", ""):gsub("/+$", "")
     if path == "" then error("Bo‘sh path") end
     local segments = string.split(path, "/")
-    local current = findService(segments[1])
+    local current = segments[1] == "game" and game or findService(segments[1])
     if not current then error("Service yoki root topilmadi: " .. segments[1]) end
     for i = 2, #segments do
         current = current:FindFirstChild(segments[i])
