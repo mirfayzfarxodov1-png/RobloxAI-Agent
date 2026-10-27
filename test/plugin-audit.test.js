@@ -26,3 +26,15 @@ test('audit reports are bounded and clearly marked as static diagnostics', () =>
   assert.match(plugin, /audit_truncated/);
   assert.match(tools.find((tool) => tool.name === 'audit_project').description, /Play-test o‘rnini bosmaydi/);
 });
+
+test('safe preview, snapshot, restore, and GUI scaffold tools are wired end-to-end', () => {
+  for (const name of ['preview_tree','snapshot_instance','restore_snapshot','create_gui_template']) {
+    assert.ok(tools.some(tool => tool.name === name), name + ' schema should be registered');
+    assert.match(plugin, new RegExp(name + '=' + (name === 'preview_tree' ? 'previewTree' : name === 'snapshot_instance' ? 'snapshotInstance' : name === 'restore_snapshot' ? 'restoreSnapshot' : 'createGuiTemplate')));
+  }
+  assert.match(plugin, /mutated=false/);
+  assert.match(plugin, /input\.confirm ~= true/);
+  assert.match(plugin, /ServerStorage\/QuruvchiSnapshots/);
+  assert.match(plugin, /ActionRequested/);
+  assert.match(prompt, /preview_tree/);
+});
