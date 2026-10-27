@@ -47,7 +47,7 @@ export async function createMessage({ messages, tools, system, signal, maxTokens
     const providerMessage = String(providerError.message || 'Anthropic API request failed');
     const retryHeader = response.headers.get('retry-after');
     const retryMsFromHeader = retryHeader
-      ? (/^\\d+(?:\\.\\d+)?$/.test(retryHeader.trim())
+      ? (/^\d+(?:\.\d+)?$/.test(retryHeader.trim())
         ? Math.max(0, Number(retryHeader) * 1000)
         : (Number.isFinite(Date.parse(retryHeader)) ? Math.max(0, Date.parse(retryHeader) - Date.now()) : null))
       : null;
@@ -57,7 +57,7 @@ export async function createMessage({ messages, tools, system, signal, maxTokens
     ].filter(Boolean);
     const resetTimes = resetHeaders.map(value => Date.parse(value)).filter(Number.isFinite);
     const resetAt = resetTimes.length ? Math.min(...resetTimes) : null;
-    const isLimit = response.status === 429 || /rate_limit|credit_balance_too_low|usage_limit|overloaded_error/i.test(providerType);
+    const isLimit = response.status === 429 || /rate_limit|credit_balance_too_low|usage_limit|overloaded_error/i.test(providerType + ' ' + providerMessage);
     if ([429,529].includes(response.status)||response.status>=500) {
       if (attempt<2) { await sleep(attempt===0?1000:3000,signal); continue; }
     }
