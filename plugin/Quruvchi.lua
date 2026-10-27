@@ -735,7 +735,7 @@ auditButton.Activated:Connect(function()
 end)
 local logTitle=make("TextLabel",{Size=UDim2.new(1,0,0,20),BackgroundTransparency=1,Text="FAOLIYAT JURNALI  ·  LOGS",TextColor3=Color3.fromRGB(166,184,255),Font=Enum.Font.GothamBold,TextSize=10,TextXAlignment=Enum.TextXAlignment.Left,LayoutOrder=9},root)
 logFrame.LayoutOrder=10
-logFrame.Size=UDim2.new(1,0,1,-330)
+logFrame.Size=UDim2.new(1,0,1,-375)
 for _,line in ipairs(logs) do log(line) end
 
 connectButton.Activated:Connect(function()
