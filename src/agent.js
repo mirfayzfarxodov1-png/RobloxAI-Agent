@@ -144,7 +144,7 @@ async function runLoop(userId, task) {
         }
         const used = getUsage(userId).steps;
         if (steps >= config.maxSteps || used >= config.dailyStepLimit || needsSummary) {
-          results.push({ type:'tool_result', tool_use_id:toolUse.id, is_error:true, content:'Qadam limiti tugadi. Yangi tool ishlatma, bajarilgan ishni xulosa qil.' });
+          results.push({ type:'tool_result', tool_use_id:toolUse.id, is_error:true, content:'Tool qadam limiti sabab hozir bajarilmadi. Hozirgi holat checkpoint sifatida saqlandi; foydalanuvchi davom ettirganda shu vazifani bajar.' });
           limitReached = true;
           continue;
         }
@@ -188,7 +188,7 @@ async function runLoop(userId, task) {
   } catch (error) {
     if (error?.name !== 'AbortError' && !signal.aborted) {
       const isLimit = Boolean(error?.isLimit || error?.status === 429);
-      const isCreditLimit = /credit_balance_too_low|usage_limit/i.test(String(error?.providerType || ''));
+      const isCreditLimit = /credit_balance_too_low|usage_limit|credit|billing/i.test(String(error?.providerType || '') + ' ' + String(error?.providerMessage || error?.message || ''));
       const retryAt = error?.retryAfterMs != null
         ? Date.now() + Math.max(0, Number(error.retryAfterMs))
         : (error?.status >= 500 || !error?.status ? Date.now() + 60000 : null);
