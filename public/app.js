@@ -66,9 +66,12 @@ function render(){
     const welcome=node('section','welcome-block'),art=node('div','welcome-art');art.append(node('div','art-orbit orbit-one'),node('div','art-orbit orbit-two'),node('div','art-cube','✧'),node('div','floating-icon float-spark','✦'),node('div','floating-icon float-code','</>'),node('div','floating-icon float-game','▣'));
     welcome.append(art,node('h2','','Nimani quramiz?'),node('p','','O‘yin mexanikasi, UI, skriptlar yoki butun loyiha — g‘oyangni yozib boshlaymiz.'));
     const grid=node('div','suggestion-grid'),suggestions=[
-      ['🌱','Pet simulator','Yashil zona, bosilganda ochiladigan tuxum va orqamdan yuradigan pet yasab ber'],
-      ['🏁','Obby o‘yini','Tanga yig‘iladigan obby: 10 ta platforma, checkpointlar va tanga hisoblagich UI'],
-      ['🛠','Tayyor asos','Leaderstats, DataStore saqlash va do‘kon UI bilan tayyor asos qur']
+      ['🌌','Katta open-world','Katta xarita, zonalar, questlar, NPC, inventar, saqlash va server/client arxitekturasi bilan o‘yin rejasini tuz'],
+      ['🧬','Simulator + progression','Petlar, tuxum ochish, rarity, rebirth, upgrade, DataStore va balanslangan progression tizimi qur'],
+      ['🗡️','Action / RPG','Qurol, combat, skill cooldown, dushman AI, boss, loot va quest tizimi bilan RPG yarat'],
+      ['🏁','Obby + checkpoint','30 bosqichli obby, checkpoint, timer, mukofotlar, leaderboard va mobilga mos UI yarat'],
+      ['🏘️','Tycoon / multiplayer','Plot claim, ishlab chiqarish, upgrade, pul iqtisodi, saqlash va multiplayer xavfsizligini qur'],
+      ['🛠️','To‘liq loyiha karkasi','ServerScriptService, ReplicatedStorage, StarterPlayer, UI, ModuleScriptlar va test checklist bilan production-style loyiha tuz']
     ];
     for(const [emoji,title,prompt] of suggestions){const card=button('', 'suggestion-card',()=>{state.prompt=prompt;render();const area=root.querySelector('#prompt');if(area){area.focus();area.setSelectionRange(area.value.length,area.value.length);}});card.append(node('span','suggestion-emoji',emoji),node('strong','',title),node('span','',prompt),node('div','suggestion-arrow','＋'));grid.append(card);}
     welcome.append(grid);scroll.append(welcome);
