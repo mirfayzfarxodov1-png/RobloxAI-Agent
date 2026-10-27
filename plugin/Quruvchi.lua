@@ -2,7 +2,8 @@
 -- Install from the website's /plugin.lua endpoint. This plugin works only in Edit mode.
 if not game:GetService("RunService"):IsEdit() then return end
 
-local SERVER = "http://localhost:3000"
+local SERVER_KEY = "quruvchi_server_url"
+local SERVER = plugin:GetSetting(SERVER_KEY) or "__SERVER_URL__"
 local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
@@ -22,7 +23,7 @@ local logs = {}
 local MAX_LOGS = 1000
 local MAX_TREE_NODES = 400
 local MAX_SOURCE = 100000
-local widget, statusDot, statusText, codeBox, connectButton, runCodeButton, logFrame, logLayout
+local widget, statusDot, statusText, codeBox, serverBox, connectButton, runCodeButton, logFrame, logLayout
 local logLabels = {}
 
 local function log(message)
@@ -820,10 +821,26 @@ statusDot=make("Frame",{Size=UDim2.fromOffset(9,9),Position=UDim2.fromOffset(2,8
 make("UICorner",{CornerRadius=UDim.new(1,0)},statusDot)
 make("UIStroke",{Color=Color3.fromRGB(66,60,115),Transparency=0.45,Thickness=1},statusRow)
 statusText=make("TextLabel",{Size=UDim2.new(1,-20,1,0),Position=UDim2.fromOffset(19,0),BackgroundTransparency=1,Text="Ulanmagan",TextColor3=Color3.fromRGB(190,187,222),Font=Enum.Font.Gotham,TextSize=12,TextXAlignment=Enum.TextXAlignment.Left},statusRow)
-codeBox=make("TextBox",{Size=UDim2.new(1,0,0,34),BackgroundColor3=Color3.fromRGB(38,37,67),TextColor3=Color3.fromRGB(248,246,255),PlaceholderText="8 belgili kod (saytdan oling)",Text="",ClearTextOnFocus=false,Font=Enum.Font.Code,TextSize=15,LayoutOrder=4},root)
+serverBox=make("TextBox",{Size=UDim2.new(1,0,0,32),BackgroundColor3=Color3.fromRGB(38,37,67),TextColor3=Color3.fromRGB(248,246,255),PlaceholderText="Server URL (taklif yuborgan odam manzili)",Text=SERVER,ClearTextOnFocus=false,Font=Enum.Font.Code,TextSize=11,LayoutOrder=4},root)
+make("UICorner",{CornerRadius=UDim.new(0,9)},serverBox)
+make("UIStroke",{Color=Color3.fromRGB(71,65,124),Transparency=0.3,Thickness=1},serverBox)
+serverBox.FocusLost:Connect(function()
+    local normalized=normalizeServerUrl(serverBox.Text)
+    if not normalized then
+        serverBox.Text=SERVER
+        setStatus("error","Server URL noto‘g‘ri")
+        log("Server URL http:// yoki https:// bilan boshlanishi kerak.")
+        return
+    end
+    SERVER=normalized
+    serverBox.Text=SERVER
+    plugin:SetSetting(SERVER_KEY,SERVER)
+    log("Server manzili saqlandi: "..SERVER)
+end)
+codeBox=make("TextBox",{Size=UDim2.new(1,0,0,34),BackgroundColor3=Color3.fromRGB(38,37,67),TextColor3=Color3.fromRGB(248,246,255),PlaceholderText="8 belgili kod (server egasidan oling)",Text="",ClearTextOnFocus=false,Font=Enum.Font.Code,TextSize=15,LayoutOrder=5},root)
 make("UICorner",{CornerRadius=UDim.new(0,9)},codeBox)
 make("UIStroke",{Color=Color3.fromRGB(71,65,124),Transparency=0.3,Thickness=1},codeBox)
-local buttons=make("Frame",{Size=UDim2.new(1,0,0,36),BackgroundTransparency=1,LayoutOrder=5},root)
+local buttons=make("Frame",{Size=UDim2.new(1,0,0,36),BackgroundTransparency=1,LayoutOrder=6},root)
 connectButton=make("TextButton",{Size=UDim2.new(0.58,-4,1,0),BackgroundColor3=Color3.fromRGB(119,103,238),TextColor3=Color3.new(1,1,1),Text=token and "Uzish" or "Ulanish",Font=Enum.Font.GothamBold,TextSize=12,AutoButtonColor=true},buttons)
 make("UICorner",{CornerRadius=UDim.new(0,9)},connectButton)
 make("UIStroke",{Color=Color3.fromRGB(167,151,255),Transparency=0.65,Thickness=1},connectButton)
@@ -832,7 +849,7 @@ make("UICorner",{CornerRadius=UDim.new(0,9)},runToggle)
 runCodeButton=runToggle
 local function refreshRunButton() runCodeButton.Text="run_code: "..(runCodeEnabled and "YOQIQ" or "O‘CHIQ") end
 refreshRunButton()
-local quickTools=make("Frame",{Size=UDim2.new(1,0,0,38),BackgroundTransparency=1,LayoutOrder=6},root)
+local quickTools=make("Frame",{Size=UDim2.new(1,0,0,38),BackgroundTransparency=1,LayoutOrder=7},root)
 local function quickButton(text,x,w,callback)
     local b=make("TextButton",{Size=UDim2.new(w,-4,1,0),Position=UDim2.new(x,0,0,0),BackgroundColor3=Color3.fromRGB(29,42,69),TextColor3=Color3.fromRGB(218,226,255),Text=text,Font=Enum.Font.GothamMedium,TextSize=10,AutoButtonColor=true},quickTools)
     make("UICorner",{CornerRadius=UDim.new(0,8)},b)
@@ -840,7 +857,7 @@ local function quickButton(text,x,w,callback)
     b.Activated:Connect(callback)
     return b
 end
-logFrame=make("ScrollingFrame",{Size=UDim2.new(1,0,1,-330),BackgroundColor3=Color3.fromRGB(10,16,29),BorderSizePixel=0,CanvasSize=UDim2.new(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollBarThickness=4,ScrollBarImageColor3=Color3.fromRGB(126,148,255),LayoutOrder=10},root)
+logFrame=make("ScrollingFrame",{Size=UDim2.new(1,0,1,-410),BackgroundColor3=Color3.fromRGB(10,16,29),BorderSizePixel=0,CanvasSize=UDim2.new(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollBarThickness=4,ScrollBarImageColor3=Color3.fromRGB(126,148,255),LayoutOrder=10},root)
 make("UICorner",{CornerRadius=UDim.new(0,10)},logFrame)
 make("UIStroke",{Color=Color3.fromRGB(43,59,88),Transparency=0.25,Thickness=1},logFrame)
 logLayout=make("UIListLayout",{Padding=UDim.new(0,5),SortOrder=Enum.SortOrder.LayoutOrder},logFrame)
@@ -881,7 +898,7 @@ quickButton("Tozalash",0.75,0.25,function()
     table.clear(logLabels)
     log("Jurnal tozalandi.")
 end)
-local quickTools2=make("Frame",{Size=UDim2.new(1,0,0,36),BackgroundTransparency=1,LayoutOrder=7},root)
+local quickTools2=make("Frame",{Size=UDim2.new(1,0,0,36),BackgroundTransparency=1,LayoutOrder=8},root)
 local function quickButton2(text,x,w,callback)
     local b=make("TextButton",{Size=UDim2.new(w,-4,1,0),Position=UDim2.new(x,0,0,0),BackgroundColor3=Color3.fromRGB(22,34,55),TextColor3=Color3.fromRGB(192,215,255),Text=text,Font=Enum.Font.GothamMedium,TextSize=10,AutoButtonColor=true},quickTools2)
     make("UICorner",{CornerRadius=UDim.new(0,8)},b)
@@ -919,7 +936,7 @@ quickButton2("Yordam",0.75,0.25,function()
     log("AI: internet tadqiqoti, obyekt qidiruvi, inspect, rename, duplicate, select va skript boshqaruvi")
     log("Katta o‘zgarishdan oldin nusxa oling va Play-test qiling.")
 end)
-local quickTools3=make("Frame",{Size=UDim2.new(1,0,0,34),BackgroundTransparency=1,LayoutOrder=8},root)
+local quickTools3=make("Frame",{Size=UDim2.new(1,0,0,34),BackgroundTransparency=1,LayoutOrder=9},root)
 local auditButton=make("TextButton",{Size=UDim2.new(1,0,1,0),BackgroundColor3=Color3.fromRGB(73,54,118),TextColor3=Color3.fromRGB(245,239,255),Text="AI AUDIT · Loyihani tekshirish",Font=Enum.Font.GothamBold,TextSize=11,AutoButtonColor=true},quickTools3)
 make("UICorner",{CornerRadius=UDim.new(0,8)},auditButton)
 make("UIStroke",{Color=Color3.fromRGB(142,120,220),Transparency=0.35,Thickness=1},auditButton)
@@ -941,9 +958,9 @@ auditButton.Activated:Connect(function()
     end
     setStatus(token and "ok" or "idle",token and "Ulangan · "..getPlaceName() or "Ulanmagan")
 end)
-local logTitle=make("TextLabel",{Size=UDim2.new(1,0,0,20),BackgroundTransparency=1,Text="FAOLIYAT JURNALI  ·  LOGS",TextColor3=Color3.fromRGB(166,184,255),Font=Enum.Font.GothamBold,TextSize=10,TextXAlignment=Enum.TextXAlignment.Left,LayoutOrder=9},root)
-logFrame.LayoutOrder=10
-logFrame.Size=UDim2.new(1,0,1,-375)
+local logTitle=make("TextLabel",{Size=UDim2.new(1,0,0,20),BackgroundTransparency=1,Text="FAOLIYAT JURNALI  ·  LOGS",TextColor3=Color3.fromRGB(166,184,255),Font=Enum.Font.GothamBold,TextSize=10,TextXAlignment=Enum.TextXAlignment.Left,LayoutOrder=10},root)
+logFrame.LayoutOrder=11
+logFrame.Size=UDim2.new(1,0,1,-410)
 for _,line in ipairs(logs) do log(line) end
 
 connectButton.Activated:Connect(function()
@@ -955,7 +972,7 @@ connectButton.Activated:Connect(function()
     end)
     if not ok then
         setStatus("error","Ulanmadi")
-        log("Ulanish xatosi: "..tostring(result).." · Server: "..SERVER.." · Server ishlayotganini va Studio’da HTTP Requests yoqilganini tekshiring.")
+        log("Ulanish xatosi: "..tostring(result).." · Server: "..SERVER.." · URL server egasiniki ekanini, tarmoq/firewall va Studio HTTP Requests sozlamasini tekshiring.")
         return
     end
     token=result.token;plugin:SetSetting(TOKEN_KEY,token);connectButton.Text="Uzish"

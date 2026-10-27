@@ -69,6 +69,9 @@ const server = http.createServer(async (req, res) => {
   try {
     if (method === 'GET' && pathname === '/healthz') return json(res, 200, { ok: true, service: 'quruvchi', version: '1.0.0' });
 
+    // Public connection metadata only; never expose API keys or user data.
+    if (method === 'GET' && pathname === '/server-info') return json(res, 200, { serverUrl: config.publicUrl, sharingMode: config.publicUrl.includes('localhost') || config.publicUrl.includes('127.0.0.1') ? 'local-only' : 'network' });
+
     if (method === 'GET' && pathname === '/plugin.lua') {
       if (!fs.existsSync(pluginFile)) return json(res, 404, { error: 'Plugin fayli topilmadi' });
       const source = fs.readFileSync(pluginFile, 'utf8');
