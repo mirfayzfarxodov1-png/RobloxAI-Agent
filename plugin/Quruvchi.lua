@@ -469,7 +469,72 @@ local function getLogs(input)
     if input.clear then table.clear(logs);for _,label in ipairs(logLabels) do label:Destroy() end;table.clear(logLabels) end
     return table.concat(out,"\n"):sub(1,20000)
 end
-local handlers={get_tree=getTree,create_tree=createTree,create_script=createScript,read_script=readScript,set_properties=setProperties,delete_instance=deleteInstance,run_code=runCode,get_logs=getLogs,get_selection=getSelection,search_instances=searchInstances,inspect_instance=inspectInstance,rename_instance=renameInstance,duplicate_instance=duplicateInstance,select_instances=selectInstances}
+
+local function auditProject(input)
+    local maxNodes = math.clamp(tonumber(input.maxNodes) or 8000, 100, 10000)
+    local root = input.path and input.path ~= "" and resolvePath(input.path) or game
+    local descendants = root:GetDescendants()
+    local counts = {instances=0,parts=0,unanchoredParts=0,scripts=0,emptyScripts=0,longScripts=0,disabledScripts=0,remotes=0,guiObjects=0}
+    local findings, seenParents = {}, {}
+    local scanned, truncated = 0, false
+    local function finding(level, code, path, message)
+        if #findings < 80 then table.insert(findings, {level=level,code=code,path=path,message=message}) end
+    end
+    for _, instance in ipairs(descendants) do
+        if scanned >= maxNodes then truncated = true; break end
+        scanned += 1
+        counts.instances += 1
+        local path = instancePath(instance)
+        if instance:IsA("BasePart") then
+            counts.parts += 1
+            if instance:IsDescendantOf(workspace) and not instance.Anchored then counts.unanchoredParts += 1 end
+        end
+        if instance:IsA("LuaSourceContainer") then
+            counts.scripts += 1
+            local ok, source = pcall(function() return instance.Source end)
+            if ok and typeof(source) == "string" then
+                if source:match("^%s*$") then
+                    counts.emptyScripts += 1
+                    finding("warning","empty_script",path,"Script kodi bo‘sh.")
+                else
+                    local lines = #string.split(source,"\n")
+                    if lines > 350 then
+                        counts.longScripts += 1
+                        finding("info","large_script",path,"Script "..lines.." qator; modullarga ajratishni ko‘rib chiq.")
+                    end
+                end
+            else
+                finding("info","source_unavailable",path,"Script manbasini o‘qib bo‘lmadi; ruxsat yoki Studio holatini tekshir.")
+            end
+            if instance:IsA("Script") or instance:IsA("LocalScript") then
+                local disabledOk, disabled = pcall(function() return instance.Disabled end)
+                if disabledOk and disabled then
+                    counts.disabledScripts += 1
+                    finding("info","disabled_script",path,"Script o‘chiq (Disabled=true); bu ataylab qilinganini tekshir.")
+                end
+            end
+        end
+        if instance:IsA("RemoteEvent") or instance:IsA("RemoteFunction") or instance:IsA("UnreliableRemoteEvent") then counts.remotes += 1 end
+        if instance:IsA("GuiObject") then counts.guiObjects += 1 end
+        local parent = instance.Parent
+        if parent and not seenParents[parent] then
+            seenParents[parent] = true
+            local names = {}
+            for _, sibling in ipairs(parent:GetChildren()) do names[sibling.Name] = (names[sibling.Name] or 0) + 1 end
+            for name, amount in pairs(names) do
+                if amount > 1 then
+                    finding("warning","duplicate_sibling_name",instancePath(parent),"Bir parent ichida '"..name.."' nomli "..amount.." ta obyekt bor; path orqali tanlash noaniq bo‘lishi mumkin.")
+                    break
+                end
+            end
+        end
+    end
+    if counts.parts > 1500 then finding("warning","many_parts",instancePath(root),"Hududda "..counts.parts.." ta BasePart bor; lag uchun profil va streaming/instancingni tekshir.") end
+    if counts.unanchoredParts > 150 then finding("warning","many_unanchored_parts",instancePath(root),counts.unanchoredParts.." ta unanchored part topildi; fizik yukni tekshir.") end
+    if truncated then finding("warning","audit_truncated",instancePath(root),"Audit "..maxNodes.." obyekt bilan cheklangan; to‘liqroq tekshiruv uchun kichikroq path tanla.") end
+    return {scope=instancePath(root),scanned=scanned,truncated=truncated,counts=counts,findings=findings}
+end
+local handlers={get_tree=getTree,create_tree=createTree,create_script=createScript,read_script=readScript,set_properties=setProperties,delete_instance=deleteInstance,run_code=runCode,get_logs=getLogs,get_selection=getSelection,search_instances=searchInstances,inspect_instance=inspectInstance,rename_instance=renameInstance,duplicate_instance=duplicateInstance,select_instances=selectInstances,audit_project=auditProject}
 local function execute(command)
     local handler=handlers[command.name]
     if not handler then error("Noma’lum tool: "..tostring(command.name)) end
@@ -567,8 +632,7 @@ local function quickButton(text,x,w,callback)
     b.Activated:Connect(callback)
     return b
 end
-local logTitle=make("TextLabel",{Size=UDim2.new(1,0,0,20),BackgroundTransparency=1,Text="FAOLIYAT JURNALI  ·  LOGS",TextColor3=Color3.fromRGB(166,184,255),Font=Enum.Font.GothamBold,TextSize=10,TextXAlignment=Enum.TextXAlignment.Left,LayoutOrder=7},root)
-logFrame=make("ScrollingFrame",{Size=UDim2.new(1,0,1,-285),BackgroundColor3=Color3.fromRGB(10,16,29),BorderSizePixel=0,CanvasSize=UDim2.new(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollBarThickness=4,ScrollBarImageColor3=Color3.fromRGB(126,148,255),LayoutOrder=8},root)
+logFrame=make("ScrollingFrame",{Size=UDim2.new(1,0,1,-330),BackgroundColor3=Color3.fromRGB(10,16,29),BorderSizePixel=0,CanvasSize=UDim2.new(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollBarThickness=4,ScrollBarImageColor3=Color3.fromRGB(126,148,255),LayoutOrder=10},root)
 make("UICorner",{CornerRadius=UDim.new(0,10)},logFrame)
 make("UIStroke",{Color=Color3.fromRGB(43,59,88),Transparency=0.25,Thickness=1},logFrame)
 logLayout=make("UIListLayout",{Padding=UDim.new(0,5),SortOrder=Enum.SortOrder.LayoutOrder},logFrame)
@@ -647,8 +711,30 @@ quickButton2("Yordam",0.75,0.25,function()
     log("AI: internet tadqiqoti, obyekt qidiruvi, inspect, rename, duplicate, select va skript boshqaruvi")
     log("Katta o‘zgarishdan oldin nusxa oling va Play-test qiling.")
 end)
-local logTitle=make("TextLabel",{Size=UDim2.new(1,0,0,20),BackgroundTransparency=1,Text="FAOLIYAT JURNALI  ·  LOGS",TextColor3=Color3.fromRGB(166,184,255),Font=Enum.Font.GothamBold,TextSize=10,TextXAlignment=Enum.TextXAlignment.Left,LayoutOrder=8},root)
-logFrame.LayoutOrder=9
+local quickTools3=make("Frame",{Size=UDim2.new(1,0,0,34),BackgroundTransparency=1,LayoutOrder=8},root)
+local auditButton=make("TextButton",{Size=UDim2.new(1,0,1,0),BackgroundColor3=Color3.fromRGB(73,54,118),TextColor3=Color3.fromRGB(245,239,255),Text="AI AUDIT · Loyihani tekshirish",Font=Enum.Font.GothamBold,TextSize=11,AutoButtonColor=true},quickTools3)
+make("UICorner",{CornerRadius=UDim.new(0,8)},auditButton)
+make("UIStroke",{Color=Color3.fromRGB(142,120,220),Transparency=0.35,Thickness=1},auditButton)
+auditButton.Activated:Connect(function()
+    setStatus("busy","Loyiha auditi...")
+    local ok, result = pcall(function() return auditProject({maxNodes=8000}) end)
+    if not ok then
+        log("AUDIT XATOSI · "..tostring(result))
+        setStatus(token and "ok" or "idle",token and "Ulangan · "..getPlaceName() or "Ulanmagan")
+        return
+    end
+    local c=result.counts
+    log("AI AUDIT · "..result.scope.." · "..result.scanned.." obyekt")
+    log("Hisob: "..c.instances.." instance · "..c.parts.." part · "..c.scripts.." script · "..c.remotes.." remote · "..c.guiObjects.." GUI")
+    log("Ogohlantirishlar: "..#result.findings..(result.truncated and " · audit qisqartirildi" or ""))
+    for i, item in ipairs(result.findings) do
+        if i > 18 then log("... yana "..tostring(#result.findings-18).." ta audit natijasi");break end
+        log("["..string.upper(item.level).."] "..item.code.." · "..item.path.." · "..item.message)
+    end
+    setStatus(token and "ok" or "idle",token and "Ulangan · "..getPlaceName() or "Ulanmagan")
+end)
+local logTitle=make("TextLabel",{Size=UDim2.new(1,0,0,20),BackgroundTransparency=1,Text="FAOLIYAT JURNALI  ·  LOGS",TextColor3=Color3.fromRGB(166,184,255),Font=Enum.Font.GothamBold,TextSize=10,TextXAlignment=Enum.TextXAlignment.Left,LayoutOrder=9},root)
+logFrame.LayoutOrder=10
 logFrame.Size=UDim2.new(1,0,1,-330)
 for _,line in ipairs(logs) do log(line) end
 
