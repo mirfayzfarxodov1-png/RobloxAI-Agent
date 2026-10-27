@@ -5,6 +5,7 @@ import { createMessage } from './claude.js';
 import { tools, truncateOutput, toolSummary } from './tools.js';
 import { systemPrompt } from './prompt.js';
 import { searchWeb } from './research.js';
+import { createProjectPlan, renderProjectPlanMarkdown } from './project-planner.js';
 import { emit, sendCommand, statusForUser, setUserRunning, stateForUser } from './hub.js';
 
 const running = new Map();
@@ -127,7 +128,10 @@ async function runLoop(userId, task) {
         sendState(userId, task.conversationId);
         let result;
         try {
-          if (toolUse.name === 'web_research') {
+          if (toolUse.name === 'create_project_plan') {
+            const plan = createProjectPlan(toolUse.input || {});
+            result = { ok:true, output:renderProjectPlanMarkdown(plan) };
+          } else if (toolUse.name === 'web_research') {
             if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
             const research = await searchWeb(toolUse.input || {});
             result = { ok:true, output:JSON.stringify(research) };

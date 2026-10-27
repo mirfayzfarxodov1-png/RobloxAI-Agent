@@ -82,6 +82,7 @@ function render(){
   const shortcutPrompts=[
     ['⌕  Tadqiqot + savol','Mening o‘yin g‘oyamni avval internetdan rasmiy manbalarda o‘rgan. Agar referens o‘yin bo‘lsa, mexanikalarini umumlashtir, manbalarni ko‘rsat va Studio’ni o‘zgartirishdan oldin mendan original uslub tanlashni so‘ra.'],
     ['◇  Avval reja','Hozircha Studio’ni o‘zgartirma. G‘oyam uchun arxitektura, asosiy gameplay loop, server/client tizimlari, UI, saqlash, xavfsizlik va testlardan iborat 7 bosqichli reja tuz.'],
+    ['▦  Loyiha arxitekturasi','Mening o‘yin g‘oyam uchun create_project_plan orqali batafsil loyiha arxitekturasi tuz: janr, core gameplay loop, modullar, server/client mas’uliyati, data, UI, xavfsizlik, fazalar va har fazaning qabul mezonlari. Hozircha Studio’ni o‘zgartirma.'],
     ['↗  Katta loyiha','Bu g‘oyani oddiy demo emas, bosqichma-bosqich quriladigan to‘liq Roblox loyihasi sifatida ishlab chiq. Avval mavjud Studio loyihasini tekshir, keyin reja, ishlaydigan asosiy gameplay va testlarni kichik fazalarda bajar.']
   ];
   for(const [label,prompt] of shortcutPrompts){quickActions.append(button(label,'builder-shortcut',()=>{state.prompt=prompt;render();const area=root.querySelector('#prompt');if(area){area.focus();area.setSelectionRange(area.value.length,area.value.length);}}));}
