@@ -180,3 +180,17 @@ html{scroll-behavior:smooth;scroll-padding-top:18px}
 .suggestion-grid{scroll-margin-top:24px}
 @media(max-width:640px){.builder-shortcuts{gap:6px}.builder-shortcut{font-size:10px;padding:7px 9px}.chat-scroll{scrollbar-gutter:auto}}
 @media(prefers-reduced-motion:reduce){html,.chat-scroll{scroll-behavior:auto}.builder-shortcut:hover{transform:none}}
+
+
+/* Resumable AI build pause panel */
+.pause-card{margin:18px auto;padding:18px 20px;width:min(100%,760px);border:1px solid rgba(245,199,106,.42);border-radius:16px;background:linear-gradient(135deg,rgba(64,49,25,.42),rgba(17,27,46,.96));color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.pause-title{display:block;color:#f5d38a;font-size:14px;letter-spacing:.01em}
+.pause-card p{margin:9px 0 0;color:#c5d0e5;font-size:13px;line-height:1.55}
+.pause-card .pause-time{color:#f4dba4;font-weight:600}
+.pause-card .pause-countdown{font-variant-numeric:tabular-nums;color:#b9c9ff}
+.pause-card .pause-details{display:block;margin-top:9px;color:#8fa0bc;overflow-wrap:anywhere}
+.resume-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:15px;min-height:42px;padding:10px 16px;border:1px solid #7e91f4;border-radius:11px;background:linear-gradient(115deg,#7186ff,#5365d8);color:#fff;font-size:13px;font-weight:700;transition:opacity .16s ease,transform .16s ease}
+.resume-button:hover:not(:disabled){transform:translateY(-1px)}
+.resume-button:disabled{cursor:not-allowed;opacity:.48;filter:saturate(.65)}
+@media(max-width:640px){.pause-card{padding:15px;margin:14px 0}.resume-button{width:100%}}
+@media(prefers-reduced-motion:reduce){.resume-button:hover:not(:disabled){transform:none}}

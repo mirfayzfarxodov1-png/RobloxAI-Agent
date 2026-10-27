@@ -1,10 +1,10 @@
 const root = document.getElementById('app');
 const state = {
-  user:null,messages:[],busy:false,status:{connected:false,placeName:'',deviceId:null},
+  user:null,messages:[],busy:false,paused:null,status:{connected:false,placeName:'',deviceId:null},
   steps:{used:0,limit:300},modal:null,authMode:'login',login:'',password:'',invite:'',
   notice:'',prompt:'',code:'',expiresAt:0,devices:[],serverOnline:false,mobileMenu:false
 };
-let stream=null,codeTicker=null;
+let stream=null,codeTicker=null,pauseReadyState=null;
 function node(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined&&text!==null)n.textContent=String(text);return n;}
 function button(text,cls,action,disabled=false){const b=node('button',cls,text);b.type='button';b.disabled=disabled;b.addEventListener('click',action);return b;}
 function link(text,href,cls){const a=node('a',cls,text);a.href=href;if(/^https?:\/\//.test(href)){a.target='_blank';a.rel='noreferrer';}return a;}
@@ -77,7 +77,21 @@ function render(){
     welcome.append(grid);scroll.append(welcome);
   }
   const list=node('div','message-list');for(const m of state.messages)list.append(renderMessage(m));scroll.append(list);
-  if(state.busy){const work=node('div','working-row');work.append(node('span','spinner'),document.createTextNode('Quruvchi ishlayapti…'));scroll.append(work);}layout.append(scroll);
+  if(state.busy){const work=node('div','working-row');work.append(node('span','spinner'),document.createTextNode('Quruvchi ishlayapti…'));scroll.append(work);}
+  if(state.paused){
+    const pause=state.paused,card=node('section','pause-card'),title=node('strong','pause-title','⏸  Loyiha pauzada — ish saqlandi');
+    card.append(title,node('p','',pause.reason==='daily_step_limit'?'Kunlik Quruvchi limiti tugadi. Keyingi UTC kunida davom ettirish mumkin.':pause.reason==='provider_rate_limit'?'AI provayder so‘rov limiti tugadi. Tiklanish vaqtini kuting, keyin davom eting.':pause.reason==='credit_limit'?'AI provayder krediti yoki foydalanish limiti tugadi. Provayder limitni tiklashi yoki kreditni to‘ldirish talab qilinishi mumkin.':'Ish checkpoint’da saqlandi. Davom etishdan oldin AI xizmati holatini tekshiring.'));
+    if(pause.retryAt){
+      const retryDate=new Date(pause.retryAt),waiting=pause.retryAt>Date.now();
+      card.append(node('p','pause-time', (waiting?'Davom etish mumkin bo‘ladi: ':'Limit tekshiruvi uchun vaqt: ')+retryDate.toLocaleString()));
+      if(waiting){const seconds=Math.ceil((pause.retryAt-Date.now())/1000),hours=Math.floor(seconds/3600),minutes=Math.floor((seconds%3600)/60),secs=seconds%60;card.append(node('p','pause-countdown','Qolgan vaqt: '+(hours?hours+' soat ':'')+(minutes?minutes+' daqiqa ':'')+secs+' soniya'));}
+    }else card.append(node('p','pause-time','Aniq tiklanish vaqti API tomonidan berilmadi. Limit holati tekshirilgach, davom ettirishni sinab ko‘rishingiz mumkin.'));
+    if(pause.details)card.append(node('small','pause-details','Tafsilot: '+pause.details));
+    const ready=!pause.retryAt||pause.retryAt<=Date.now();
+    card.append(button(ready?'▶  Davom etish':'◷  Limit tiklanishini kutish','resume-button',resumeBuild,!ready||state.busy));
+    scroll.append(card);
+  }
+  layout.append(scroll);
   const composerWrap=node('div','composer-wrap'),quickActions=node('div','builder-shortcuts');
   const shortcutPrompts=[
     ['⌕  Tadqiqot + savol','Mening o‘yin g‘oyamni avval internetdan rasmiy manbalarda o‘rgan. Agar referens o‘yin bo‘lsa, mexanikalarini umumlashtir, manbalarni ko‘rsat va Studio’ni o‘zgartirishdan oldin mendan original uslub tanlashni so‘ra.'],
@@ -133,20 +147,33 @@ async function openPair(){state.modal='pair';state.notice='';render();await load
 async function createPair(){try{const d=await api('/api/pair',{});state.code=d.code;state.expiresAt=d.expiresAt;state.notice='';render();}catch(e){state.notice=e.message;render();}}
 async function loadDevices(){try{state.devices=await api('/api/devices');}catch{state.devices=[];}}
 async function loadHistory(){try{const d=await api('/api/chat/history');state.messages=(d.messages||[]).map(m=>({...m,role:m.role==='user'?'user':'assistant'}));}catch{}}
-async function loadApp(){try{const me=await api('/api/me');state.user={login:me.login};state.steps=me.steps||state.steps;state.status=me.status||state.status;state.serverOnline=true;state.busy=!!me.running;await loadHistory();connectStream();}catch(error){state.user=null;state.serverOnline=false;state.notice=error.message;}render();}
+async function loadApp(){try{const me=await api('/api/me');state.user={login:me.login};state.steps=me.steps||state.steps;state.status=me.status||state.status;state.serverOnline=true;state.busy=!!me.running;state.paused=me.paused||null;await loadHistory();connectStream();}catch(error){state.user=null;state.serverOnline=false;state.notice=error.message;}render();}
 function connectStream(){
   if(stream)stream.close();stream=new EventSource('/api/stream');
   stream.addEventListener('status',e=>{try{state.status=JSON.parse(e.data);render();}catch{}});
-  stream.addEventListener('state',e=>{try{const d=JSON.parse(e.data);state.busy=!!d.running;if(d.steps)state.steps=d.steps;render();}catch{}});
-  stream.addEventListener('message',e=>{try{const d=JSON.parse(e.data);if(d.kind==='user'||d.kind==='assistant')addMessage({id:d.id,role:d.kind,text:d.text});else if(d.kind==='tool')addMessage({id:d.id||d.toolId,role:'tool',name:d.name,summary:d.summary,text:(d.name||'Tool')+(d.summary?' · '+d.summary:'')});else if(d.kind==='tool_result')addMessage({id:d.id||('result-'+d.toolId+'-'+Date.now()),role:'tool_result',toolId:d.toolId,ok:d.ok,preview:d.preview,text:(d.ok?'✓ ':'✕ ')+(d.preview||'Tool natijasi')});else if(d.kind==='error')addMessage({id:d.id,role:'error',text:d.text||'Xatolik yuz berdi'});else if(d.kind==='info')addMessage({id:d.id,role:'assistant',text:d.text||''});}catch{}});
-  stream.addEventListener('reset',()=>{state.messages=[];render();});stream.onerror=()=>{};
+  stream.addEventListener('state',e=>{try{const d=JSON.parse(e.data);state.busy=!!d.running;if(d.steps)state.steps=d.steps;state.paused=d.paused||null;render();}catch{}});
+  stream.addEventListener('message',e=>{try{const d=JSON.parse(e.data);if(d.kind==='user'||d.kind==='assistant')addMessage({id:d.id,role:d.kind,text:d.text});else if(d.kind==='tool')addMessage({id:d.id||d.toolId,role:'tool',name:d.name,summary:d.summary,text:(d.name||'Tool')+(d.summary?' · '+d.summary:'')});else if(d.kind==='tool_result')addMessage({id:d.id||('result-'+d.toolId+'-'+Date.now()),role:'tool_result',toolId:d.toolId,ok:d.ok,preview:d.preview,text:(d.ok?'✓ ':'✕ ')+(d.preview||'Tool natijasi')});else if(d.kind==='error'||d.kind==='pause')addMessage({id:d.id,role:'error',text:d.text||'Xatolik yuz berdi'});else if(d.kind==='info')addMessage({id:d.id,role:'assistant',text:d.text||''});}catch{}});
+  stream.addEventListener('pause',e=>{try{state.paused=JSON.parse(e.data);state.busy=false;render();}catch{}});
+  stream.addEventListener('reset',()=>{state.messages=[];state.paused=null;render();});stream.onerror=()=>{};
 }
-async function sendMessage(){const text=state.prompt.trim();if(!text||state.busy)return;try{await api('/api/chat',{text});state.prompt='';state.busy=true;render();}catch(error){if(error.status===412||error.data?.needPairing){openPair().then(()=>{state.notice='Avval Roblox Studio’ni ulang.';render();});}else addMessage({role:'error',text:error.message});}}
+async function sendMessage(){const text=state.prompt.trim();if(!text||state.busy)return;try{const result=await api('/api/chat',{text});state.prompt='';state.paused=result.pause||state.paused;state.busy=!result.paused;render();}catch(error){if(error.status===412||error.data?.needPairing){openPair().then(()=>{state.notice='Avval Roblox Studio’ni ulang.';render();});}else if(error.data?.paused){state.paused=error.data.paused;addMessage({role:'error',text:error.message});render();}else addMessage({role:'error',text:error.message});}}
+async function resumeBuild(){
+  if(state.busy||!state.paused)return;
+  try{
+    await api('/api/resume',{});
+    state.paused=null;state.busy=true;render();
+  }catch(error){
+    if(error.status===412||error.data?.needPairing){openPair();}
+    if(error.data?.paused)state.paused=error.data.paused;
+    addMessage({role:'error',text:error.message||'Davom ettirib bo‘lmadi.'});render();
+  }
+}
 async function stop(){try{await api('/api/stop',{});}catch(e){addMessage({role:'error',text:e.message});}state.busy=false;render();}
-async function newChat(){try{await api('/api/chat/new',{});state.messages=[];state.prompt='';state.busy=false;render();}catch(e){addMessage({role:'error',text:e.message});}}
+async function newChat(){try{await api('/api/chat/new',{});state.messages=[];state.prompt='';state.busy=false;state.paused=null;render();}catch(e){addMessage({role:'error',text:e.message});}}
 async function logout(){try{await api('/api/logout',{});}catch{}if(stream){stream.close();stream=null;}state.user=null;state.messages=[];state.password='';state.notice='';state.modal=null;render();}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.modal)closeModal();});
-(async function boot(){try{const me=await api('/api/me');state.user={login:me.login};state.steps=me.steps||state.steps;state.status=me.status||state.status;state.serverOnline=true;state.busy=!!me.running;await loadHistory();connectStream();}catch{state.user=null;try{const r=await fetch('/healthz');state.serverOnline=r.ok;if(!r.ok)state.notice='Server javob bermadi.';}catch{state.serverOnline=false;state.notice='Server ishga tushmagan. PowerShell’da npm start buyrug‘ini bajaring.';}}render();})();
+setInterval(()=>{const ready=state.paused?(!state.paused.retryAt||state.paused.retryAt<=Date.now()):null;if(ready!==pauseReadyState){pauseReadyState=ready;if(state.user)render();}},1000);
+(async function boot(){try{const me=await api('/api/me');state.user={login:me.login};state.steps=me.steps||state.steps;state.status=me.status||state.status;state.serverOnline=true;state.busy=!!me.running;state.paused=me.paused||null;await loadHistory();connectStream();}catch{state.user=null;try{const r=await fetch('/healthz');state.serverOnline=r.ok;if(!r.ok)state.notice='Server javob bermadi.';}catch{state.serverOnline=false;state.notice='Server ishga tushmagan. PowerShell’da npm start buyrug‘ini bajaring.';}}render();})();
 
 
 // Lightweight motion layer: no per-frame cursor animation or subtree MutationObserver.

@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { config } from './config.js';
-import { db, currentConversation, saveMessage, getMessages, addUsage, getUsage } from './db.js';
+import { db, currentConversation, saveMessage, getMessages, addUsage, getUsage, getTaskPause, setTaskPause, clearTaskPause } from './db.js';
 import { createMessage } from './claude.js';
 import { tools, truncateOutput, toolSummary } from './tools.js';
 import { systemPrompt } from './prompt.js';
@@ -65,6 +65,23 @@ function emitText(userId, content) {
 function sendState(userId, conversationId) {
   emit(userId, 'state', { ...stateForUser(userId), running: running.has(userId), conversationId });
 }
+function nextUtcMidnight() {
+  const now = new Date();
+  return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+}
+function pauseTaskForUser(userId, conversationId, reason, retryAt = null, details = '') {
+  const pause = setTaskPause(userId, conversationId, reason, retryAt, details);
+  emit(userId, 'pause', pause);
+  sendState(userId, conversationId);
+  return pause;
+}
+function pauseMessage(pause) {
+  if (pause.reason === 'daily_step_limit') return 'Kunlik Quruvchi qadam limiti tugadi. Loyiha saqlandi va pauzaga qo‘yildi.';
+  if (pause.reason === 'provider_rate_limit') return 'AI provayder limiti tugadi. Loyiha va bajarilgan ishlar saqlandi.';
+  if (pause.reason === 'credit_limit') return 'AI provayder kredit/foydalanish limiti tugadi. Loyiha saqlandi.';
+  if (pause.reason === 'batch_step_limit') return 'Ushbu ish bosqichi xavfsiz checkpoint’da pauzaga qo‘yildi.';
+  return 'AI xizmati vaqtincha to‘xtadi. Loyiha holati saqlandi.';
+}
 export function isRunning(userId) { return running.has(userId); }
 
 export async function startTask(user, text) {
@@ -73,9 +90,19 @@ export async function startTask(user, text) {
   if (!status.connected) return { ok: false, status: 412, error: 'Studio ulanmagan', needPairing: true };
   if (!config.anthropicApiKey) return { ok: false, status: 503, error: 'AI provider sozlanmagan. Serverdagi .env fayliga ANTHROPIC_API_KEY kiriting.' };
   if (text.length < 1 || text.length > 30000) return { ok: false, status: 400, error: 'Xabar 1–30 000 belgi oralig‘ida bo‘lishi kerak.' };
-  const usage = getUsage(user.id);
-  if (usage.steps >= config.dailyStepLimit) return { ok: false, status: 429, error: 'Bugungi qadam limiti tugadi' };
   const conversationId = currentConversation(user.id);
+  const existingPause = getTaskPause(user.id);
+  if (existingPause && existingPause.conversationId === conversationId) {
+    return { ok: false, status: 409, error: 'Bu loyiha pauzada. Davom etish tugmasidan foydalaning.', paused: existingPause };
+  }
+  const usage = getUsage(user.id);
+  if (usage.steps >= config.dailyStepLimit) {
+    saveMessage(conversationId, 'user', textBlock(text));
+    emit(user.id, 'message', { id: crypto.randomUUID(), kind: 'user', text });
+    const pause = pauseTaskForUser(user.id, conversationId, 'daily_step_limit', nextUtcMidnight(), 'Kunlik ichki qadam limiti');
+    emit(user.id, 'message', { id: crypto.randomUUID(), kind: 'pause', text: pauseMessage(pause) });
+    return { ok: true, status: 202, paused: pause };
+  }
   const controller = new AbortController();
   const task = { controller, conversationId, startedAt: Date.now() };
   running.set(user.id, task); setUserRunning(user.id, true);
@@ -94,12 +121,12 @@ export async function startTask(user, text) {
   return { ok: true, status: 202 };
 }
 async function runLoop(userId, task) {
-  let steps = 0, needsSummary = false;
+  let steps = 0;
   const signal = task.controller.signal;
   try {
     while (!signal.aborted) {
       const history = repairHistory(getMessages(task.conversationId));
-      const response = await createMessage({ messages: history, tools, system: systemPrompt, signal, maxTokens: needsSummary ? Math.min(config.maxTokens, 2000) : config.maxTokens });
+      const response = await createMessage({ messages: history, tools, system: systemPrompt, signal, maxTokens: config.maxTokens });
       const content = Array.isArray(response.content) ? response.content : textBlock('AI javobi noto‘g‘ri formatda keldi.');
       saveMessage(task.conversationId, 'assistant', content);
       emitText(userId, content);
@@ -109,15 +136,15 @@ async function runLoop(userId, task) {
 
       const toolUses = content.filter(block => block?.type === 'tool_use');
       const results = [];
-      let limitReached = needsSummary;
+      let limitReached = false;
       for (const toolUse of toolUses) {
         if (signal.aborted) {
           results.push({ type:'tool_result', tool_use_id:toolUse.id, is_error:true, content:'Foydalanuvchi to‘xtatdi' });
           continue;
         }
         const used = getUsage(userId).steps;
-        if (steps >= config.maxSteps || used >= config.dailyStepLimit || needsSummary) {
-          results.push({ type:'tool_result', tool_use_id:toolUse.id, is_error:true, content:'Qadam limiti tugadi. Yangi tool ishlatma, bajarilgan ishni xulosa qil.' });
+        if (steps >= config.maxSteps || used >= config.dailyStepLimit ) {
+          results.push({ type:'tool_result', tool_use_id:toolUse.id, is_error:true, content:'Tool qadam limiti sabab hozir bajarilmadi. Hozirgi holat checkpoint sifatida saqlandi; foydalanuvchi davom ettirganda shu vazifani bajar.' });
           limitReached = true;
           continue;
         }
@@ -149,15 +176,26 @@ async function runLoop(userId, task) {
       if (results.length) saveMessage(task.conversationId, 'user', results);
       if (signal.aborted) break;
       if (limitReached || steps >= config.maxSteps || getUsage(userId).steps >= config.dailyStepLimit) {
-        needsSummary = true;
-        // One additional Claude call is allowed to summarize; stop if it requests more tools.
-        if (response.stop_reason === 'tool_use') {
-          const finalHistory = repairHistory(getMessages(task.conversationId));
-          const summaryResponse = await createMessage({ messages: finalHistory, tools: [], system: systemPrompt + '\nTool limiti tugadi. Endi tool chaqirma; bajarilgan ishni va qolgan ishni qisqa xulosa qil.', signal, maxTokens: 1800 });
-          if (summaryResponse.content) { saveMessage(task.conversationId, 'assistant', summaryResponse.content); emitText(userId, summaryResponse.content); }
-        }
+        const dailyLimitReached = getUsage(userId).steps >= config.dailyStepLimit;
+        const reason = dailyLimitReached ? 'daily_step_limit' : 'batch_step_limit';
+        const retryAt = dailyLimitReached ? nextUtcMidnight() : null;
+        const pause = pauseTaskForUser(userId, task.conversationId, reason, retryAt,
+          dailyLimitReached ? 'Kunlik ichki qadam limiti' : 'Xavfsiz bosqich checkpoint’i');
+        emit(userId, 'message', { id: crypto.randomUUID(), kind: 'pause', text: pauseMessage(pause) });
         break;
       }
+    }
+  } catch (error) {
+    if (error?.name !== 'AbortError' && !signal.aborted) {
+      const isLimit = Boolean(error?.isLimit || error?.status === 429);
+      const isCreditLimit = /credit_balance_too_low|usage_limit|credit|billing/i.test(String(error?.providerType || '') + ' ' + String(error?.providerMessage || error?.message || ''));
+      const retryAt = error?.retryAfterMs != null
+        ? Date.now() + Math.max(0, Number(error.retryAfterMs))
+        : (error?.status >= 500 || !error?.status ? Date.now() + 60000 : null);
+      const reason = isLimit ? (isCreditLimit ? 'credit_limit' : 'provider_rate_limit') : 'provider_error';
+      const details = String(error?.providerMessage || error?.message || 'AI xizmati xatosi').slice(0, 500);
+      const pause = pauseTaskForUser(userId, task.conversationId, reason, retryAt, details);
+      emit(userId, 'message', { id: crypto.randomUUID(), kind: 'pause', text: pauseMessage(pause) + (details ? ' Sabab: ' + details : '') });
     }
   } finally {
     // Persist missing tool results for the last assistant tool-use turn after cancellation.
@@ -176,6 +214,38 @@ async function runLoop(userId, task) {
     if (signal.aborted) emit(userId, 'message', { id: crypto.randomUUID(), kind:'info', text:'To‘xtatildi' });
   }
 }
+export async function resumeTask(user) {
+  if (running.has(user.id)) return { ok: false, status: 409, error: 'Agent hali ishlayapti' };
+  const pause = getTaskPause(user.id);
+  if (!pause) return { ok: false, status: 409, error: 'Davom ettiriladigan pauza topilmadi.' };
+  const conversationId = currentConversation(user.id);
+  if (pause.conversationId !== conversationId) {
+    clearTaskPause(user.id);
+    return { ok: false, status: 409, error: 'Pauzadagi loyiha chatidan chiqib ketilgan. Chat tarixini tekshiring.' };
+  }
+  if (pause.retryAt && pause.retryAt > Date.now()) {
+    return { ok: false, status: 429, error: 'AI limiti hali tiklanmagan.', paused: pause };
+  }
+  const status = statusForUser(user.id);
+  if (!status.connected) return { ok: false, status: 412, error: 'Studio ulanmagan', needPairing: true };
+  if (!config.anthropicApiKey) return { ok: false, status: 503, error: 'AI provider sozlanmagan. Serverdagi .env fayliga ANTHROPIC_API_KEY kiriting.' };
+  const controller = new AbortController();
+  const task = { controller, conversationId, startedAt: Date.now(), resumed: true };
+  clearTaskPause(user.id);
+  running.set(user.id, task);
+  setUserRunning(user.id, true);
+  sendState(user.id, conversationId);
+  task.done = runLoop(user.id, task).catch(error => {
+    console.error('[Quruvchi agent resume]', error?.status || '', error?.message || error);
+    emit(user.id, 'message', { id: crypto.randomUUID(), kind: 'error', text: 'Davom ettirishda xatolik yuz berdi. Saqlangan loyiha tarixi saqlanib qoldi.' });
+  }).finally(() => {
+    if (running.get(user.id) === task) running.delete(user.id);
+    setUserRunning(user.id, false);
+    sendState(user.id, conversationId);
+  });
+  void task.done;
+  return { ok: true, status: 202 };
+}
 export async function stopTask(userId) {
   const task = running.get(userId);
   if (!task) return false;
@@ -191,6 +261,7 @@ export async function newConversation(userId) {
     if (current) db.prepare('UPDATE conversations SET archived=1 WHERE id=? AND user_id=?').run(current.id, userId);
     const result = db.prepare('INSERT INTO conversations(user_id,created_at,archived) VALUES(?,?,0)').run(userId, Date.now());
     db.exec('COMMIT');
+    clearTaskPause(userId);
     emit(userId, 'reset', { conversationId: Number(result.lastInsertRowid) });
     sendState(userId, Number(result.lastInsertRowid));
     return Number(result.lastInsertRowid);

@@ -9,7 +9,7 @@ import { hashPassword, verifyPassword, verifyInvite, createSession, sessionCooki
 import { consumeLimit } from './ratelimit.js';
 import { sendJson, readJson, checkCsrf, clientIp, serveStatic, securityHeaders } from './http-util.js';
 import { attachSse, addDevice, pollDevice, receiveResult, listDevices, disconnectDevice, statusForUser, stateForUser, emit } from './hub.js';
-import { startTask, stopTask, newConversation, isRunning } from './agent.js';
+import { startTask, stopTask, newConversation, isRunning, resumeTask } from './agent.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pluginFile = path.resolve(__dirname, '..', 'plugin', 'Quruvchi.lua');
@@ -188,7 +188,7 @@ const server = http.createServer(async (req, res) => {
       }
       if (method === 'GET' && pathname === '/api/me') {
         const usage = getUsage(user.id);
-        return json(res, 200, { login:user.login, steps:{ used:usage.steps, limit:config.dailyStepLimit }, running:isRunning(user.id), status:statusForUser(user.id), conversationId:currentConversation(user.id) });
+        return json(res, 200, { login:user.login, steps:{ used:usage.steps, limit:config.dailyStepLimit }, running:isRunning(user.id), status:statusForUser(user.id), conversationId:currentConversation(user.id), paused:stateForUser(user.id).paused });
       }
       if (method === 'GET' && pathname === '/api/stream') return attachSse(user.id, req, res);
       if (method === 'POST' && pathname === '/api/pair') {
@@ -212,6 +212,11 @@ const server = http.createServer(async (req, res) => {
         const input = await getBody(req, res); if (!input) return;
         const result = await startTask(user, String(input.text || '').trim());
         if (!result.ok) return json(res, result.status, { error:result.error, ...(result.needPairing ? { needPairing:true } : {}) });
+        return json(res, 202, { ok:true, paused:Boolean(result.paused), pause:result.paused || null });
+      }
+      if (method === 'POST' && pathname === '/api/resume') {
+        const result = await resumeTask(user);
+        if (!result.ok) return json(res, result.status, { error:result.error, ...(result.needPairing ? { needPairing:true } : {}), ...(result.paused ? { paused:result.paused } : {}) });
         return json(res, 202, { ok:true });
       }
       if (method === 'POST' && pathname === '/api/stop') {
