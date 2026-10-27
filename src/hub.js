@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { db } from './db.js';
+import { db, getTaskPause } from './db.js';
 import { config } from './config.js';
 import { sendJson } from './http-util.js';
 
@@ -59,7 +59,7 @@ function updateStatus(userId) {
 export function stateForUser(userId) {
   const usage = db.prepare('SELECT steps FROM usage WHERE user_id=? AND day=?').get(userId, new Date().toISOString().slice(0, 10));
   const conversationId = db.prepare('SELECT id FROM conversations WHERE user_id=? AND archived=0 ORDER BY id DESC LIMIT 1').get(userId)?.id || null;
-  return { running: runningUsers.has(userId), steps: { used: usage?.steps || 0, limit: config.dailyStepLimit }, conversationId };
+  return { running: runningUsers.has(userId), steps: { used: usage?.steps || 0, limit: config.dailyStepLimit }, conversationId, paused: getTaskPause(userId) };
 }
 export function attachSse(userId, req, res) {
   const hub = hydrate(userId);
