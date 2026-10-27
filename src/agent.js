@@ -121,12 +121,12 @@ export async function startTask(user, text) {
   return { ok: true, status: 202 };
 }
 async function runLoop(userId, task) {
-  let steps = 0, needsSummary = false;
+  let steps = 0;
   const signal = task.controller.signal;
   try {
     while (!signal.aborted) {
       const history = repairHistory(getMessages(task.conversationId));
-      const response = await createMessage({ messages: history, tools, system: systemPrompt, signal, maxTokens: needsSummary ? Math.min(config.maxTokens, 2000) : config.maxTokens });
+      const response = await createMessage({ messages: history, tools, system: systemPrompt, signal, maxTokens: config.maxTokens });
       const content = Array.isArray(response.content) ? response.content : textBlock('AI javobi noto‘g‘ri formatda keldi.');
       saveMessage(task.conversationId, 'assistant', content);
       emitText(userId, content);
@@ -136,14 +136,14 @@ async function runLoop(userId, task) {
 
       const toolUses = content.filter(block => block?.type === 'tool_use');
       const results = [];
-      let limitReached = needsSummary;
+      let limitReached = false;
       for (const toolUse of toolUses) {
         if (signal.aborted) {
           results.push({ type:'tool_result', tool_use_id:toolUse.id, is_error:true, content:'Foydalanuvchi to‘xtatdi' });
           continue;
         }
         const used = getUsage(userId).steps;
-        if (steps >= config.maxSteps || used >= config.dailyStepLimit || needsSummary) {
+        if (steps >= config.maxSteps || used >= config.dailyStepLimit ) {
           results.push({ type:'tool_result', tool_use_id:toolUse.id, is_error:true, content:'Tool qadam limiti sabab hozir bajarilmadi. Hozirgi holat checkpoint sifatida saqlandi; foydalanuvchi davom ettirganda shu vazifani bajar.' });
           limitReached = true;
           continue;
