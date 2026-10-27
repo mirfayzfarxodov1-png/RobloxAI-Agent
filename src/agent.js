@@ -70,7 +70,7 @@ export async function startTask(user, text) {
   const status = statusForUser(user.id);
   if (!status.connected) return { ok: false, status: 412, error: 'Studio ulanmagan', needPairing: true };
   if (!config.anthropicApiKey) return { ok: false, status: 503, error: 'AI provider sozlanmagan. Serverdagi .env fayliga ANTHROPIC_API_KEY kiriting.' };
-  if (text.length < 1 || text.length > 8000) return { ok: false, status: 400, error: 'Xabar 1–8000 belgi oralig‘ida bo‘lishi kerak.' };
+  if (text.length < 1 || text.length > 30000) return { ok: false, status: 400, error: 'Xabar 1–30 000 belgi oralig‘ida bo‘lishi kerak.' };
   const usage = getUsage(user.id);
   if (usage.steps >= config.dailyStepLimit) return { ok: false, status: 429, error: 'Bugungi qadam limiti tugadi' };
   const conversationId = currentConversation(user.id);
