@@ -44,7 +44,20 @@ export function checkCsrf(req) {
   if (!contentType.startsWith('application/json')) return { ok: false, status: 415, error: 'Content-Type application/json bo‘lishi shart' };
   let origin;
   try { origin = new URL(req.headers.origin || '').origin; } catch { origin = ''; }
-  if (origin !== config.publicUrl) return { ok: false, status: 403, error: 'Origin tekshiruvidan o‘tmadi' };
+  if (origin !== config.publicUrl) {
+    // Local Windows users may open the same server as localhost or 127.0.0.1.
+    // Permit only HTTP loopback aliases on the same port; production origins stay strict.
+    let localAlias = false;
+    try {
+      const actual = new URL(origin);
+      const configured = new URL(config.publicUrl);
+      const loopbacks = new Set(['localhost', '127.0.0.1', '[::1]']);
+      localAlias = actual.protocol === 'http:' && configured.protocol === 'http:' &&
+        actual.port === configured.port && loopbacks.has(actual.hostname) &&
+        loopbacks.has(configured.hostname);
+    } catch {}
+    if (!localAlias) return { ok: false, status: 403, error: 'Origin tekshiruvidan o‘tmadi' };
+  }
   return { ok: true };
 }
 export function clientIp(req) {
