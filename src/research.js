@@ -56,7 +56,7 @@ export function parseSearchResults(html, query, maxResults = 6) {
     return true;
   }).slice(0, maxResults).map((item, i) => ({ ...item, snippet: (snippets[i] || '').slice(0, 700) }));
 }
-export async function searchWeb({ queries, officialOnly = false, maxResults = 6, fetchImpl = fetch } = {}) {
+export async function searchWeb({ queries, officialOnly = false, maxResults = 6, fetchImpl = fetch, signal } = {}) {
   const cleanQueries = (Array.isArray(queries) ? queries : [queries])
     .map(q => String(q || '').trim().slice(0, 220)).filter(Boolean).slice(0, 4);
   if (!cleanQueries.length) throw new Error('Kamida bitta qidiruv so‘rovi kerak.');
@@ -68,11 +68,11 @@ export async function searchWeb({ queries, officialOnly = false, maxResults = 6,
       const url = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query);
       const response = await fetchImpl(url, {
         headers: { 'user-agent': 'Mozilla/5.0 (compatible; QuruvchiResearch/1.0)', accept: 'text/html' },
-        signal: AbortSignal.timeout(9000),
+        signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(9000)]) : AbortSignal.timeout(9000),
       });
       if (!response.ok) throw new Error('Qidiruv HTTP ' + response.status);
       const html = (await response.text()).slice(0, 2_000_000);
-      const parsed = parseSearchResults(html, query, limit);
+      const parsed = parseSearchResults(html, query, officialOnly ? 30 : limit);
       results.push(...(officialOnly ? parsed.filter(item => item.official) : parsed));
     } catch (error) {
       failures.push(query + ': ' + String(error?.message || error).slice(0, 160));
