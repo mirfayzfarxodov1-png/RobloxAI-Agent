@@ -71,7 +71,10 @@ Use the included Dockerfile or render.yaml as a deployment starting point. A pub
 - plugin/Quruvchi.lua — Studio plugin and supported tool handlers.
 - test/ — fake provider/plugin helpers and end-to-end tests.
 
-## Honest limitations
+## Studio project audit
+
+The plugin now includes an **AI AUDIT · Loyihani tekshirish** action and an `audit_project` tool. It reports bounded static diagnostics such as instance/part/script/GUI/remote counts, empty or unusually long scripts, disabled scripts, duplicate sibling names, and potentially expensive part counts. Findings are hints, not automatic fixes; duplicate names and disabled scripts can be intentional. Audit does not run Play mode or prove runtime correctness.
+
 
 - AI-generated code can be wrong. Quruvchi does not promise zero defects.
 - The plugin cannot press Play or claim a runtime test passed. You must test in Studio and send “logs” if something fails.
