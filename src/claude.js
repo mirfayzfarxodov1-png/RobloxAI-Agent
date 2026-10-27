@@ -40,10 +40,34 @@ export async function createMessage({ messages, tools, system, signal, maxTokens
       return data;
     }
     lastStatus=response.status;
+    let errorBody = {};
+    try { errorBody = await response.json(); } catch {}
+    const providerError = errorBody?.error || {};
+    const providerType = String(providerError.type || providerError.code || '');
+    const providerMessage = String(providerError.message || 'Anthropic API request failed');
+    const retryHeader = response.headers.get('retry-after');
+    const retryMsFromHeader = retryHeader
+      ? (/^\\d+(?:\\.\\d+)?$/.test(retryHeader.trim())
+        ? Math.max(0, Number(retryHeader) * 1000)
+        : (Number.isFinite(Date.parse(retryHeader)) ? Math.max(0, Date.parse(retryHeader) - Date.now()) : null))
+      : null;
+    const resetHeaders = [
+      response.headers.get('anthropic-ratelimit-requests-reset'),
+      response.headers.get('anthropic-ratelimit-tokens-reset')
+    ].filter(Boolean);
+    const resetTimes = resetHeaders.map(value => Date.parse(value)).filter(Number.isFinite);
+    const resetAt = resetTimes.length ? Math.min(...resetTimes) : null;
+    const isLimit = response.status === 429 || /rate_limit|credit_balance_too_low|usage_limit|overloaded_error/i.test(providerType);
     if ([429,529].includes(response.status)||response.status>=500) {
       if (attempt<2) { await sleep(attempt===0?1000:3000,signal); continue; }
     }
-    throw Object.assign(new Error('Anthropic API request failed'),{status:response.status});
+    throw Object.assign(new Error(providerMessage), {
+      status: response.status,
+      providerType,
+      isLimit,
+      retryAfterMs: retryMsFromHeader ?? (resetAt !== null ? Math.max(0, resetAt - Date.now()) : null),
+      providerMessage
+    });
   }
   throw Object.assign(new Error('Anthropic API temporarily unavailable'),{status:lastStatus});
 }
