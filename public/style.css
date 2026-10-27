@@ -14,3 +14,34 @@
 .bar-low{width:8%}.bar-one-third{width:33%}.bar-two-thirds{width:66%}.bar-full{width:100%;background:linear-gradient(90deg,#ffc93c,#ff7b64)!important}
 .auth-page{width:100%;min-height:100vh;display:grid;place-items:center;padding:22px;background:radial-gradient(ellipse at 50% 10%,#353064 0,transparent 48%),var(--bg)}.auth-card{width:min(420px,100%);padding:30px;border:1px solid #484575;border-radius:18px;background:linear-gradient(155deg,#28274a,#19192f);box-shadow:0 24px 90px #0006;display:flex;flex-direction:column;align-items:stretch}.auth-card>.brand-mark{margin:0 auto 12px}.auth-card h1{text-align:center;font-size:27px;margin:0 0 6px}.auth-intro{text-align:center;color:#a9a6d1;font-size:12px;margin:0 0 20px}.auth-security{font-size:10px;line-height:1.6;color:#8885b2;text-align:center;margin:15px 0 0}.plugin-download{display:block;text-align:center;color:#c7beff;font-size:11px;text-decoration:underline;margin:12px auto}.modal-close{margin-left:auto;position:absolute;right:12px;top:12px}.primary-button{min-height:44px}.state-tag{max-width:55%;text-align:right;overflow-wrap:anywhere}
 @media(max-width:640px){.auth-card{padding:24px 18px}.auth-page{padding:14px}.plugin-download{padding:10px}}
+
+
+/* Quruvchi interaction polish: accessible motion, prompt-import controls, and responsive micro-interactions. */
+:root{scroll-behavior:smooth}
+button,.suggestion-card,.side-link,.new-chat,.studio-pill,.github-link,.icon-button,.modal-card,.auth-card{transition:transform .2s cubic-bezier(.2,.8,.2,1),background-color .2s ease,border-color .2s ease,box-shadow .2s ease,opacity .2s ease}
+button:not(:disabled):hover,.suggestion-card:hover{transform:translateY(-2px)}
+button:not(:disabled):active,.suggestion-card:active{transform:translateY(0) scale(.985)}
+.brand-mark{box-shadow:0 0 0 0 rgba(139,124,255,.3);animation:brandPulse 4s ease-in-out infinite}
+.message{animation:messageEnter .28s ease both}
+.message-tool{animation:messageEnter .22s ease both}
+.welcome-art .art-cube{animation:cubeFloat 5s ease-in-out infinite}
+.welcome-art .orbit-one{animation:orbitSpin 18s linear infinite}
+.welcome-art .orbit-two{animation:orbitSpin 24s linear infinite reverse}
+.welcome-art .floating-icon{animation:iconFloat 4s ease-in-out infinite}
+.welcome-art .float-code{animation-delay:-1.3s}.welcome-art .float-game{animation-delay:-2.2s}
+.spinner{animation:orbitSpin .9s linear infinite}
+.composer{transition:border-color .2s ease,box-shadow .2s ease}
+.composer:focus-within{border-color:#7166cb;box-shadow:0 0 0 3px rgba(139,124,255,.09),0 14px 38px rgba(0,0,0,.12)}
+.composer-bottom{gap:12px;flex-wrap:wrap}
+.composer-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.paste-prompt-button{border:1px solid var(--line);border-radius:10px;background:#292847;color:var(--text);padding:10px 12px;font-size:12px;font-weight:600;white-space:nowrap}
+.paste-prompt-button:hover{border-color:var(--accent);background:#34315d}
+.prompt-limit{font-variant-numeric:tabular-nums;opacity:.72}
+.send-button{white-space:nowrap}
+@keyframes messageEnter{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@keyframes cubeFloat{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-9px) rotate(4deg)}}
+@keyframes iconFloat{0%,100%{translate:0 0}50%{translate:0 -7px}}
+@keyframes orbitSpin{to{transform:rotate(360deg)}}
+@keyframes brandPulse{0%,100%{box-shadow:0 0 0 0 rgba(139,124,255,0)}50%{box-shadow:0 0 0 6px rgba(139,124,255,.07)}}
+@media(max-width:640px){.composer-actions{width:100%;justify-content:space-between}.paste-prompt-button,.send-button{min-height:42px}.composer-bottom{align-items:stretch}.composer-hints{flex-wrap:wrap;gap:5px}.prompt-limit{display:none}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
