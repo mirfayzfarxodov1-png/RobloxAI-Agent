@@ -10,6 +10,7 @@ const MAX_BODY = 256 * 1024;
 const INVITE_TTL_MS = 10 * 60 * 1000;
 const REQUEST_TTL_MS = 2 * 60 * 1000;
 const DAILY_REQUEST_LIMIT = Number(process.env.SHARE_DAILY_REQUEST_LIMIT || 100);
+const allowedOrigins = new Set(String(process.env.ALLOWED_ORIGINS || '').split(',').map(v => v.trim()).filter(Boolean));
 if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) throw new Error('PORT noto‘g‘ri');
 fs.mkdirSync(DATA_DIR, { recursive: true });
 const db = new DatabaseSync(path.join(DATA_DIR, 'quruvchi-relay.sqlite'));
@@ -36,7 +37,11 @@ function ownerFor(req) { const t=bearer(req); return t ? db.prepare('SELECT id F
 function partnerFor(req) { const t=bearer(req); return t ? db.prepare("SELECT id,owner_id,status FROM partners WHERE token_hash=?").get(hash(t)) : null; }
 function route(path, method, req, res) { return method+' '+path; }
 const server = http.createServer(async (req,res) => {
-  res.setHeader('access-control-allow-origin', process.env.ALLOWED_ORIGIN || 'null');
+  const origin = String(req.headers.origin || '');
+  if (origin && allowedOrigins.has(origin)) {
+    res.setHeader('access-control-allow-origin', origin);
+    res.setHeader('vary', 'Origin');
+  }
   res.setHeader('access-control-allow-headers','authorization,content-type');
   res.setHeader('access-control-allow-methods','GET,POST,DELETE,OPTIONS');
   if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
