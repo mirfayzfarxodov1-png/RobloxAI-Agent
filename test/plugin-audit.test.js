@@ -39,3 +39,12 @@ test('safe preview, snapshot, restore, and GUI scaffold tools are wired end-to-e
   assert.match(plugin, /ActionRequested/);
   assert.match(prompt, /preview_tree/);
 });
+
+test('performance audit and asset ID verification tools are wired', () => {
+  assert.ok(tools.some(tool => tool.name === 'performance_audit'));
+  assert.ok(tools.some(tool => tool.name === 'check_asset_ids'));
+  assert.match(plugin, /performance_audit=performanceAudit/);
+  assert.match(plugin, /check_asset_ids=checkAssetIds/);
+  assert.match(plugin, /particleEmitters/);
+  assert.match(plugin, /MarketplaceService:GetProductInfo\(id, Enum.InfoType.Asset\)/);
+});
