@@ -85,3 +85,50 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opa
 @media(hover:hover) and (pointer:fine){.q-cursor-glow{opacity:1}.suggestion-card,.side-link,.new-chat,.github-link,.studio-pill,.icon-button{will-change:transform}}
 @media(max-width:640px){.q-cursor-glow{display:none}body::before{background-size:38px 38px}.chat-heading h1{letter-spacing:-1px}}
 @media(prefers-reduced-motion:reduce){.q-cursor-glow,.q-reveal{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+
+
+/* Performance-first visual refinement: crisp surfaces, restrained motion, lower GPU cost */
+:root{
+  --bg:#0b1020;--bg2:#111a2d;--panel:#121b30;--panel2:#18243a;
+  --line:#263650;--text:#edf3ff;--muted:#9aabc4;
+  --accent:#8b9cff;--accent2:#6679ed;--brick:#f5c76a;
+  --glow:rgba(102,121,237,.10);
+}
+body{
+  background:radial-gradient(ellipse at 78% -20%,rgba(78,91,170,.18),transparent 44%),#0b1020;
+  background-attachment:scroll;
+}
+body::before{opacity:.055;background-size:64px 64px}
+.sidebar{background:#0c1425;border-right-color:#22304a;backdrop-filter:none}
+.topbar{background:rgba(12,20,37,.94);backdrop-filter:none;border-bottom-color:#22304a}
+.new-chat{background:#1b2b47;border-color:#314765}
+.new-chat:hover{background:#243956;box-shadow:none}
+.side-link:hover,.side-link.active{background:#17243a;border-color:#2b405d}
+.usage-card{background:#111d31;border-color:#263852}
+.backend-pill,.studio-pill{background:#121e32;border-color:#2b3d58;backdrop-filter:none}
+.chat-heading h1{background:linear-gradient(100deg,#f6f8ff 8%,#cbd6ff 58%,#9caeff 100%);-webkit-background-clip:text;background-clip:text}
+.chat-heading h1 span{color:#9caeff;-webkit-text-fill-color:#9caeff}
+.suggestion-card{background:linear-gradient(145deg,#16243a,#111a2c);border-color:#293b56}
+.suggestion-card::before{display:none}
+.suggestion-card:hover{border-color:#7185e9;transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.16)}
+.message-body{backdrop-filter:none;box-shadow:none}
+.message-user .message-body{box-shadow:none}
+.composer{background:#111b2e;border-color:#2b3d59;backdrop-filter:none;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.composer:focus-within{border-color:#7b8ded;box-shadow:0 0 0 2px rgba(123,141,237,.12)}
+.modal-card{backdrop-filter:none}
+.q-reveal{animation:qReveal .18s ease-out both}
+@keyframes qReveal{from{opacity:.7;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+.q-cursor-glow{display:none!important}
+.q-scroll-progress{height:2px;background:rgba(139,156,255,.06)}
+.q-scroll-progress span{background:linear-gradient(90deg,#7185ed,#8eabff);box-shadow:none;transition:none}
+.art-cube,.art-orbit,.floating-icon{animation:none!important}
+.art-cube{box-shadow:0 0 22px rgba(102,121,237,.12),inset 0 1px rgba(255,255,255,.1)}
+.floating-icon{box-shadow:0 5px 14px rgba(0,0,0,.14)}
+.new-chat,.side-link,.suggestion-card,.tool-row,.usage-card,.composer,.modal-card,
+.backend-pill,.studio-pill,.heading-chip,.icon-button,.send-button{transition:background-color .16s ease,border-color .16s ease,color .16s ease,transform .16s ease}
+@media(hover:hover) and (pointer:fine){
+  .suggestion-card,.side-link,.new-chat,.github-link,.studio-pill,.icon-button{will-change:auto}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
