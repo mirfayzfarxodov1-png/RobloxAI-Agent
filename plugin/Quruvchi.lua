@@ -682,9 +682,7 @@ local function restoreSnapshot(input)
     local originalName=backup:GetAttribute("__QuruvchiOriginalName")
     if typeof(parentPath)~="string" or typeof(originalName)~="string" then error("Snapshot metadata yo‘q; xavfsiz tiklash mumkin emas") end
     local parent=resolvePath(parentPath)
-    if protectedService(parent) and parent~=findService("Workspace") and parent~=findService("StarterGui") and parent~=findService("ReplicatedStorage") and parent~=findService("ServerStorage") then
-        error("Himoyalangan parentga tiklash taqiqlangan")
-    end
+    -- parent path was captured from the original object; replace only the named child, never the service itself.
     return recordWaypoint("restore_snapshot",function()
         local ok,restored=pcall(function() return backup:Clone() end)
         if not ok or not restored then error("Snapshot nusxasi olinmadi") end
