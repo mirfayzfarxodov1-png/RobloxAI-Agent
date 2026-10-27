@@ -110,6 +110,15 @@ local function resolvePath(path)
     end
     return current
 end
+local function instancePath(instance)
+    local parts = {}
+    local current = instance
+    while current and current ~= game do
+        table.insert(parts,1,current.Name)
+        current = current.Parent
+    end
+    return #parts > 0 and table.concat(parts,"/") or "game"
+end
 local function resolveParent(path)
     if not path or path == "" then return workspace end
     return resolvePath(path)
@@ -344,7 +353,7 @@ end
 local function getSelection()
     local out = {}
     for _, instance in ipairs(Selection:Get()) do
-        table.insert(out,{path=instance:GetFullName(),name=instance.Name,className=instance.ClassName})
+        table.insert(out,{path=instancePath(instance),name=instance.Name,className=instance.ClassName})
         if #out >= 100 then break end
     end
     return {count=#out,items=out}
@@ -361,18 +370,18 @@ local function searchInstances(input)
         local nameMatch = nameNeedle == "" or string.find(string.lower(instance.Name),nameNeedle,1,true) ~= nil
         local classMatch = classNeedle == "" or instance.ClassName == classNeedle
         if nameMatch and classMatch then
-            table.insert(found,{path=instance:GetFullName(),name=instance.Name,className=instance.ClassName})
+            table.insert(found,{path=instancePath(instance),name=instance.Name,className=instance.ClassName})
             if #found >= limit then break end
         end
     end
-    return {root=root:GetFullName(),scanned=scanned,results=found,truncated=scanned>5000 or #found>=limit}
+    return {root=instancePath(root),scanned=scanned,results=found,truncated=scanned>5000 or #found>=limit}
 end
 local function inspectInstance(input)
     local instance = resolvePath(input.path)
     local properties = {}
     for _, key in ipairs({"Name","ClassName","Archivable","Parent","Position","Size","Anchored","CanCollide","Transparency","Material","Color","Visible","Enabled","Text","Value","LayoutOrder"}) do
         local ok, value = pcall(function() return instance[key] end)
-        if ok then properties[key] = key == "Parent" and (value and value:GetFullName() or nil) or tostring(value) end
+        if ok then properties[key] = key == "Parent" and (value and instancePath(value) or nil) or tostring(value) end
     end
     local attributes = {}
     for key, value in pairs(instance:GetAttributes()) do
@@ -384,7 +393,7 @@ local function inspectInstance(input)
         table.insert(children,{name=child.Name,className=child.ClassName})
         if #children >= 60 then break end
     end
-    return {path=instance:GetFullName(),properties=properties,attributes=attributes,children=children}
+    return {path=instancePath(instance),properties=properties,attributes=attributes,children=children}
 end
 local function renameInstance(input)
     return recordWaypoint("rename_instance",function()
@@ -393,7 +402,7 @@ local function renameInstance(input)
         local name = safeName(input.name)
         local old = instance.Name
         instance.Name = name
-        return {path=instance:GetFullName(),oldName=old,newName=name}
+        return {path=instancePath(instance),oldName=old,newName=name}
     end)
 end
 local function duplicateInstance(input)
@@ -406,7 +415,7 @@ local function duplicateInstance(input)
         local parent = input.parent and input.parent ~= "" and resolvePath(input.parent) or source.Parent
         if not parent then error("Yangi parent topilmadi") end
         clone.Parent = parent
-        return {path=clone:GetFullName(),className=clone.ClassName,name=clone.Name}
+        return {path=instancePath(clone),className=clone.ClassName,name=clone.Name}
     end)
 end
 local function selectInstances(input)
@@ -418,7 +427,7 @@ local function selectInstances(input)
     Selection:Set(items)
     return {selected=#items,items=(function()
         local out={}
-        for _, instance in ipairs(items) do table.insert(out,{path=instance:GetFullName(),className=instance.ClassName}) end
+        for _, instance in ipairs(items) do table.insert(out,{path=instancePath(instance),className=instance.ClassName}) end
         return out
     end)()}
 end
