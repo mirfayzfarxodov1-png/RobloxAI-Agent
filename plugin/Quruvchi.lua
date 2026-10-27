@@ -459,12 +459,56 @@ make("UICorner",{CornerRadius=UDim.new(0,9)},runToggle)
 runCodeButton=runToggle
 local function refreshRunButton() runCodeButton.Text="run_code: "..(runCodeEnabled and "YOQIQ" or "O‘CHIQ") end
 refreshRunButton()
-local logTitle=make("TextLabel",{Size=UDim2.new(1,0,0,20),BackgroundTransparency=1,Text="FAOLIYAT JURNALI  ·  LOGS",TextColor3=Color3.fromRGB(166,154,237),Font=Enum.Font.GothamBold,TextSize=10,TextXAlignment=Enum.TextXAlignment.Left,LayoutOrder=6},root)
-logFrame=make("ScrollingFrame",{Size=UDim2.new(1,0,1,-190),BackgroundColor3=Color3.fromRGB(15,15,30),BorderSizePixel=0,CanvasSize=UDim2.new(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollBarThickness=4,ScrollBarImageColor3=Color3.fromRGB(126,108,238),LayoutOrder=7},root)
+local quickTools=make("Frame",{Size=UDim2.new(1,0,0,38),BackgroundTransparency=1,LayoutOrder=6},root)
+local function quickButton(text,x,w,callback)
+    local b=make("TextButton",{Size=UDim2.new(w,-4,1,0),Position=UDim2.new(x,0,0,0),BackgroundColor3=Color3.fromRGB(29,42,69),TextColor3=Color3.fromRGB(218,226,255),Text=text,Font=Enum.Font.GothamMedium,TextSize=10,AutoButtonColor=true},quickTools)
+    make("UICorner",{CornerRadius=UDim.new(0,8)},b)
+    make("UIStroke",{Color=Color3.fromRGB(63,81,123),Transparency=0.35,Thickness=1},b)
+    b.Activated:Connect(callback)
+    return b
+end
+local logTitle=make("TextLabel",{Size=UDim2.new(1,0,0,20),BackgroundTransparency=1,Text="FAOLIYAT JURNALI  ·  LOGS",TextColor3=Color3.fromRGB(166,184,255),Font=Enum.Font.GothamBold,TextSize=10,TextXAlignment=Enum.TextXAlignment.Left,LayoutOrder=7},root)
+logFrame=make("ScrollingFrame",{Size=UDim2.new(1,0,1,-285),BackgroundColor3=Color3.fromRGB(10,16,29),BorderSizePixel=0,CanvasSize=UDim2.new(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,ScrollBarThickness=4,ScrollBarImageColor3=Color3.fromRGB(126,148,255),LayoutOrder=8},root)
 make("UICorner",{CornerRadius=UDim.new(0,10)},logFrame)
-make("UIStroke",{Color=Color3.fromRGB(49,47,83),Transparency=0.25,Thickness=1},logFrame)
+make("UIStroke",{Color=Color3.fromRGB(43,59,88),Transparency=0.25,Thickness=1},logFrame)
 logLayout=make("UIListLayout",{Padding=UDim.new(0,5),SortOrder=Enum.SortOrder.LayoutOrder},logFrame)
 make("UIPadding",{PaddingTop=UDim.new(0,8),PaddingBottom=UDim.new(0,8),PaddingLeft=UDim.new(0,8),PaddingRight=UDim.new(0,8)},logFrame)
+quickButton("Explorer",0,0.25,function()
+    local ok,result=pcall(function() return getTree({depth=1}) end)
+    if not ok then log("Explorer xatosi: "..tostring(result));return end
+    local lines={}
+    local function visit(item,prefix)
+        if #lines>=28 or typeof(item)~="table" then return end
+        table.insert(lines,prefix..tostring(item.name or "?").." ["..tostring(item.className or "Service").."] · "..tostring(item.childCount or 0).." child")
+        for _,child in ipairs(item.children or {}) do visit(child,prefix.."  ") end
+    end
+    if typeof(result.tree)=="table" then
+        for _,item in ipairs(result.tree) do visit(item,"") end
+    else visit(result.tree,"") end
+    log("EXPLORER · "..tostring(result.count or #lines).." obyekt tekshirildi")
+    for _,line in ipairs(lines) do log(line) end
+end)
+quickButton("Xatolar",0.25,0.25,function()
+    local ok,result=pcall(function() return getLogs({limit=40,onlyErrors=true}) end)
+    if not ok then log("Log o‘qish xatosi: "..tostring(result));return end
+    if result=="" then log("Xato yoki warning topilmadi.") else
+        log("STUDIO XATOLARI / WARNINGS")
+        for line in string.gmatch(result,"[^\n]+") do log(line) end
+    end
+end)
+quickButton("Loyiha",0.5,0.25,function()
+    local roots={"Workspace","ReplicatedStorage","ServerScriptService","ServerStorage","StarterGui","StarterPlayer"}
+    log("LOYIHA · "..getPlaceName().." · PlaceId "..tostring(game.PlaceId))
+    for _,name in ipairs(roots) do
+        local service=findService(name)
+        if service then log(name.." · "..tostring(#service:GetChildren()).." ta bevosita obyekt") end
+    end
+end)
+quickButton("Tozalash",0.75,0.25,function()
+    for _,label in ipairs(logLabels) do if label and label.Parent then label:Destroy() end end
+    table.clear(logLabels)
+    log("Jurnal tozalandi.")
+end)
 for _,line in ipairs(logs) do log(line) end
 
 connectButton.Activated:Connect(function()
