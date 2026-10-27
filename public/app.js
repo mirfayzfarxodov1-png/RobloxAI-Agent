@@ -78,7 +78,15 @@ function render(){
   }
   const list=node('div','message-list');for(const m of state.messages)list.append(renderMessage(m));scroll.append(list);
   if(state.busy){const work=node('div','working-row');work.append(node('span','spinner'),document.createTextNode('Quruvchi ishlayapti…'));scroll.append(work);}layout.append(scroll);
-  const composerWrap=node('div','composer-wrap'),composer=node('div','composer'),textarea=node('textarea');textarea.id='prompt';textarea.rows=2;textarea.maxLength=30000;textarea.value=state.prompt;textarea.placeholder='O‘yin g‘oyangni yoki boshqa AI bergan to‘liq texnik promptni shu yerga joyla (30 000 belgigacha)...';textarea.setAttribute('aria-label','Xabaringiz');textarea.addEventListener('input',e=>state.prompt=e.target.value);textarea.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});
+  const composerWrap=node('div','composer-wrap'),quickActions=node('div','builder-shortcuts');
+  const shortcutPrompts=[
+    ['⌕  Tadqiqot + savol','Mening o‘yin g‘oyamni avval internetdan rasmiy manbalarda o‘rgan. Agar referens o‘yin bo‘lsa, mexanikalarini umumlashtir, manbalarni ko‘rsat va Studio’ni o‘zgartirishdan oldin mendan original uslub tanlashni so‘ra.'],
+    ['◇  Avval reja','Hozircha Studio’ni o‘zgartirma. G‘oyam uchun arxitektura, asosiy gameplay loop, server/client tizimlari, UI, saqlash, xavfsizlik va testlardan iborat 7 bosqichli reja tuz.'],
+    ['↗  Katta loyiha','Bu g‘oyani oddiy demo emas, bosqichma-bosqich quriladigan to‘liq Roblox loyihasi sifatida ishlab chiq. Avval mavjud Studio loyihasini tekshir, keyin reja, ishlaydigan asosiy gameplay va testlarni kichik fazalarda bajar.']
+  ];
+  for(const [label,prompt] of shortcutPrompts){quickActions.append(button(label,'builder-shortcut',()=>{state.prompt=prompt;render();const area=root.querySelector('#prompt');if(area){area.focus();area.setSelectionRange(area.value.length,area.value.length);}}));}
+  composerWrap.append(quickActions);
+  const composer=node('div','composer'),textarea=node('textarea');textarea.id='prompt';textarea.rows=2;textarea.maxLength=30000;textarea.value=state.prompt;textarea.placeholder='O‘yin g‘oyangni yoki boshqa AI bergan to‘liq texnik promptni shu yerga joyla (30 000 belgigacha)...';textarea.setAttribute('aria-label','Xabaringiz');textarea.addEventListener('input',e=>state.prompt=e.target.value);textarea.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});
   const bottom=node('div','composer-bottom'),hints=node('div','composer-hints');hints.append(node('span','','↵ Enter yuborish'),node('span','','·'),node('span','','Shift + Enter yangi qator'),node('span','prompt-limit',state.prompt.length.toLocaleString()+' / 30 000'));
   const composerActions=node('div','composer-actions');
   composerActions.append(button('▣  Clipboard’dan joylash','paste-prompt-button',async()=>{try{const pasted=await navigator.clipboard.readText();if(!pasted.trim())throw new Error('Clipboard bo‘sh. Avval promptni nusxalang.');state.prompt=pasted.slice(0,30000);render();const next=root.querySelector('#prompt');if(next){next.focus();next.setSelectionRange(next.value.length,next.value.length);}}catch(error){addMessage({role:'error',text:error.message||'Clipboard’ni o‘qib bo‘lmadi. Matn maydoniga Ctrl+V bilan joylang.'});}},state.busy));
