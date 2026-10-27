@@ -4,6 +4,7 @@ import { db, currentConversation, saveMessage, getMessages, addUsage, getUsage }
 import { createMessage } from './claude.js';
 import { tools, truncateOutput, toolSummary } from './tools.js';
 import { systemPrompt } from './prompt.js';
+import { searchWeb } from './research.js';
 import { emit, sendCommand, statusForUser, setUserRunning, stateForUser } from './hub.js';
 
 const running = new Map();
@@ -126,9 +127,15 @@ async function runLoop(userId, task) {
         sendState(userId, task.conversationId);
         let result;
         try {
-          result = await sendCommand(userId, toolUse.name, toolUse.input || {}, signal);
+          if (toolUse.name === 'web_research') {
+            if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
+            const research = await searchWeb(toolUse.input || {});
+            result = { ok:true, output:JSON.stringify(research) };
+          } else {
+            result = await sendCommand(userId, toolUse.name, toolUse.input || {}, signal);
+          }
         } catch (error) {
-          result = { ok:false, output: error?.name === 'AbortError' ? 'Foydalanuvchi to‘xtatdi' : 'Tool bajarilmadi' };
+          result = { ok:false, output: error?.name === 'AbortError' ? 'Foydalanuvchi to‘xtatdi' : String(error?.message || 'Tool bajarilmadi').slice(0, 500) };
         }
         const output = truncateOutput(result.output || '', 20000);
         results.push({ type:'tool_result', tool_use_id:toolUse.id, is_error:!result.ok, content:output });
