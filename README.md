@@ -89,3 +89,6 @@ The plugin now includes an **AI AUDIT · Loyihani tekshirish** action and an `au
 - `restore_snapshot` requires explicit confirmation and replaces the current subtree with the saved copy. Use only when you deliberately want to restore that named snapshot.
 - `create_gui_template` creates a responsive ScreenGui scaffold with a close action, status label, and action buttons. The buttons raise a local BindableEvent; connect each action to real game logic and validated server remotes before treating it as a complete feature.
 - These helpers improve safety but do not replace source control, a separate place copy, code review, or Studio Play tests.
+
+- `performance_audit` reports static counts for parts, unanchored parts, lights, particle emitters, beams/trails, sounds, and scripts; it cannot measure FPS.
+- `check_asset_ids` checks up to 20 Roblox asset IDs with MarketplaceService metadata. A failed lookup may be a permissions/API restriction, and successful metadata does not guarantee the asset is allowed in a particular experience.
