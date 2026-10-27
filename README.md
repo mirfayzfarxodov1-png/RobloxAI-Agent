@@ -81,3 +81,11 @@ The plugin now includes an **AI AUDIT · Loyihani tekshirish** action and an `au
 - External asset IDs are not guessed. Roblox APIs, permissions, DataStore availability, and Studio settings can affect results.
 - run_code is intentionally disabled until you explicitly enable it in the plugin. Only enable it for code and projects you trust.
 - API usage depends on your provider account, model access, pricing, and limits. This application does not make those provider limits disappear.
+
+## Safer build workflow and GUI scaffolding
+
+- `preview_tree` validates an upcoming tree and reports create/update/class-conflict counts without changing Studio.
+- `snapshot_instance` clones one selected subtree into `ServerStorage/QuruvchiSnapshots` (up to 10 snapshots). Save/publish the place to persist the backup. This is an in-place Roblox backup, not an external project file.
+- `restore_snapshot` requires explicit confirmation and replaces the current subtree with the saved copy. Use only when you deliberately want to restore that named snapshot.
+- `create_gui_template` creates a responsive ScreenGui scaffold with a close action, status label, and action buttons. The buttons raise a local BindableEvent; connect each action to real game logic and validated server remotes before treating it as a complete feature.
+- These helpers improve safety but do not replace source control, a separate place copy, code review, or Studio Play tests.
