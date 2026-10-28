@@ -6,7 +6,7 @@ test('API-free builder chooses an obby starter for Uzbek parkur requests', () =>
   const project = buildFreeProject('Menga 24 bosqichli parkur va checkpoint yarat');
   assert.equal(project.kind, 'obby');
   assert.match(project.source, /Checkpoint/);
-  assert.match(project.source, /ServerScriptService/); // The code is intended to be installed as a server Script.
+  assert.equal(project.path, 'ServerScriptService/QuruvchiFreeBuilder/FreeGame.server.lua');
   assert.ok(project.source.length > 1000);
 });
 
