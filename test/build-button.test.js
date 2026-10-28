@@ -36,3 +36,18 @@ test('external AI is opt-in and removing a key returns the account to free mode'
   assert.match(app, /Odatiy rejimda tashqi AI API ishlatilmaydi/);
   assert.doesNotMatch(app, /Boshqa AI provayderini ulash/);
 });
+
+
+test('premium 3D world is present on the builder welcome screen and auth screen', async () => {
+  const app = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+  const css = await readFile(new URL('../public/style.css', import.meta.url), 'utf8');
+  const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
+  assert.match(app, /function createWorldVisual\(className\)/);
+  assert.match(app, /createWorldVisual\('world-stage world-stage-inline'\)/);
+  assert.match(app, /createWorldVisual\('world-stage world-stage-auth'\)/);
+  assert.match(app, /prefers-reduced-motion: reduce/);
+  assert.match(css, /\.world-stage/);
+  assert.match(css, /@media\(max-width:520px\)/);
+  assert.match(css, /@media\(prefers-reduced-motion:reduce\)/);
+  assert.match(html, /20261028-3d-world/);
+});
