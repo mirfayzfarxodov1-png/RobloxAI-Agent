@@ -210,3 +210,29 @@ html{scroll-behavior:smooth;scroll-padding-top:18px}
 .referral-loading{color:var(--muted,#98a6c1);font-size:13px}
 .referral-auth-note{margin-top:10px;border:1px solid rgba(112,134,255,.25);background:rgba(112,134,255,.1);color:#c5d0ff}
 @media(max-width:480px){.referral-link-row{flex-direction:column}.referral-link-row .primary-button{width:100%}}
+
+
+/* Quruvchi 2026 Studio refresh: brighter accents, clearer hierarchy, polished settings surfaces. */
+:root{--accent:#8b7cff;--accent2:#5d7cff;--ok:#55dfb4;--cyan:#56d8ed;--warm:#ffcb72;--panel:#111a30;--panel2:#192743;--line:#2b3c60}
+body{background:radial-gradient(ellipse at 78% -12%,rgba(111,91,255,.24),transparent 38%),radial-gradient(ellipse at 0% 74%,rgba(36,190,210,.12),transparent 34%),radial-gradient(ellipse at 54% 110%,rgba(69,94,205,.11),transparent 44%),#0a1020}
+body::before{opacity:.075;background-image:linear-gradient(rgba(145,158,255,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(145,158,255,.10) 1px,transparent 1px);background-size:56px 56px}
+.sidebar{background:linear-gradient(180deg,rgba(15,23,45,.98),rgba(10,17,33,.98));border-right-color:rgba(130,145,255,.22)}
+.brand-mark{background:linear-gradient(135deg,#8a70ff,#4779ee 62%,#36bed0);border-color:rgba(207,216,255,.6);box-shadow:0 8px 24px rgba(91,103,255,.26)}
+.new-chat,.primary-button,.send-button{background:linear-gradient(112deg,#7765f4,#4d78ed 65%,#418fdc);border-color:#8a9bff;box-shadow:0 7px 20px rgba(79,100,230,.18)}
+.new-chat:hover,.primary-button:hover,.send-button:hover:not(:disabled){filter:brightness(1.12);box-shadow:0 9px 26px rgba(79,100,230,.28)}
+.side-link.active,.side-link:hover{background:linear-gradient(105deg,rgba(113,100,239,.19),rgba(56,168,205,.08));border-color:rgba(138,151,255,.34)}
+.chat-heading h1{background:linear-gradient(100deg,#fff 0%,#c9c5ff 44%,#82e4f2 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.chat-heading h1 span{background:linear-gradient(100deg,#9e8aff,#5dd9e9);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.eyebrow{color:#b3a5ff}.heading-chip{border-color:rgba(100,218,202,.24);background:rgba(31,112,112,.13)}
+.suggestion-card{background:linear-gradient(145deg,rgba(30,43,75,.98),rgba(17,27,48,.98));border-color:rgba(126,145,225,.28)}
+.suggestion-card:before{background:linear-gradient(180deg,#a08bff,#54d9e9);opacity:.9;width:3px}
+.suggestion-card:hover{background:linear-gradient(145deg,rgba(43,52,97,.98),rgba(20,40,62,.98));border-color:#8c9dff;box-shadow:0 12px 28px rgba(36,44,110,.22)}
+.suggestion-emoji{background:linear-gradient(145deg,rgba(117,101,239,.2),rgba(55,181,206,.1));border-color:rgba(148,161,255,.35)}
+.composer{background:linear-gradient(145deg,rgba(18,29,52,.98),rgba(15,25,45,.98));border-color:rgba(130,146,235,.38)}
+.composer:focus-within{border-color:#8d9cff;box-shadow:0 0 0 3px rgba(123,130,255,.14),0 14px 36px rgba(0,0,0,.2)}
+.backend-pill.online,.studio-pill.connected{border-color:rgba(85,223,180,.38);background:rgba(29,119,92,.15)}
+.modal-card,.auth-card{background:linear-gradient(145deg,#151f39,#10192d);border-color:rgba(130,146,235,.32);box-shadow:0 26px 90px rgba(0,0,0,.42)}
+.modal-icon{background:linear-gradient(140deg,rgba(132,105,255,.25),rgba(58,192,216,.15));border-color:rgba(142,157,255,.3)}
+.settings-row{background:rgba(30,45,76,.55);border-color:rgba(112,137,197,.2);border-radius:12px;padding:12px 14px;margin:7px 0}
+.state-tag{color:#aeeede}.form-error{border-color:rgba(255,119,143,.32);background:rgba(150,43,68,.15)}
+@media(max-width:640px){.chat-heading h1{background:linear-gradient(100deg,#fff,#bfb8ff 60%,#7bdce9);-webkit-background-clip:text;background-clip:text;color:transparent}}
