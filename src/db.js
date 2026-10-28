@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { config } from './config.js';
 
@@ -10,7 +11,8 @@ db.exec(`
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS users (
  id INTEGER PRIMARY KEY, login TEXT NOT NULL UNIQUE COLLATE NOCASE,
- pass_hash TEXT NOT NULL, created_at INTEGER NOT NULL
+ pass_hash TEXT NOT NULL, created_at INTEGER NOT NULL,
+ referral_code TEXT UNIQUE, referred_by INTEGER REFERENCES users(id) ON DELETE SET NULL
 );
 CREATE TABLE IF NOT EXISTS sessions (
  token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -51,6 +53,20 @@ CREATE INDEX IF NOT EXISTS idx_messages_conv ON messages(conversation_id,id);
 CREATE INDEX IF NOT EXISTS idx_devices_user ON devices(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_expiry ON sessions(expires_at);
 `);
+// Backward-compatible schema migration for existing local databases.
+const userColumns = new Set(db.prepare('PRAGMA table_info(users)').all().map(column => column.name));
+if (!userColumns.has('referral_code')) db.exec('ALTER TABLE users ADD COLUMN referral_code TEXT');
+if (!userColumns.has('referred_by')) db.exec('ALTER TABLE users ADD COLUMN referred_by INTEGER REFERENCES users(id) ON DELETE SET NULL');
+db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_referral_code ON users(referral_code)');
+const usersWithoutReferral = db.prepare('SELECT id FROM users WHERE referral_code IS NULL OR referral_code = \'\'').all();
+const setReferral = db.prepare('UPDATE users SET referral_code=? WHERE id=?');
+for (const user of usersWithoutReferral) {
+  let code;
+  do { code = crypto.randomBytes(8).toString('hex'); }
+  while (db.prepare('SELECT 1 FROM users WHERE referral_code=?').get(code));
+  setReferral.run(code, user.id);
+}
+
 const version = db.prepare('SELECT value FROM meta WHERE key=?').get('schema_version');
 if (!version) db.prepare('INSERT INTO meta(key,value) VALUES(?,?)').run('schema_version', '1');
 

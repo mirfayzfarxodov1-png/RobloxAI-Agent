@@ -58,6 +58,21 @@ test('Quruvchi auth, CSRF, pairing, tool loop, cancellation history, and device 
   assert.equal(registered.status,201);
   const cookie=registered.headers.get('set-cookie').split(';')[0];
   assert.ok(cookie.startsWith('qs='));
+
+  const referralResponse=await fetch(base+'/api/referral',{headers:{Cookie:cookie}});
+  assert.equal(referralResponse.status,200);
+  const referral=await referralResponse.json();
+  assert.match(referral.referralCode,/^[a-f0-9]{16}$/);
+  assert.equal(referral.referralUrl,base+'/?ref='+referral.referralCode);
+  assert.equal(referral.localOnly,true);
+  const invited=await post(base,'/api/register',{login:'tester_two',password:'correct-horse',invite:referral.referralCode});
+  assert.equal(invited.status,201,'a personal referral code should allow registration even when INVITE_CODE is configured');
+  const invitedCookie=invited.headers.get('set-cookie').split(';')[0];
+  const secondReferral=await (await fetch(base+'/api/referral',{headers:{Cookie:invitedCookie}})).json();
+  assert.equal(secondReferral.referrals,0);
+  const updatedReferral=await (await fetch(base+'/api/referral',{headers:{Cookie:cookie}})).json();
+  assert.equal(updatedReferral.referrals,1,'the referrer should see one successful signup');
+
   const duplicate=await post(base,'/api/register',{login:'tester_one',password:'correct-horse',invite:'test123'});
   assert.equal(duplicate.status,409);
   const wrongLogin=await post(base,'/api/login',{login:'tester_one',password:'wrong-password'});
