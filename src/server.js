@@ -95,15 +95,24 @@ const server = http.createServer(async (req, res) => {
         const password = String(input.password || '');
         if (!/^[a-zA-Z0-9_]{3,32}$/.test(login)) return json(res, 400, { error:'Login 3–32 belgi, faqat harf, raqam va _ bo‘lsin' });
         if (password.length < 8 || password.length > 200) return json(res, 400, { error:'Parol 8–200 belgi bo‘lishi kerak' });
-        if (!verifyInvite(String(input.invite || ''))) return json(res, 403, { error:'Taklif kodi noto‘g‘ri' });
+        const invite = String(input.invite || '').trim();
+        const referrer = invite ? db.prepare('SELECT id FROM users WHERE referral_code=?').get(invite) : null;
+        const validGlobalInvite = Boolean(config.registrationInvite && verifyInvite(invite));
+        if ((invite && !referrer && !validGlobalInvite) || (config.registrationInvite && !referrer && !validGlobalInvite)) {
+          return json(res, 403, { error:'Taklif havolasi yoki taklif kodi noto‘g‘ri' });
+        }
+        let referralCode;
+        do { referralCode = crypto.randomBytes(8).toString('hex'); }
+        while (db.prepare('SELECT 1 FROM users WHERE referral_code=?').get(referralCode));
         try {
-          const result = db.prepare('INSERT INTO users(login,pass_hash,created_at) VALUES(?,?,?)').run(login, hashPassword(password), Date.now());
+          const result = db.prepare('INSERT INTO users(login,pass_hash,created_at,referral_code,referred_by) VALUES(?,?,?,?,?)')
+            .run(login, hashPassword(password), Date.now(), referralCode, referrer ? referrer.id : null);
           const userId = Number(result.lastInsertRowid);
           createConversation(userId);
           const token = createSession(userId);
           return json(res, 201, { login }, { 'Set-Cookie': sessionCookie(token) });
         } catch (error) {
-          if (String(error).includes('UNIQUE')) return json(res, 409, { error:'Bu login band' });
+          if (String(error).includes('UNIQUE')) return json(res, 409, { error:'Bu login yoki taklif kodi band' });
           throw error;
         }
       }
@@ -192,6 +201,26 @@ const server = http.createServer(async (req, res) => {
       if (method === 'GET' && pathname === '/api/me') {
         const usage = getUsage(user.id);
         return json(res, 200, { login:user.login, steps:{ used:usage.steps, limit:config.dailyStepLimit }, running:isRunning(user.id), status:statusForUser(user.id), conversationId:currentConversation(user.id), paused:stateForUser(user.id).paused });
+      }
+      if (method === 'GET' && pathname === '/api/referral') {
+        let account = db.prepare('SELECT referral_code FROM users WHERE id=?').get(user.id);
+        if (!account) return json(res, 404, { error:'Hisob topilmadi' });
+        if (!account.referral_code) {
+          let referralCode;
+          do { referralCode = crypto.randomBytes(8).toString('hex'); }
+          while (db.prepare('SELECT 1 FROM users WHERE referral_code=?').get(referralCode));
+          db.prepare('UPDATE users SET referral_code=? WHERE id=?').run(referralCode, user.id);
+          account = { referral_code: referralCode };
+        }
+        const referrals = db.prepare('SELECT COUNT(*) AS total FROM users WHERE referred_by=?').get(user.id).total;
+        const localOnly = config.publicUrl.includes('localhost') || config.publicUrl.includes('127.0.0.1');
+        return json(res, 200, {
+          referralCode: account.referral_code,
+          referralUrl: config.publicUrl + '/?ref=' + encodeURIComponent(account.referral_code),
+          serverUrl: config.publicUrl,
+          localOnly,
+          referrals
+        });
       }
       if (method === 'GET' && pathname === '/api/stream') return attachSse(user.id, req, res);
       if (method === 'POST' && pathname === '/api/pair') {
