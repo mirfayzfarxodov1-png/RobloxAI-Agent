@@ -129,6 +129,8 @@ function createWorldVisual(className){
   const overlay=node('div','world-scene-overlay');
   overlay.append(node('span','world-scene-tag','LIVE WORLD ENGINE'),node('span','world-scene-coordinate','WORLD / 001'));
   stage.append(canvas,overlay,caption);
+  // Progressive enhancement: the original canvas world remains visible if WebGL/Three.js is unavailable.
+  import('/avatar-3d.js').then(({mountAvatar3D})=>mountAvatar3D(stage)).catch(()=>{});
   const ctx=canvas.getContext('2d',{alpha:true,desynchronized:true});
   if(!ctx)return stage;
   const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
