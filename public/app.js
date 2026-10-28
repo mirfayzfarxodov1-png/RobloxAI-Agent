@@ -42,6 +42,8 @@ function renderMessage(m){
 }
 function render(){
   const oldScroll=root.querySelector('.chat-scroll');const oldScrollTop=oldScroll?oldScroll.scrollTop:0;
+  // Preserve the pairing/settings modal's scroll position when SSE updates or the pairing timer rerenders the UI.
+  const oldModal=root.querySelector('.modal-card');const oldModalScrollTop=oldModal?oldModal.scrollTop:0;
   const oldPrompt=root.querySelector('#prompt');const promptFocused=oldPrompt===document.activeElement;const selectionStart=oldPrompt?oldPrompt.selectionStart:0;const selectionEnd=oldPrompt?oldPrompt.selectionEnd:0;
   root.replaceChildren();if(!state.user){renderAuth();return;}
   const shell=node('div','app-shell'),sidebar=node('aside','sidebar'+(state.mobileMenu?' open':''));
@@ -109,7 +111,10 @@ function render(){
   composerActions.append(button(state.busy?'■  To‘xtatish':'➤  Qurishni boshlash','send-button'+(state.busy?' stop':''),state.busy?stop:sendMessage,!state.busy&&!state.prompt.trim()));
   bottom.append(hints,composerActions);
   composer.append(textarea,bottom);composerWrap.append(composer,node('div','composer-foot','◇  AI yaratgan kodni Roblox Studio’da sinab ko‘r. Haqiqiy Play-test alohida talab qilinadi.'));layout.append(composerWrap);main.append(layout);shell.append(main,shellVersion());root.append(shell);
-  if(state.modal)renderModal(shell);if(state.scrollBottom){scroll.scrollTop=scroll.scrollHeight;state.scrollBottom=false;}else if(oldScroll)scroll.scrollTop=oldScrollTop;
+  if(state.modal)renderModal(shell);
+  const nextModal=root.querySelector('.modal-card');
+  if(nextModal&&oldModal)nextModal.scrollTop=oldModalScrollTop;
+  if(state.scrollBottom){scroll.scrollTop=scroll.scrollHeight;state.scrollBottom=false;}else if(oldScroll)scroll.scrollTop=oldScrollTop;
   if(promptFocused){const nextPrompt=root.querySelector('#prompt');if(nextPrompt){nextPrompt.focus();try{nextPrompt.setSelectionRange(selectionStart,selectionEnd);}catch{}}}
 }
 function shellVersion(){return node('div','version-label','QURUVCHI  WEB · v1.0');}
