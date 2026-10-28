@@ -5,10 +5,10 @@ Quruvchi is an Uzbek-first web application connecting a chat UI, Anthropic Claud
 ## Requirements
 
 - Node.js **22.13.0 or newer** (uses native node:sqlite).
-- An Anthropic API key and a provider account with access to the configured model. Provider usage may cost money and has provider-side limits.
+- Roblox Studio. An Anthropic API key is optional: without a configured key, Quruvchi uses its local template builder; with a key, it can use the configured AI provider. Provider usage may cost money and has provider-side limits.
 - Roblox Studio.
 
-The application intentionally has **no external npm runtime dependencies**. The web UI can start without an AI key; sending AI tasks requires a valid provider key. It uses Node.js built-ins, including node:http, node:crypto, node:sqlite, and native fetch.
+The application intentionally has **no external npm runtime dependencies**. The web UI and API-free template builder work without an AI key. The no-key mode generates supported starter templates and can advance them through bounded improvement stages using the current conversation history; it is not a general-purpose LLM and cannot reliably implement arbitrary game ideas. When a provider key is configured, requests use that provider. It uses Node.js built-ins, including node:http, node:crypto, node:sqlite, and native fetch.
 
 ## Local setup on Windows
 
@@ -38,6 +38,10 @@ For another computer to reach the same server, `PUBLIC_URL` must be a reachable 
 7. Ask Quruvchi to inspect or change the project. Review the plugin log and test changes in a separate place before using them in an important game.
 
 The plugin uses long-polling with bearer-token authentication. Pairing codes expire after ten minutes and can only be used once. You can revoke a device from the website.
+
+## API-free step-by-step game building
+
+Without an API key, Quruvchi supports starter templates for obby/parkour, collectible simulators, tycoons, and a decorative 3D world. In the same conversation, follow-up requests such as “endi yaxshila” advance the current template through bounded professional passes: fall recovery, progress/leaderstats, and lifecycle telemetry. The full updated Luau script is returned for copying and written to `ServerScriptService/QuruvchiFreeBuilder/FreeGame.server.lua` when Studio is connected. Always use Studio Play mode and Output to verify the generated game; the template generator does not replace a general-purpose reasoning model or automatic runtime testing.
 
 ## Large-project planning
 
