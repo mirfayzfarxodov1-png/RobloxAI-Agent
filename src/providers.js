@@ -42,16 +42,14 @@ function unseal(row) {
 export function listProviders() { return Object.entries(providers).map(([id,p])=>({id,label:p.label,endpoint:p.endpoint,models:p.models,officialUrl:({anthropic:'https://console.anthropic.com/settings/keys',openai:'https://platform.openai.com/api-keys',openrouter:'https://openrouter.ai/keys',google:'https://aistudio.google.com/apikey',groq:'https://console.groq.com/keys',deepseek:'https://platform.deepseek.com/api_keys'})[id]})); }
 export function getCredential(userId) {
  const row=db.prepare('SELECT * FROM ai_credentials WHERE user_id=?').get(userId);
- if(!row) {
-  if(!config.anthropicApiKey) return null;
-  return {provider:'anthropic',model:config.claudeModel,endpoint:config.anthropicBaseUrl,key:config.anthropicApiKey,source:'server'};
- }
+ // External AI is opt-in only: never silently activate a server .env key.
+ if(!row) return null;
  return {provider:row.provider,model:row.model,endpoint:row.endpoint,key:unseal(row),source:'user'};
 }
 export function credentialStatus(userId) {
  const row=db.prepare('SELECT provider,model,endpoint,updated_at FROM ai_credentials WHERE user_id=?').get(userId);
  if(row) return {configured:true,provider:row.provider,model:row.model,endpoint:row.endpoint,updatedAt:row.updated_at,source:'account'};
- return config.anthropicApiKey ? {configured:true,provider:'anthropic',model:config.claudeModel,endpoint:config.anthropicBaseUrl,source:'server'} : {configured:false,provider:null,model:null,source:null};
+ return {configured:false,provider:null,model:null,source:null};
 }
 export async function saveCredential(userId,{provider,model,endpoint,key}) {
  if(!providers[provider]) throw Object.assign(new Error('AI provayder tanlanmadi.'),{status:400});
