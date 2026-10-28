@@ -32,5 +32,5 @@ export const config = Object.freeze({
   isTest: process.env.NODE_ENV === 'test',
   registrationInvite: process.env.INVITE_CODE || '',
 });
-if (!config.anthropicApiKey) console.warn('[Quruvchi] ANTHROPIC_API_KEY yo‘q: sayt ochiladi, lekin AI chat kalit kiritilmaguncha ishlamaydi.');
+if (!config.anthropicApiKey) console.warn('[Quruvchi] ANTHROPIC_API_KEY yo‘q: API-kalitsiz bepul shablon generatori ishlatiladi; u umumiy AI modelining o‘rnini bosmaydi.');
 if (!config.isTest && !process.env.CLAUDE_MODEL) console.warn('[Quruvchi] CLAUDE_MODEL was not set; using configured default claude-sonnet-5.');
