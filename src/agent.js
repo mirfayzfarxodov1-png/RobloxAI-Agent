@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { config } from './config.js';
 import { db, currentConversation, saveMessage, getMessages, addUsage, getUsage, getTaskPause, setTaskPause, clearTaskPause } from './db.js';
 import { createMessage } from './claude.js';
+import { getCredential } from './providers.js';
 import { tools, truncateOutput, toolSummary } from './tools.js';
 import { systemPrompt } from './prompt.js';
 import { searchWeb } from './research.js';
@@ -88,7 +89,7 @@ export async function startTask(user, text) {
   if (running.has(user.id)) return { ok: false, status: 409, error: 'Agent hali ishlayapti' };
   const status = statusForUser(user.id);
   if (!status.connected) return { ok: false, status: 412, error: 'Studio ulanmagan', needPairing: true };
-  if (!config.anthropicApiKey) return { ok: false, status: 503, error: 'AI provider sozlanmagan. Serverdagi .env fayliga ANTHROPIC_API_KEY kiriting.' };
+  if (!getCredential(user.id)) return { ok: false, status: 503, error: 'AI provider sozlanmagan. Sozlamalardan API kalitni kiriting.' };
   if (text.length < 1 || text.length > 30000) return { ok: false, status: 400, error: 'Xabar 1–30 000 belgi oralig‘ida bo‘lishi kerak.' };
   const conversationId = currentConversation(user.id);
   const existingPause = getTaskPause(user.id);
@@ -126,7 +127,7 @@ async function runLoop(userId, task) {
   try {
     while (!signal.aborted) {
       const history = repairHistory(getMessages(task.conversationId));
-      const response = await createMessage({ messages: history, tools, system: systemPrompt, signal, maxTokens: config.maxTokens });
+      const response = await createMessage({ messages: history, tools, system: systemPrompt, signal, maxTokens: config.maxTokens, credential:getCredential(userId) });
       const content = Array.isArray(response.content) ? response.content : textBlock('AI javobi noto‘g‘ri formatda keldi.');
       saveMessage(task.conversationId, 'assistant', content);
       emitText(userId, content);
