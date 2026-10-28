@@ -11,7 +11,7 @@ test('build button remains clickable with an empty prompt and explains what to d
 
 test('index refreshes the browser JavaScript after the build-button fix', async () => {
   const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
-  assert.match(html, /app\.js\?v=20261028-sendfix/);
+  assert.match(html, /app\\.js\\?v=20261028-optin-free/);
 });
 
 
@@ -21,7 +21,7 @@ test('API-free mode does not redirect chat errors into mandatory API-key setup',
   const agent = await readFile(new URL('../src/agent.js', import.meta.url), 'utf8');
   assert.match(app, /API kaliti majburiy emas/);
   assert.doesNotMatch(app, /else if\(error\.status===503\)\{openAiSettings\(\)/);
-  assert.match(config, /API-kalitsiz bepul shablon generatori ishlatiladi/);
+  assert.match(config, /Tashqi AI faqat foydalanuvchi sozlamada API kalitini ixtiyoriy ulaganda ishlaydi/);
   assert.match(agent, /getCredential\(user\.id\)\s*\?\s*runLoop\(user\.id, task\)\s*:\s*runFreeTask\(user\.id, task, text\)/);
 });
 
