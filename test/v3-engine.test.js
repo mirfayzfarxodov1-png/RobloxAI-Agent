@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { buildV3Architecture, buildV3BuildSpec, buildV3ModelSpec, buildV3QAMatrix, runV3Action, runV3Audit } from '../src/v3-engine.js';
+test('architect rejects short ideas',()=>{assert.throws(()=>buildV3Architecture({idea:'hi'}),/kamida 8/);});
+test('architect detects game systems and security gates',()=>{const r=buildV3Architecture({title:'Steal an Egg',idea:'Steal an egg simulator with bases, pets, upgrades, shop and multiplayer'});assert.ok(r.plan.features.some(x=>/ownership/i.test(x)));assert.ok(r.plan.securityGates.some(x=>x.id==='remote-validation'));assert.ok(r.plan.phases.length>=6);assert.ok(r.plan.folderTree.some(x=>x.path.includes('ServerScriptService')));});
+test('build spec requires Studio inspection and honest test status',()=>{const r=buildV3BuildSpec({title:'My Game',idea:'A simple obstacle course with checkpoints'});assert.match(r.prompt,/inspect the connected Studio tree/i);assert.match(r.prompt,/Never fake Play-test success/i);assert.match(r.prompt,/rollback/i);});
+test('multi-pass audit combines Luau, performance and security',()=>{const r=runV3Audit({source:'while true do print("x") end\nRemote.OnServerEvent:Connect(function(player, value) end)\nrequire(12345)'});assert.ok(r.passes.luauPatternAudit>=1);assert.ok(r.passes.securityReview>=1);assert.ok(r.findings.length>=2);});
+test('QA matrix is not-run before real execution',()=>{const r=buildV3QAMatrix({title:'Test Game'});assert.equal(r.status,'not-run');assert.ok(r.tests.some(x=>x.area==='Networking'));});
+test('model spec clamps scale and documents scope',()=>{const r=buildV3ModelSpec({name:'Egg',scale:100});assert.equal(r.scale,20);assert.ok(r.assemblyRules.some(x=>/instance/i.test(x)));});
+test('unknown V3 action is rejected',()=>{assert.throws(()=>runV3Action({action:'unknown'}),/Noma’lum/);});

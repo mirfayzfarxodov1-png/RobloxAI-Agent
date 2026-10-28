@@ -102,3 +102,12 @@ The plugin now includes an **AI AUDIT · Loyihani tekshirish** action and an `au
 
 - `performance_audit` reports static counts for parts, unanchored parts, lights, particle emitters, beams/trails, sounds, and scripts; it cannot measure FPS.
 - `check_asset_ids` checks up to 20 Roblox asset IDs with MarketplaceService metadata. A failed lookup may be a permissions/API restriction, and successful metadata does not guarantee the asset is allowed in a particular experience.
+
+
+## Quruvchi V3 Workbench
+
+V3 adds a deterministic, API-keyless architecture planner; a connected-Studio build spec; multi-pass heuristic Luau/performance/security audit; QA test matrix; and parametric model spec. Open Quruvchi V2 → V3 AI Studio in the signed-in app. The V3 endpoint is authenticated and rate-limited.
+
+The architecture planner is deterministic, not a generative model. Build Spec is copied into the existing chat so the connected agent can inspect the Studio tree and use supported plugin tools. Audit is heuristic/static, not a full Luau parser. QA matrices remain not-run until tests happen in Studio. Model specs do not create mesh files by themselves.
+
+Run npm test on Node.js 22.13+ to verify V3 tests with the existing suite.

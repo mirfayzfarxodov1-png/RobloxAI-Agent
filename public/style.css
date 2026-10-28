@@ -436,3 +436,11 @@ body::before{opacity:.075;background-image:linear-gradient(rgba(145,158,255,.10)
 .v2-panel button{transform:none!important}.v2-panel button:hover{transform:translateY(-1px)!important}
 @media(max-width:640px){.v2-backdrop{padding:8px!important}.v2-panel{width:100%!important;height:94dvh!important;max-height:94dvh!important;border-radius:16px!important;padding:14px 12px!important}.v2-panel h2{font-size:22px!important}.v2-tabs button{flex:1 1 calc(50% - 8px);min-width:0;padding:9px 7px!important}.v2-tool-actions,.v2-engine-list{grid-template-columns:minmax(0,1fr)}.v2-foot{gap:6px}}
 @media(prefers-reduced-motion:reduce){.v2-backdrop{animation:none!important}}
+
+/* Quruvchi V3 workbench controls */
+.v2-panel .v2-field textarea{box-sizing:border-box;max-width:100%}
+.v2-tool-actions button{min-width:0;white-space:normal;line-height:1.4;padding:10px 12px}
+.v2-tool-output{tab-size:2}
+.v2-panel button:focus-visible,.v2-panel a:focus-visible,.v2-panel textarea:focus-visible{outline:2px solid #b6adff;outline-offset:2px}
+@media(max-width:640px){.v2-panel .v2-tool-actions{grid-template-columns:minmax(0,1fr)}.v2-tool-actions button{width:100%}.v2-panel .v2-tool-output{max-height:38dvh}}
+@media(prefers-reduced-motion:reduce){.v2-panel *{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}

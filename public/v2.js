@@ -30,14 +30,14 @@
     const head=el('div','v2-panel-head'),titleWrap=el('div','');
     titleWrap.append(el('span','v2-eyebrow','QURUVCHI AI · V2.1'),el('h2','','V2 Command Center'),el('p','','Loyihani rejalashtir, xotirani saqla va tekshiruvlarni kuzat.'));
     head.append(titleWrap,btn('×','v2-close',()=>backdrop.remove()));panel.append(head);
-    const tabs=el('div','v2-tabs'),tabPlan=btn('Loyiha arxitektori','active',()=>showTab('plan')),tabMemory=btn('Loyiha xotirasi','',()=>showTab('memory')),tabCaps=btn('V2 imkoniyatlari','',()=>showTab('caps')),tabEngines=btn('10 texnologiya','',()=>showTab('engines'));
-    tabs.append(tabPlan,tabMemory,tabEngines,tabCaps);panel.append(tabs);
+    const tabs=el('div','v2-tabs'),tabPlan=btn('Loyiha arxitektori','active',()=>showTab('plan')),tabMemory=btn('Loyiha xotirasi','',()=>showTab('memory')),tabV3=btn('V3 AI Studio','',()=>showTab('v3')),tabCaps=btn('V2 imkoniyatlari','',()=>showTab('caps')),tabEngines=btn('10 texnologiya','',()=>showTab('engines'));
+    tabs.append(tabPlan,tabMemory,tabV3,tabEngines,tabCaps);panel.append(tabs);
     const content=el('div','v2-content');panel.append(content);const status=el('p','v2-status','Tayyor');panel.append(status);
     const foot=el('div','v2-foot');foot.append(el('span','','Studio ulanishi mavjud bo‘lsa, reja chatga yuborib qurishni boshlash mumkin.'));
     const link=el('a','','GitHub main');link.href='https://github.com/mirfayzfarxodov1-png/RobloxAI-Agent';link.target='_blank';link.rel='noreferrer';foot.append(link);panel.append(foot);
     backdrop.append(panel);backdrop.addEventListener('click',e=>{if(e.target===backdrop)backdrop.remove();});document.body.append(backdrop);
     async function showTab(name){
-      for(const [key,b] of [['plan',tabPlan],['memory',tabMemory],['caps',tabCaps],['engines',tabEngines]])b.classList.toggle('active',key===name);
+      for(const [key,b] of [['plan',tabPlan],['memory',tabMemory],['v3',tabV3],['caps',tabCaps],['engines',tabEngines]])b.classList.toggle('active',key===name);
       content.replaceChildren();status.textContent='Tayyor';
       if(name==='plan'){
         content.append(el('p','v2-muted','G‘oyani yozing. Quruvchi uni 8 ta ish fazasi va QA mezonlariga ajratadi.'));
@@ -60,6 +60,13 @@
           const save=btn('Xotirani saqlash','v2-primary',async()=>{save.disabled=true;try{await api('/api/v2/memory',{title:title.input.value,idea:idea.input.value,decisions:decisions.input.value.split('\n'),completed:completed.input.value.split('\n'),nextSteps:next.input.value.split('\n'),notes:notes.input.value});status.textContent='Xotira saqlandi.';}catch(e){status.textContent=e.message;}finally{save.disabled=false;}});
           for(const f of [title,idea,decisions,completed,next,notes])content.append(f.wrap);content.append(save);
         }catch(e){content.replaceChildren(el('p','v2-muted',e.message));}
+      }else if(name==='v3'){
+        content.append(el('p','v2-muted','G‘oyani arxitekturaga aylantiring, kodni ko‘p qatlamli audit qiling va Studio chatiga topshiriq tayyorlang. Asosiy analizlar API kalitisiz ishlaydi.'));
+        const title=field('O‘yin nomi','Masalan: Steal an Egg');const idea=field('To‘liq o‘yin g‘oyasi','Gameplay, xarita, progress, UI, multiplayer va maxsus mexanikalarni yozing.');const context=field('Mavjud Studio loyihasi (ixtiyoriy)','Mavjud scriptlar, ishlaydigan tizimlar yoki xatolar...');const code=field('Luau kodi — audit uchun','Tekshiriladigan server/client skriptini joylang.');const modelName=field('Model nomi','Masalan: Cosmic Egg','Quruvchi Model');const modelStyle=field('Model uslubi','stylized, sci-fi, fantasy...','stylized');const modelScale=field('Model o‘lchami (0.25–20)','4','4');const result=el('pre','v2-tool-output','V3 natijalari shu yerda ko‘rinadi.');
+        const runV3=async(action,payload={})=>{status.textContent='V3 ishlayapti…';try{const data=await api('/api/v3/action',{action,...payload});result.textContent=JSON.stringify(data,null,2);status.textContent='Tayyor · natija tekshirish uchun tayyor.';return data;}catch(e){status.textContent=e.message;return null;}};
+        const architect=btn('AI Game Architect','v2-primary',async()=>{await runV3('architect',{title:title.input.value,idea:idea.input.value});});const spec=btn('Studio uchun Build Spec','v2-primary',async()=>{const data=await runV3('build-spec',{title:title.input.value,idea:idea.input.value,existingContext:context.input.value});if(data?.prompt){result.textContent=data.prompt;status.textContent='Build Spec tayyor · chatga yuborish mumkin.';}});const audit=btn('Multi-pass Luau audit','v2-secondary',async()=>{await runV3('audit',{source:code.input.value});});const qa=btn('QA test matrix','v2-secondary',async()=>{await runV3('qa',{title:title.input.value});});const model=btn('3D Model Spec','v2-secondary',async()=>{await runV3('model-spec',{name:modelName.input.value,style:modelStyle.input.value,scale:modelScale.input.value});});
+        const copy=btn('Natijani nusxalash','v2-secondary',async()=>{try{await navigator.clipboard.writeText(result.textContent);status.textContent='Natija nusxalandi.';}catch{status.textContent='Clipboard ruxsati yo‘q. Natijani qo‘lda belgilang.';}});const send=btn('Build Spec’ni chatga yuborish','v2-primary',()=>{const text=result.textContent||'';if(!text.includes('QURUVCHI V3')){status.textContent='Avval “Studio uchun Build Spec” yarating.';return;}const composer=document.querySelector('#prompt');if(!composer){status.textContent='Chat input topilmadi.';return;}composer.value=text;composer.dispatchEvent(new Event('input',{bubbles:true}));composer.focus();status.textContent='Build Spec chatga ko‘chirildi. Yuborish tugmasini bosing.';});
+        const actions=el('div','v2-tool-actions');actions.append(architect,spec,audit,qa,model,copy,send);content.append(title.wrap,idea.wrap,context.wrap,actions,code.wrap,modelName.wrap,modelStyle.wrap,modelScale.wrap,result);
       }else if(name==='engines'){
         content.append(el('p','v2-muted','API kalitisiz ishlaydigan lokal auditlar va aniq chegarasi ko‘rsatilgan yordamchi engine’lar. Natija Studio ichida obyekt yaratildi degani emas.'));
         const source=field('Luau kod yoki skript','Tahlil qilinadigan Luau kodini shu yerga qo‘ying.');

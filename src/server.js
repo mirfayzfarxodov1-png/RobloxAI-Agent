@@ -13,6 +13,7 @@ import { startTask, stopTask, newConversation, isRunning, resumeTask } from './a
 import { listProviders, credentialStatus, saveCredential } from './providers.js';
 import { V2_CAPABILITIES, buildV2Plan, getProjectMemory, saveProjectMemory } from './v2.js';
 import { V2_TECHNOLOGIES, runV2Toolkit } from './v2-engine.js';
+import { runV3Action } from './v3-engine.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pluginFile = path.resolve(__dirname, '..', 'plugin', 'Quruvchi.lua');
@@ -207,6 +208,13 @@ const server = http.createServer(async (req, res) => {
       }
       if (method === 'GET' && pathname === '/api/v2/capabilities') return json(res, 200, { version:'2.1.0', capabilities:V2_CAPABILITIES });
       if (method === 'GET' && pathname === '/api/v2/engines') return json(res, 200, { version:'2.1.0', technologies:V2_TECHNOLOGIES });
+      if (method === 'POST' && pathname === '/api/v3/action') {
+        const input = await getBody(req, res); if (!input) return;
+        const limit = consumeLimit('chatUser', 'v3-action:' + user.id);
+        if (!limit.allowed) return json(res, 429, { error:'V3 amallari juda tez-tez bajarildi. Biroz kutib qayta urinib ko‘ring.' }, { 'Retry-After':String(limit.retryAfter) });
+        try { return json(res, 200, runV3Action(input)); }
+        catch (error) { return json(res, error?.status || 400, { error:error?.message || 'V3 amali bajarilmadi' }); }
+      }
       if (method === 'POST' && pathname === '/api/v2/toolkit') {
         const input = await getBody(req, res); if (!input) return;
         const limit = consumeLimit('chatUser', 'v2-toolkit:' + user.id);
