@@ -87,6 +87,7 @@ function render(){
       if(waiting){const seconds=Math.ceil((pause.retryAt-Date.now())/1000),hours=Math.floor(seconds/3600),minutes=Math.floor((seconds%3600)/60),secs=seconds%60;card.append(node('p','pause-countdown','Qolgan vaqt: '+(hours?hours+' soat ':'')+(minutes?minutes+' daqiqa ':'')+secs+' soniya'));}
     }else card.append(node('p','pause-time','Aniq tiklanish vaqti API tomonidan berilmadi. Limit holati tekshirilgach, davom ettirishni sinab ko‘rishingiz mumkin.'));
     if(pause.details)card.append(node('small','pause-details','Tafsilot: '+pause.details));
+    if(pause.reason==='provider_rate_limit'||pause.reason==='credit_limit'||pause.reason==='provider_error')card.append(button('✦  Boshqa AI provayderini ulash','primary-button full',openAiSettings));
     const ready=!pause.retryAt||pause.retryAt<=Date.now();
     card.append(button(ready?'▶  Davom etish':'◷  Limit tiklanishini kutish','resume-button',resumeBuild,!ready||state.busy));
     scroll.append(card);
@@ -121,7 +122,7 @@ function renderAuth(){
   if(state.notice)form.append(node('div','form-error',state.notice));
   const submit=button(state.authMode==='login'?'Kirish':'Hisob yaratish','primary-button full',()=>{});submit.type='submit';form.append(submit);
   form.addEventListener('submit',async e=>{e.preventDefault();state.notice='';try{const data=await api(state.authMode==='login'?'/api/login':'/api/register',{login:state.login,password:state.password,...(state.authMode==='register'?{invite:state.invite}:{})});state.user={login:data.login||state.login};state.password='';state.notice='';await loadApp();}catch(error){state.notice=error.message;render();}});
-  card.append(form,node('p','auth-security','Sessiya xavfsiz cookie bilan saqlanadi. AI kaliti brauzerga yuborilmaydi.'));wrap.append(card);root.append(wrap);
+  card.append(form,node('p','auth-security','Sessiya xavfsiz cookie bilan saqlanadi. API kalit chat tarixiga kiritilmaydi va serverda shifrlanadi.'));wrap.append(card);root.append(wrap);
 }
 function renderModal(shell){
   const backdrop=node('div','modal-backdrop');backdrop.addEventListener('mousedown',e=>{if(e.target===backdrop)closeModal();});
