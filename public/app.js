@@ -119,53 +119,155 @@ function render(){
 }
 function shellVersion(){return node('div','version-label','QURUVCHI  WEB · v1.0');}
 function createWorldVisual(className){
-  const stage=node('div',className);
-  stage.setAttribute('aria-label','Quruvchi 3D o‘yin dunyosi');
+  const stage=node('div',className+' world-cinematic');
+  stage.setAttribute('aria-label','Quruvchi uchun original animatsion 3D shahar manzarasi');
   stage.setAttribute('role','img');
-  const glow=node('div','world-glow');
-  const stars=node('div','world-stars');
-  const planet=node('div','world-planet');
-  const orbit=node('div','world-orbit');
-  const island=node('div','world-island');
-  const islandTop=node('div','world-island-top');
-  const river=node('div','world-river');
-  const path=node('div','world-path');
-  island.append(islandTop,river,path);
-  const tower=node('div','world-tower');
-  const towerRoof=node('div','world-tower-roof');
-  tower.append(towerRoof);
-  const tree1=node('div','world-tree world-tree-one');
-  const tree2=node('div','world-tree world-tree-two');
-  const crystal=node('div','world-crystal');
-  const cube=node('div','world-cube');
-  const cubeTop=node('div','world-cube-top');
-  cube.append(cubeTop);
-  const badge1=node('div','world-float world-float-code','</>');
-  const badge2=node('div','world-float world-float-star','✦');
-  const badge3=node('div','world-float world-float-build','BUILD · READY');
+  const canvas=node('canvas','world-canvas');
+  canvas.setAttribute('aria-hidden','true');
   const caption=node('div','world-caption');
-  caption.append(node('span','world-caption-dot'),node('span','','YOUR NEXT WORLD STARTS HERE'));
-  stage.append(glow,stars,planet,orbit,island,tower,tree1,tree2,crystal,cube,badge1,badge2,badge3,caption);
-  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches && window.matchMedia('(hover: hover) and (pointer: fine)').matches){
-    let frame=0;
-    stage.addEventListener('pointermove',event=>{
-      if(frame)return;
-      frame=requestAnimationFrame(()=>{
-        frame=0;
-        const rect=stage.getBoundingClientRect();
-        const x=(event.clientX-rect.left)/rect.width-.5;
-        const y=(event.clientY-rect.top)/rect.height-.5;
-        stage.style.setProperty('--tilt-x',(-y*7).toFixed(2)+'deg');
-        stage.style.setProperty('--tilt-y',(x*9).toFixed(2)+'deg');
-        stage.style.setProperty('--pointer-x',(x*18).toFixed(1)+'px');
-        stage.style.setProperty('--pointer-y',(y*14).toFixed(1)+'px');
-      });
-    },{passive:true});
-    stage.addEventListener('pointerleave',()=>{
-      stage.style.setProperty('--tilt-x','0deg');stage.style.setProperty('--tilt-y','0deg');
-      stage.style.setProperty('--pointer-x','0px');stage.style.setProperty('--pointer-y','0px');
-    },{passive:true});
+  caption.append(node('span','world-caption-dot'),node('span','','QURUVCHI · WORLDS IN MOTION'));
+  const overlay=node('div','world-scene-overlay');
+  overlay.append(node('span','world-scene-tag','LIVE WORLD ENGINE'),node('span','world-scene-coordinate','WORLD / 001'));
+  stage.append(canvas,overlay,caption);
+  const ctx=canvas.getContext('2d',{alpha:true,desynchronized:true});
+  if(!ctx)return stage;
+  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const pointer={x:0,y:0,tx:0,ty:0};
+  let width=0,height=0,raf=0,last=0,alive=true;
+  const resize=()=>{
+    const rect=stage.getBoundingClientRect();
+    width=Math.max(1,rect.width);height=Math.max(1,rect.height);
+    const dpr=Math.min(window.devicePixelRatio||1,1.5);
+    canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);
+    canvas.style.width=width+'px';canvas.style.height=height+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    draw(performance.now());
+  };
+  const poly=(pts,fill,stroke)=>{
+    ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);
+    for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i][0],pts[i][1]);
+    ctx.closePath();ctx.fillStyle=fill;ctx.fill();
+    if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();}
+  };
+  const line=(pts,color,w=1)=>{
+    ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);
+    for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i][0],pts[i][1]);
+    ctx.strokeStyle=color;ctx.lineWidth=w;ctx.stroke();
+  };
+  function draw(now){
+    if(!alive)return;
+    if(!reduced&&now-last<30){raf=requestAnimationFrame(draw);return;}
+    last=now;
+    const t=reduced?0:now*.001;
+    pointer.x+=(pointer.tx-pointer.x)*.045;pointer.y+=(pointer.ty-pointer.y)*.045;
+    ctx.clearRect(0,0,width,height);
+    const bg=ctx.createRadialGradient(width*.53,height*.45,2,width*.53,height*.45,Math.max(width,height)*.75);
+    bg.addColorStop(0,'rgba(46,93,180,.24)');bg.addColorStop(.6,'rgba(13,27,57,.12)');bg.addColorStop(1,'rgba(5,10,25,0)');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,width,height);
+    const scale=Math.min(width/600,height/440);
+    const cx=width*.51+pointer.x*12,cy=height*.58+pointer.y*7;
+    const project=(x,y,z=0)=>[cx+(x-y)*.66*scale,cy+(x+y)*.31*scale-z*scale];
+    // Distant starfield, gently parallaxing without image assets.
+    for(let i=0;i<48;i++){
+      const x=((i*97.13)%997)/997*width+(pointer.x*(i%3+1)*3);
+      const y=((i*61.71)%887)/887*height;
+      const twinkle=.35+.65*(.5+.5*Math.sin(t*1.4+i*2.7));
+      ctx.globalAlpha=twinkle*.75;ctx.fillStyle=i%5===0?'#83f3ff':'#c5d6ff';
+      ctx.beginPath();ctx.arc((x+width)%width,y, i%9===0?1.5:.8,0,Math.PI*2);ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    // Orbit rings.
+    ctx.save();ctx.translate(cx,cy-height*.16);ctx.rotate(-.19);
+    ctx.strokeStyle='rgba(107,166,255,.25)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.ellipse(0,0,width*.28,height*.105,0,0,Math.PI*2);ctx.stroke();
+    ctx.strokeStyle='rgba(108,234,231,.17)';ctx.beginPath();ctx.ellipse(0,0,width*.34,height*.13,0,0,Math.PI*2);ctx.stroke();ctx.restore();
+    // Floating island: top, front and right faces.
+    const A=project(-220,-130,0),B=project(220,-130,0),C=project(220,130,0),D=project(-220,130,0);
+    const depth=35*scale;
+    poly([D,C,[C[0],C[1]+depth],[D[0],D[1]+depth]],'#142b52','#355ca0');
+    poly([B,C,[C[0],C[1]+depth],[B[0],B[1]+depth]],'#101e40','#2b4c87');
+    const topGrad=ctx.createLinearGradient(cx-width*.2,cy-height*.12,cx+width*.22,cy+height*.1);
+    topGrad.addColorStop(0,'#3ab7aa');topGrad.addColorStop(.48,'#246f9b');topGrad.addColorStop(1,'#514ab0');
+    poly([A,B,C,D],topGrad,'rgba(137,255,232,.7)');
+    // Fine construction grid on the island surface.
+    for(let x=-200;x<=200;x+=40)line([project(x,-120,1),project(x,120,1)],'rgba(166,235,255,.13)');
+    for(let y=-120;y<=120;y+=40)line([project(-220,y,1),project(220,y,1)],'rgba(166,235,255,.13)');
+    // Luminous river and roads.
+    line([project(-165,30,3),project(-90,5,3),project(-15,34,3),project(55,0,3),project(145,-26,3)],'rgba(93,238,255,.75)',3*scale);
+    line([project(-70,-100,4),project(-25,-48,4),project(45,-15,4),project(110,48,4)],'rgba(255,213,132,.8)',2*scale);
+    // Isometric building primitives: three shaded faces per building.
+    const building=(x,y,w,d,h,color)=>{
+      const p=project(x,y,0),p2=project(x+w,y,0),p3=project(x+w,y+d,0),p4=project(x,y+d,0);
+      const q1=project(x,y,h),q2=project(x+w,y,h),q3=project(x+w,y+d,h),q4=project(x,y+d,h);
+      const g=ctx.createLinearGradient(q1[0],q1[1],q2[0],q2[1]);g.addColorStop(0,color);g.addColorStop(1,'#293f8d');
+      poly([q1,q2,q3,q4],g,'rgba(182,220,255,.65)');
+      poly([q2,p2,p3,q3],'#182953','rgba(119,157,255,.38)');
+      poly([q4,q3,p3,p4],'#172344','rgba(119,157,255,.32)');
+      // Window lights on front face.
+      for(let k=1;k<=Math.min(4,Math.floor(h/15));k++){
+        const z=h*k/(Math.min(4,Math.floor(h/15))+1);
+        const l=project(x+w*.5,y,z);
+        ctx.fillStyle=k%2?'rgba(118,245,255,.92)':'rgba(255,214,139,.88)';
+        ctx.fillRect(l[0]-2*scale,l[1]-2*scale,4*scale,4*scale);
+      }
+      // Roof beacon.
+      const roof=project(x+w*.5,y+d*.5,h+8+Math.sin(t*2+x)*2);
+      ctx.shadowColor='#76f4ff';ctx.shadowBlur=10*scale;ctx.fillStyle='#9df9ff';
+      ctx.beginPath();ctx.arc(roof[0],roof[1],2.2*scale,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+    };
+    building(-130,-65,34,34,78,'#7d8cff');
+    building(-78,-35,25,27,48,'#6bd7dc');
+    building(32,-80,42,34,112,'#a58bff');
+    building(91,-24,31,31,65,'#70c9ff');
+    building(-25,38,27,26,44,'#68e5cf');
+    // Stylized low-poly trees and energy crystals.
+    const tree=(x,y,s)=>{
+      const base=project(x,y,0),mid=project(x,y,17*s),tip=project(x,y,37*s);
+      line([base,mid],'#6f8cba',2*scale);
+      poly([[tip[0],tip[1]-5*scale],[mid[0]-9*s*scale,mid[1]+5*scale],[mid[0]+9*s*scale,mid[1]+5*scale]],'#69dfc1');
+      poly([[mid[0],mid[1]-4*scale],[base[0]-7*s*scale,base[1]],[base[0]+7*s*scale,base[1]]],'#388f9c');
+    };
+    tree(-165,-25,.8);tree(155,22,.72);tree(-105,82,.68);tree(137,-76,.65);
+    const crystal=project(158,-40,20+Math.sin(t*2)*4);
+    poly([[crystal[0],crystal[1]-15*scale],[crystal[0]+8*scale,crystal[1]],[crystal[0],crystal[1]+8*scale],[crystal[0]-6*scale,crystal[1]]],'#8df5ff','#d2ffff');
+    ctx.shadowColor='#66dfff';ctx.shadowBlur=18*scale;ctx.fillStyle='rgba(102,223,255,.18)';ctx.beginPath();ctx.arc(crystal[0],crystal[1],14*scale,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+    // A hovering holographic cube, drawn in perspective.
+    const cubeX=cx-width*.27+pointer.x*8,cubeY=height*.28+Math.sin(t*1.2)*7;
+    ctx.save();ctx.translate(cubeX,cubeY);ctx.rotate(.55+t*.12);const s=25*scale;
+    poly([[0,-s],[s,-s*.5],[0,0],[-s,-s*.5]],'#b1a5ff','rgba(226,233,255,.8)');
+    poly([[-s,-s*.5],[0,0],[0,s],[ -s,s*.5]],'#655ed5','rgba(226,233,255,.7)');
+    poly([[0,0],[s,-s*.5],[s,s*.5],[0,s]],'#343e9a','rgba(226,233,255,.7)');ctx.restore();
+    // Animated energy particles travel around the island.
+    for(let i=0;i<9;i++){
+      const phase=(t*.12+i/9)%1,ang=phase*Math.PI*2;
+      const px=cx+Math.cos(ang)*width*.31,py=cy-height*.12+Math.sin(ang)*height*.105;
+      ctx.globalAlpha=.45+.55*Math.sin(phase*Math.PI);ctx.fillStyle=i%2?'#7ceeff':'#b6a5ff';
+      ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=9;ctx.beginPath();ctx.arc(px,py,2*scale,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+    }
+    ctx.globalAlpha=1;
+    // Soft foreground glow.
+    const glow=ctx.createRadialGradient(cx,cy,2,cx,cy,width*.35);
+    glow.addColorStop(0,'rgba(79,180,255,.08)');glow.addColorStop(1,'rgba(79,180,255,0)');
+    ctx.fillStyle=glow;ctx.fillRect(0,0,width,height);
+    if(!reduced)raf=requestAnimationFrame(draw);
   }
+  const onMove=e=>{
+    const r=stage.getBoundingClientRect();
+    pointer.tx=((e.clientX-r.left)/r.width-.5)*2;
+    pointer.ty=((e.clientY-r.top)/r.height-.5)*2;
+    if(!raf&&!reduced)raf=requestAnimationFrame(draw);
+  };
+  const onLeave=()=>{pointer.tx=0;pointer.ty=0;};
+  stage.addEventListener('pointermove',onMove,{passive:true});
+  stage.addEventListener('pointerleave',onLeave,{passive:true});
+  if('ResizeObserver'in window)new ResizeObserver(resize).observe(stage);else window.addEventListener('resize',resize,{passive:true});
+  if('IntersectionObserver'in window)new IntersectionObserver(entries=>{
+    alive=entries[0].isIntersecting;
+    if(alive&&!reduced&&!raf)raf=requestAnimationFrame(draw);
+    else if(!alive&&raf){cancelAnimationFrame(raf);raf=0;}
+  }).observe(stage);
+  resize();
+  if(!reduced)raf=requestAnimationFrame(draw);
   return stage;
 }
 function renderAuth(){
