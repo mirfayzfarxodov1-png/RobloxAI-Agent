@@ -124,12 +124,13 @@ export async function startTask(user, text) {
 async function runFreeTask(userId, task, prompt) {
   const signal = task.controller.signal;
   if (signal.aborted) return;
-  const project = buildFreeProject(prompt);
+  const project = buildFreeProject(prompt, getMessages(task.conversationId));
   const explanation = [
     '## Quruvchi bepul qurish rejimi',
-    'Tashqi AI API kaliti talab qilinmadi. So‘roving asosida mahalliy shablon tanlandi.',
+    'Tashqi AI API kaliti talab qilinmadi. So‘roving va suhbat tarixiga qarab mahalliy quruvchi ishladi.',
     '',
     '**Loyiha:** ' + project.name,
+    '**Bosqich:** ' + project.level + ' / 4',
     '**Hozir yaratiladigan qism:** ' + project.summary,
     '**Studio yo‘li:** `' + project.path + '`',
     '',
@@ -139,7 +140,7 @@ async function runFreeTask(userId, task, prompt) {
     project.source,
     '```',
     '',
-    'Eslatma: bu bepul mahalliy generator — umumiy maqsadli bulut AI emas. Noma’lum yoki juda murakkab g‘oyalar uchun shablonni kengaytirish yoki ixtiyoriy AI provayder ulash kerak bo‘lishi mumkin. Play rejimida o‘zing sinab ko‘r.'
+    'Keyingi qadam: Play’da sinab ko‘r, xato bo‘lsa Output’dagi xabarni yubor. So‘ng “endi yaxshila” yoki aniq yangi funksiya nomini yoz — generator suhbatdagi o‘yin turini saqlab, kodni keyingi bosqichga kengaytiradi. Bu API-siz rejim tanilgan shablonlar bilan ishlaydi; istalgan murakkab g‘oyani to‘liq tushunadigan umumiy AI emas. Roblox Studio’da Play-testni albatta o‘zing bajar.'
   ].join('\n');
   const assistantContent = textBlock(explanation);
   saveMessage(task.conversationId, 'assistant', assistantContent);
