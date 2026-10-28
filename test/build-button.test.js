@@ -9,7 +9,7 @@ test('build button remains clickable with an empty prompt and explains what to d
   assert.match(app, /root\.querySelector\('#prompt'\)/);
 });
 
-test('index refreshes the browser JavaScript after the build-button fix', async () => {
+test('index refreshes browser assets after the 3D visual update', async () => {
   const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
   assert.match(html, /app\.js\?v=20261028-optin-free/);
 });
