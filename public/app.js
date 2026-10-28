@@ -2,7 +2,7 @@ const root = document.getElementById('app');
 const state = {
   user:null,messages:[],busy:false,paused:null,status:{connected:false,placeName:'',deviceId:null},
   steps:{used:0,limit:300},modal:null,authMode:new URLSearchParams(location.search).has('ref')?'register':'login',login:'',password:'',invite:new URLSearchParams(location.search).get('ref')||'',referral:null,
-  notice:'',prompt:'',code:'',expiresAt:0,devices:[],serverOnline:false,mobileMenu:false,ownerServerUrl:location.origin
+  notice:'',prompt:'',code:'',expiresAt:0,devices:[],serverOnline:false,mobileMenu:false,ownerServerUrl:location.origin,aiProviders:[],aiCredential:{configured:false},aiKeyDraft:'',aiProviderDraft:'anthropic',aiModelDraft:'claude-sonnet-4-5',aiEndpointDraft:'https://api.anthropic.com'
 };
 let stream=null,codeTicker=null,pauseReadyState=null;
 function node(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined&&text!==null)n.textContent=String(text);return n;}
@@ -164,7 +164,25 @@ function renderModal(shell){
     if(state.notice)card.append(node('div','form-error',state.notice));
   }else if(state.modal==='settings'){
     card.append(node('div','modal-icon','⚙'),node('h2','','Sozlamalar'),node('p','modal-subtitle','Quruvchi ish muhiti va xavfsizlik holati.'));
+    card.append(button('✦  AI provayderi va API kalitlari','primary-button full',openAiSettings));
     for(const [label,value] of [['Server',state.serverOnline?'ONLINE':'OFFLINE'],['Studio bridge',state.status.connected?'ULANGAN':'ULANMAGAN'],['Bugungi tool limiti',state.steps.used+' / '+state.steps.limit],['run_code','Plugin ichida sukut bo‘yicha O‘CHIQ']]){const row=node('div','settings-row'),left=node('div');left.append(node('strong','',label));row.append(left,node('span','state-tag',value));card.append(row);}card.append(node('p','modal-footnote','API kalitni .env ichida saqlang. GitHub yoki frontend kodiga qo‘ymang.'));
+  }else if(state.modal==='ai'){
+    card.append(node('div','modal-icon','✦'),node('h2','','AI provayderini ulash'),node('p','modal-subtitle','Rasmiy saytdan API kalit oling. Kalit tekshiriladi va serverda shifrlangan holda saqlanadi; hech qachon chatga yubormang.'));
+    const form=node('form','ai-provider-form');
+    const providerLabel=node('label','form-label','AI PROVAYDERI'),providerSelect=node('select');
+    for(const p of state.aiProviders){const opt=node('option','',p.label);opt.value=p.id;providerSelect.append(opt);}
+    providerSelect.value=state.aiProviderDraft;
+    providerSelect.addEventListener('change',()=>{const p=state.aiProviders.find(x=>x.id===providerSelect.value);if(!p)return;state.aiProviderDraft=p.id;state.aiModelDraft=p.models[0];state.aiEndpointDraft=p.endpoint;render();});
+    providerLabel.append(providerSelect);form.append(providerLabel);
+    const active=state.aiProviders.find(p=>p.id===state.aiProviderDraft);
+    if(active){const official=link('↗  '+active.label+' — rasmiy API kalit olish sahifasi',active.officialUrl,'ai-official-link');form.append(official);}
+    const modelLabel=node('label','form-label','MODEL NOMI'),modelInput=node('input');modelInput.value=state.aiModelDraft;modelInput.required=true;modelInput.maxLength=160;modelInput.placeholder='Masalan: gpt-4.1-mini';modelInput.addEventListener('input',e=>state.aiModelDraft=e.target.value);modelLabel.append(modelInput);form.append(modelLabel);
+    const endpointLabel=node('label','form-label','API ENDPOINT'),endpointInput=node('input');endpointInput.type='url';endpointInput.value=state.aiEndpointDraft;endpointInput.required=true;endpointInput.addEventListener('input',e=>state.aiEndpointDraft=e.target.value);endpointLabel.append(endpointInput);form.append(endpointLabel);
+    const keyLabel=node('label','form-label','API KALIT'),keyInput=node('input');keyInput.type='password';keyInput.autocomplete='new-password';keyInput.minLength=12;keyInput.maxLength=500;keyInput.required=true;keyInput.value=state.aiKeyDraft;keyInput.placeholder='API kalitni shu yerga joylang';keyInput.addEventListener('input',e=>state.aiKeyDraft=e.target.value);keyLabel.append(keyInput);form.append(keyLabel);
+    form.append(node('p','modal-footnote','Kalit faqat tanlangan provayder endpointiga yuborilib tekshiriladi. Limit tugasa, shu oynada boshqa provayderni tanlab yangi kalit ulashing.'));
+    const save=button('✓  Tekshirish va xavfsiz saqlash','primary-button full',()=>{});save.type='submit';form.append(save);form.addEventListener('submit',e=>{e.preventDefault();state.aiKeyDraft=keyInput.value;saveAiCredential();});card.append(form);
+    if(state.aiCredential?.configured){const current=node('div','ai-current');current.append(node('strong','','Ulangan AI'),node('p','',state.aiCredential.provider+' · '+state.aiCredential.model),button('Kalitni o‘chirish','device-delete',removeAiCredential));card.append(current);}
+    if(state.notice)card.append(node('div','form-error',state.notice));
   }else if(state.modal==='help'){
     card.append(node('div','modal-icon','?'),node('h2','','Quruvchi qanday ishlaydi?'),node('p','modal-subtitle','Brauzer serverga, server Claude API’ga, server esa Studio pluginiga buyruqlar yuboradi.'));
     const help=node('div','help-list');for(const line of ['G‘oyangni chatga yoz.','AI avval mavjud Studio ierarxiyasini ko‘radi va reja tuzadi.','Plugin ruxsat etilgan tool buyruqlarini bajaradi.','Play-testni o‘zing bajar; muammo bo‘lsa “logs” deb yoz.'])help.append(node('p','',line));card.append(help,node('p','modal-footnote','AI yaratgan kodda xato bo‘lishi mumkin. Plugin Play rejimini bosmaydi. DataStore uchun Studio API Services sozlamasi kerak.'));
@@ -175,6 +193,9 @@ function serverAddressCardWarning(parent,url){
   const local=/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(url);
   parent.append(node('p','modal-footnote',local?'Diqqat: localhost faqat shu kompyuterda ishlaydi. Boshqa kompyuter uchun .env ichida PUBLIC_URL ni server egasining LAN IP manziliga o‘zgartiring; boshqa tarmoqdan ulanish uchun server ommaviy HTTPS manzilda bo‘lishi kerak.':'Sherik shu manzil orqali server egasining API’siga ulanadi. Manzil sherikka yetib borishi va server porti firewall’da ruxsat etilgan bo‘lishi kerak.'));
 }
+async function openAiSettings(){state.modal='ai';state.notice='';try{const data=await api('/api/ai/providers');state.aiProviders=data.providers||[];state.aiCredential=data.credential||{configured:false};const p=state.aiProviders.find(x=>x.id===(state.aiCredential.provider||'anthropic'))||state.aiProviders[0];if(p){state.aiProviderDraft=p.id;state.aiModelDraft=state.aiCredential.model||p.models[0];state.aiEndpointDraft=state.aiCredential.endpoint||p.endpoint;}}catch(e){state.notice=e.message;}render();}
+async function saveAiCredential(){try{const result=await api('/api/ai/credentials',{provider:state.aiProviderDraft,model:state.aiModelDraft,endpoint:state.aiEndpointDraft,key:state.aiKeyDraft});state.aiCredential=result.credential;state.aiKeyDraft='';state.notice='API tekshirildi va saqlandi. Quruvchi shu provayderdan foydalanadi.';render();}catch(e){state.notice=e.message;render();}}
+async function removeAiCredential(){try{const result=await api('/api/ai/credentials',undefined,'DELETE');state.aiCredential=result.credential;state.notice='Shaxsiy API kalit o‘chirildi.';}catch(e){state.notice=e.message;}render();}
 async function openReferral(){
   state.modal='referral';state.notice='';state.referral=null;render();
   try{state.referral=await api('/api/referral');}
@@ -195,7 +216,7 @@ function connectStream(){
   stream.addEventListener('pause',e=>{try{state.paused=JSON.parse(e.data);state.busy=false;render();}catch{}});
   stream.addEventListener('reset',()=>{state.messages=[];state.paused=null;render();});stream.onerror=()=>{};
 }
-async function sendMessage(){const text=state.prompt.trim();if(!text||state.busy)return;try{const result=await api('/api/chat',{text});state.prompt='';state.paused=result.pause||state.paused;state.busy=!result.paused;render();}catch(error){if(error.status===412||error.data?.needPairing){openPair().then(()=>{state.notice='Avval Roblox Studio’ni ulang.';render();});}else if(error.data?.paused){state.paused=error.data.paused;addMessage({role:'error',text:error.message});render();}else addMessage({role:'error',text:error.message});}}
+async function sendMessage(){const text=state.prompt.trim();if(!text||state.busy)return;try{const result=await api('/api/chat',{text});state.prompt='';state.paused=result.pause||state.paused;state.busy=!result.paused;render();}catch(error){if(error.status===412||error.data?.needPairing){openPair().then(()=>{state.notice='Avval Roblox Studio’ni ulang.';render();});}else if(error.status===503){openAiSettings();addMessage({role:'error',text:error.message});}else if(error.data?.paused){state.paused=error.data.paused;addMessage({role:'error',text:error.message});render();}else addMessage({role:'error',text:error.message});}}
 async function resumeBuild(){
   if(state.busy||!state.paused)return;
   try{
