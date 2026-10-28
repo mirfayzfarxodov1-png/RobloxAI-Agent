@@ -65,7 +65,7 @@ function render(){
   const chip=node('div','heading-chip'+(state.status.connected?' connected':''));chip.append(node('span','pulse-dot'),document.createTextNode(state.status.connected?'Studio ulangan':'Studio ulanmagan'));heading.append(headingText,chip);layout.append(heading);
   const scroll=node('div','chat-scroll');
   if(!state.messages.length){
-    const welcome=node('section','welcome-block'),art=node('div','welcome-art');art.append(node('div','art-orbit orbit-one'),node('div','art-orbit orbit-two'),node('div','art-cube','✧'),node('div','floating-icon float-spark','✦'),node('div','floating-icon float-code','</>'),node('div','floating-icon float-game','▣'));
+    const welcome=node('section','welcome-block'),art=createWorldVisual('world-stage world-stage-inline');
     welcome.append(art,node('h2','','Nimani quramiz?'),node('p','','O‘yin mexanikasi, UI, skriptlar yoki butun loyiha — g‘oyangni yozib boshlaymiz.'));
     const grid=node('div','suggestion-grid'),suggestions=[
       ['🌌','Katta open-world','Katta xarita, zonalar, questlar, NPC, inventar, saqlash va server/client arxitekturasi bilan o‘yin rejasini tuz'],
@@ -118,8 +118,61 @@ function render(){
   if(promptFocused){const nextPrompt=root.querySelector('#prompt');if(nextPrompt){nextPrompt.focus();try{nextPrompt.setSelectionRange(selectionStart,selectionEnd);}catch{}}}
 }
 function shellVersion(){return node('div','version-label','QURUVCHI  WEB · v1.0');}
+function createWorldVisual(className){
+  const stage=node('div',className);
+  stage.setAttribute('aria-label','Quruvchi 3D o‘yin dunyosi');
+  stage.setAttribute('role','img');
+  const glow=node('div','world-glow');
+  const stars=node('div','world-stars');
+  const planet=node('div','world-planet');
+  const orbit=node('div','world-orbit');
+  const island=node('div','world-island');
+  const islandTop=node('div','world-island-top');
+  const river=node('div','world-river');
+  const path=node('div','world-path');
+  island.append(islandTop,river,path);
+  const tower=node('div','world-tower');
+  const towerRoof=node('div','world-tower-roof');
+  tower.append(towerRoof);
+  const tree1=node('div','world-tree world-tree-one');
+  const tree2=node('div','world-tree world-tree-two');
+  const crystal=node('div','world-crystal');
+  const cube=node('div','world-cube');
+  const cubeTop=node('div','world-cube-top');
+  cube.append(cubeTop);
+  const badge1=node('div','world-float world-float-code','</>');
+  const badge2=node('div','world-float world-float-star','✦');
+  const badge3=node('div','world-float world-float-build','BUILD · READY');
+  const caption=node('div','world-caption');
+  caption.append(node('span','world-caption-dot'),node('span','','YOUR NEXT WORLD STARTS HERE'));
+  stage.append(glow,stars,planet,orbit,island,tower,tree1,tree2,crystal,cube,badge1,badge2,badge3,caption);
+  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches && window.matchMedia('(hover: hover) and (pointer: fine)').matches){
+    let frame=0;
+    stage.addEventListener('pointermove',event=>{
+      if(frame)return;
+      frame=requestAnimationFrame(()=>{
+        frame=0;
+        const rect=stage.getBoundingClientRect();
+        const x=(event.clientX-rect.left)/rect.width-.5;
+        const y=(event.clientY-rect.top)/rect.height-.5;
+        stage.style.setProperty('--tilt-x',(-y*7).toFixed(2)+'deg');
+        stage.style.setProperty('--tilt-y',(x*9).toFixed(2)+'deg');
+        stage.style.setProperty('--pointer-x',(x*18).toFixed(1)+'px');
+        stage.style.setProperty('--pointer-y',(y*14).toFixed(1)+'px');
+      });
+    },{passive:true});
+    stage.addEventListener('pointerleave',()=>{
+      stage.style.setProperty('--tilt-x','0deg');stage.style.setProperty('--tilt-y','0deg');
+      stage.style.setProperty('--pointer-x','0px');stage.style.setProperty('--pointer-y','0px');
+    },{passive:true});
+  }
+  return stage;
+}
 function renderAuth(){
-  const wrap=node('div','auth-page'),card=node('section','auth-card');card.append(node('div','brand-mark','Q'),node('h1','','Quruvchi'),node('p','auth-intro','Roblox Studio uchun AI quruvchi'));
+  const wrap=node('div','auth-page');
+  const visual=node('section','auth-visual');
+  visual.append(createWorldVisual('world-stage world-stage-auth'),node('div','auth-visual-copy'),node('p','auth-visual-kicker','ROBLOX WORLDS · REIMAGINED'),node('h2','auth-visual-title','G‘oyangdan boshlanadi. Cheksiz dunyolar.'),node('p','auth-visual-description','Tasavvur qil. Quruvchi bilan reja tuz. Roblox Studio’da jonlantir.'));
+  const card=node('section','auth-card');card.append(node('div','brand-mark','Q'),node('h1','','Quruvchi'),node('p','auth-intro','Roblox Studio uchun AI quruvchi'));
   const tabs=node('div','auth-tabs');tabs.append(button('Kirish',state.authMode==='login'?'active':'',()=>{state.authMode='login';state.notice='';render();}),button('Ro‘yxatdan o‘tish',state.authMode==='register'?'active':'',()=>{state.authMode='register';state.notice='';render();}));card.append(tabs);
   const form=node('form'),loginLabel=node('label','form-label','LOGIN'),loginInput=node('input');loginInput.name='login';loginInput.autocomplete='username';loginInput.required=true;loginInput.minLength=3;loginInput.maxLength=32;loginInput.value=state.login;loginInput.placeholder='foydalanuvchi';loginInput.addEventListener('input',e=>state.login=e.target.value);loginLabel.append(loginInput);form.append(loginLabel);
   const passLabel=node('label','form-label','PAROL'),passInput=node('input');passInput.type='password';passInput.name='password';passInput.autocomplete=state.authMode==='login'?'current-password':'new-password';passInput.required=true;passInput.minLength=8;passInput.maxLength=200;passInput.value=state.password;passInput.placeholder='Kamida 8 belgi';passInput.addEventListener('input',e=>state.password=e.target.value);passLabel.append(passInput);form.append(passLabel);
