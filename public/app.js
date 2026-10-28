@@ -108,7 +108,7 @@ function render(){
   const bottom=node('div','composer-bottom'),hints=node('div','composer-hints');hints.append(node('span','','↵ Enter yuborish'),node('span','','·'),node('span','','Shift + Enter yangi qator'),node('span','prompt-limit',state.prompt.length.toLocaleString()+' / 30 000'));
   const composerActions=node('div','composer-actions');
   composerActions.append(button('▣  Clipboard’dan joylash','paste-prompt-button',async()=>{try{const pasted=await navigator.clipboard.readText();if(!pasted.trim())throw new Error('Clipboard bo‘sh. Avval promptni nusxalang.');state.prompt=pasted.slice(0,30000);render();const next=root.querySelector('#prompt');if(next){next.focus();next.setSelectionRange(next.value.length,next.value.length);}}catch(error){addMessage({role:'error',text:error.message||'Clipboard’ni o‘qib bo‘lmadi. Matn maydoniga Ctrl+V bilan joylang.'});}},state.busy));
-  composerActions.append(button(state.busy?'■  To‘xtatish':'➤  Qurishni boshlash','send-button'+(state.busy?' stop':''),state.busy?stop:sendMessage,!state.busy&&!state.prompt.trim()));
+  composerActions.append(button(state.busy?'■  To‘xtatish':'➤  Qurishni boshlash','send-button'+(state.busy?' stop':''),state.busy?stop:sendMessage,state.busy));
   bottom.append(hints,composerActions);
   composer.append(textarea,bottom);composerWrap.append(composer,node('div','composer-foot','◇  AI yaratgan kodni Roblox Studio’da sinab ko‘r. Haqiqiy Play-test alohida talab qilinadi.'));layout.append(composerWrap);main.append(layout);shell.append(main,shellVersion());root.append(shell);
   if(state.modal)renderModal(shell);
@@ -222,7 +222,7 @@ function connectStream(){
   stream.addEventListener('pause',e=>{try{state.paused=JSON.parse(e.data);state.busy=false;render();}catch{}});
   stream.addEventListener('reset',()=>{state.messages=[];state.paused=null;render();});stream.onerror=()=>{};
 }
-async function sendMessage(){const text=state.prompt.trim();if(!text||state.busy)return;try{const result=await api('/api/chat',{text});state.prompt='';state.paused=result.pause||state.paused;state.busy=!result.paused;render();}catch(error){if(error.status===412||error.data?.needPairing){openPair().then(()=>{state.notice='Avval Roblox Studio’ni ulang.';render();});}else if(error.status===503){openAiSettings();addMessage({role:'error',text:error.message});}else if(error.data?.paused){state.paused=error.data.paused;addMessage({role:'error',text:error.message});render();}else addMessage({role:'error',text:error.message});}}
+async function sendMessage(){const input=root.querySelector('#prompt');const text=String(input?.value??state.prompt).trim();state.prompt=text;if(state.busy)return;if(!text){if(input)input.focus();addMessage({role:'error',text:'Avval o‘yin g‘oyangni yoz yoki yuqoridagi tayyor g‘oyalardan birini tanla. Keyin “Qurishni boshlash”ni bos.'});return;}try{const result=await api('/api/chat',{text});state.prompt='';state.paused=result.pause||state.paused;state.busy=!result.paused;render();}catch(error){if(error.status===412||error.data?.needPairing){openPair().then(()=>{state.notice='Avval Roblox Studio’ni ulang.';render();});}else if(error.status===503){openAiSettings();addMessage({role:'error',text:error.message});}else if(error.data?.paused){state.paused=error.data.paused;addMessage({role:'error',text:error.message});render();}else addMessage({role:'error',text:error.message});}}
 async function resumeBuild(){
   if(state.busy||!state.paused)return;
   try{
