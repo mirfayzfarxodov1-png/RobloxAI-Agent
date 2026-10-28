@@ -24,3 +24,15 @@ test('API-free mode does not redirect chat errors into mandatory API-key setup',
   assert.match(config, /API-kalitsiz bepul shablon generatori ishlatiladi/);
   assert.match(agent, /getCredential\(user\.id\)\s*\?\s*runLoop\(user\.id, task\)\s*:\s*runFreeTask\(user\.id, task, text\)/);
 });
+
+
+test('external AI is opt-in and removing a key returns the account to free mode', async () => {
+  const providers = await readFile(new URL('../src/providers.js', import.meta.url), 'utf8');
+  const app = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(providers, /if\(!row\) return null/);
+  assert.doesNotMatch(providers, /return config\.anthropicApiKey \?/);
+  assert.match(app, /Ixtiyoriy: tashqi AI API sozlamalari/);
+  assert.match(app, /API kalit o‘chirildi\. Quruvchi endi bepul API-kalitsiz rejimda ishlaydi\./);
+  assert.match(app, /Odatiy rejimda tashqi AI API ishlatilmaydi/);
+  assert.doesNotMatch(app, /Boshqa AI provayderini ulash/);
+});
