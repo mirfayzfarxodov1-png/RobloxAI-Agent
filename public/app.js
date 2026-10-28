@@ -310,7 +310,7 @@ function renderAuth(){
   topMeta.append(node('span','auth-v2-status','●  AI WORLD ENGINE'),node('span','auth-v2-language','O‘ZBEKCHA'));
   topbar.append(brand,topMeta);
   const visual=node('section','auth-visual auth-v2-visual');
-  visual.append(createWorldVisual('world-stage world-stage-auth'),createHeroMascot());
+  visual.append(createWorldVisual('world-stage world-stage-auth'));
   const copy=node('div','auth-v2-copy');
   copy.append(node('p','auth-visual-kicker','G‘OYADAN — HAQIQIY O‘YINGACHA'),node('h2','auth-visual-title','Orzularingni'),node('h2','auth-v2-gradient-title','yarat!'),node('p','auth-visual-description','Quruvchi bilan g‘oyangni Roblox dunyosiga aylantir. Reja tuz, kod yarat va Roblox Studio’da davom et.'));
   const features=node('div','auth-v2-features');
@@ -329,7 +329,7 @@ function renderAuth(){
   card.append(cardMark,cardTitle,node('p','auth-intro','Roblox Studio uchun AI quruvchi'));
   const tabs=node('div','auth-tabs');tabs.append(button('↪  Kirish',state.authMode==='login'?'active':'',()=>{state.authMode='login';state.notice='';render();}),button('♧  Ro‘yxatdan o‘tish',state.authMode==='register'?'active':'',()=>{state.authMode='register';state.notice='';render();}));card.append(tabs);
   const form=node('form'),loginLabel=node('label','form-label','LOGIN'),loginInput=node('input');loginInput.name='login';loginInput.autocomplete='username';loginInput.required=true;loginInput.minLength=3;loginInput.maxLength=32;loginInput.value=state.login;loginInput.placeholder='Foydalanuvchi nomi yoki email';loginInput.addEventListener('input',e=>state.login=e.target.value);loginLabel.append(loginInput);form.append(loginLabel);
-  const passLabel=node('label','form-label','PAROL'),passInput=node('input');passInput.type='password';passInput.name='password';passInput.autocomplete=state.authMode==='login'?'current-password':'new-password';passInput.required=true;passInput.minLength=8;passInput.maxLength=200;passInput.value=state.password;passInput.placeholder='Parolingiz';passLabel.append(passInput);form.append(passLabel);
+  const passLabel=node('label','form-label','PAROL'),passInput=node('input');passInput.type='password';passInput.name='password';passInput.autocomplete=state.authMode==='login'?'current-password':'new-password';passInput.required=true;passInput.minLength=8;passInput.maxLength=200;passInput.value=state.password;passInput.placeholder='Parolingiz';passInput.addEventListener('input',e=>{state.password=e.target.value;});passLabel.append(passInput);form.append(passLabel);
   if(state.authMode==='register'){const label=node('label','form-label','TAKLIF HAVOLASI / KODI'),input=node('input');input.name='invite';input.value=state.invite;input.placeholder='Taklif havolasidan avtomatik tushadi';input.autocomplete='off';input.addEventListener('input',e=>state.invite=e.target.value.trim());label.append(input);form.append(label);if(new URLSearchParams(location.search).has('ref'))form.append(node('p','referral-auth-note','Siz taklif havolasi orqali keldingiz. Ro‘yxatdan o‘tish ushbu serverda davom etadi.'));}
   if(state.notice)form.append(node('div','form-error',state.notice));
   const submit=button(state.authMode==='login'?'➜  Kirish':'✦  Hisob yaratish','primary-button full',()=>{});submit.type='submit';form.append(submit);
