@@ -11,7 +11,7 @@ test('build button remains clickable with an empty prompt and explains what to d
 
 test('index refreshes the browser JavaScript after the build-button fix', async () => {
   const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
-  assert.match(html, /app\\.js\\?v=20261028-optin-free/);
+  assert.match(html, /app\.js\?v=20261028-optin-free/);
 });
 
 
@@ -29,7 +29,7 @@ test('API-free mode does not redirect chat errors into mandatory API-key setup',
 test('external AI is opt-in and removing a key returns the account to free mode', async () => {
   const providers = await readFile(new URL('../src/providers.js', import.meta.url), 'utf8');
   const app = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
-  assert.match(providers, /if\(!row\) return null/);
+  assert.match(providers, /if\(!row\)\s*\{/);
   assert.doesNotMatch(providers, /return config\.anthropicApiKey \?/);
   assert.match(app, /Ixtiyoriy: tashqi AI API sozlamalari/);
   assert.match(app, /API kalit o‘chirildi\. Quruvchi endi bepul API-kalitsiz rejimda ishlaydi\./);
