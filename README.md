@@ -21,6 +21,12 @@ The application intentionally has **no external npm runtime dependencies**. The 
 
 No npm install is required because the project has no external dependencies. SQLite database files are created under data/.
 
+## Referral links and shared server
+
+After signing in, open **Taklif havolasi** in the sidebar and copy your personal link. The link uses this server's `PUBLIC_URL`, and a successful signup through it is counted under the referring account. Existing databases are migrated automatically and existing accounts receive a referral code.
+
+For another computer to reach the same server, `PUBLIC_URL` must be a reachable address, not `localhost` or `127.0.0.1`. On one Wi-Fi/LAN, set it to the host computer's LAN IPv4 address (for example, `http://192.168.1.20:3000`), allow TCP port 3000 in Windows Firewall, and restart the server. For people on different networks, deploy to a public HTTPS host. The referral link opens the server owner's website; it does not make a private localhost server public by itself.
+
 ## Connect Roblox Studio
 
 1. Open Roblox Studio in Edit mode.
