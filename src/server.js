@@ -10,6 +10,7 @@ import { consumeLimit } from './ratelimit.js';
 import { sendJson, readJson, checkCsrf, clientIp, serveStatic, securityHeaders } from './http-util.js';
 import { attachSse, addDevice, pollDevice, receiveResult, listDevices, disconnectDevice, statusForUser, stateForUser, emit } from './hub.js';
 import { startTask, stopTask, newConversation, isRunning, resumeTask } from './agent.js';
+import { listProviders, credentialStatus, saveCredential } from './providers.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pluginFile = path.resolve(__dirname, '..', 'plugin', 'Quruvchi.lua');
@@ -200,7 +201,19 @@ const server = http.createServer(async (req, res) => {
       }
       if (method === 'GET' && pathname === '/api/me') {
         const usage = getUsage(user.id);
-        return json(res, 200, { login:user.login, steps:{ used:usage.steps, limit:config.dailyStepLimit }, running:isRunning(user.id), status:statusForUser(user.id), conversationId:currentConversation(user.id), paused:stateForUser(user.id).paused });
+        return json(res, 200, { login:user.login, steps:{ used:usage.steps, limit:config.dailyStepLimit }, running:isRunning(user.id), status:statusForUser(user.id), conversationId:currentConversation(user.id), paused:stateForUser(user.id).paused, ai:credentialStatus(user.id) });
+      }
+      if (method === 'GET' && pathname === '/api/ai/providers') return json(res, 200, {providers:listProviders(),credential:credentialStatus(user.id)});
+      if (method === 'POST' && pathname === '/api/ai/credentials') {
+        const input=await getBody(req,res); if(!input)return;
+        const limit=consumeLimit('chatUser','ai-key:'+user.id);
+        if(!limit.allowed)return json(res,429,{error:'Juda ko‘p API tekshiruvi. Keyinroq urinib ko‘ring.'},{'Retry-After':String(limit.retryAfter)});
+        const result=await saveCredential(user.id,input);
+        return json(res,200,{ok:true,credential:result,message:'API kalit tekshirildi va xavfsiz saqlandi.'});
+      }
+      if (method === 'DELETE' && pathname === '/api/ai/credentials') {
+        db.prepare('DELETE FROM ai_credentials WHERE user_id=?').run(user.id);
+        return json(res,200,{ok:true,credential:credentialStatus(user.id)});
       }
       if (method === 'GET' && pathname === '/api/referral') {
         let account = db.prepare('SELECT referral_code FROM users WHERE id=?').get(user.id);
