@@ -63,7 +63,7 @@ export async function saveCredential(userId,{provider,model,endpoint,key}) {
  try { parsed=new URL(String(endpoint||defaultEndpoint)); } catch { throw Object.assign(new Error('API endpoint URL noto‘g‘ri.'),{status:400}); }
  if(parsed.protocol!=='https:' || parsed.username || parsed.password) throw Object.assign(new Error('API endpoint HTTPS bo‘lishi kerak.'),{status:400});
  const safeEndpoint=parsed.origin+parsed.pathname.replace(/\/$/,'');
- if(!safeEndpoint.startsWith(defaultEndpoint) && !['openrouter','openai','anthropic','google','groq','deepseek'].includes(provider)) throw Object.assign(new Error('Endpoint ushbu provayder uchun ruxsat etilmagan.'),{status:400});
+ if(safeEndpoint!==defaultEndpoint) throw Object.assign(new Error('Xavfsizlik uchun faqat tanlangan provayderning rasmiy endpointidan foydalanish mumkin.'),{status:400});
  const candidate={provider,model,endpoint:safeEndpoint,key};
  await testCredential(candidate);
  const encrypted=seal(key);
