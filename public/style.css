@@ -236,3 +236,6 @@ body::before{opacity:.075;background-image:linear-gradient(rgba(145,158,255,.10)
 .settings-row{background:rgba(30,45,76,.55);border-color:rgba(112,137,197,.2);border-radius:12px;padding:12px 14px;margin:7px 0}
 .state-tag{color:#aeeede}.form-error{border-color:rgba(255,119,143,.32);background:rgba(150,43,68,.15)}
 @media(max-width:640px){.chat-heading h1{background:linear-gradient(100deg,#fff,#bfb8ff 60%,#7bdce9);-webkit-background-clip:text;background-clip:text;color:transparent}}
+
+/* AI provider settings panel */
+.ai-provider-form{display:flex;flex-direction:column;gap:13px;margin-top:14px}.ai-provider-form input,.ai-provider-form select{width:100%;box-sizing:border-box;background:#0d172b;color:#f2f5ff;border:1px solid #35496e;border-radius:10px;padding:12px 13px;font:inherit;outline:none}.ai-provider-form input:focus,.ai-provider-form select:focus{border-color:#8b8cff;box-shadow:0 0 0 3px rgba(126,120,255,.14)}.ai-official-link{display:block;padding:12px;border:1px solid rgba(113,214,231,.26);background:rgba(53,151,177,.1);border-radius:10px;color:#8ce8f1;text-decoration:none}.ai-current{margin-top:14px;padding:13px;border:1px solid rgba(85,223,180,.25);border-radius:12px;background:rgba(38,124,102,.1)}.ai-current p{color:#b9c8e9;margin:7px 0 12px}.ai-provider-form .modal-footnote{line-height:1.55}
