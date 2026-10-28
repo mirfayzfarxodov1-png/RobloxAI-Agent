@@ -1,4 +1,4 @@
-const COMMON = \`-- Quruvchi Free Builder · 3D world starter
+const COMMON = `-- Quruvchi Free Builder · 3D world starter
 -- API-free generated Luau. All gameplay changes are server-authoritative where practical.
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
@@ -57,9 +57,9 @@ label.TextScaled = true
 label.Font = Enum.Font.GothamBold
 label.Parent = surface
 print("[Quruvchi] World starter created. Press Play and test.")
-\`;
+`;
 
-const OBBY = \`-- Quruvchi Free Builder · Obby starter
+const OBBY = `-- Quruvchi Free Builder · Obby starter
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local ROOT_NAME = "QuruvchiFreeWorld"
@@ -124,9 +124,9 @@ end
 Players.PlayerAdded:Connect(bindPlayer)
 for _, player in ipairs(Players:GetPlayers()) do bindPlayer(player) end
 print("[Quruvchi] 24-stage obby created. Press Play and test.")
-\`;
+`;
 
-const SIMULATOR = \`-- Quruvchi Free Builder · Collectible simulator starter
+const SIMULATOR = `-- Quruvchi Free Builder · Collectible simulator starter
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local ROOT_NAME = "QuruvchiFreeWorld"
@@ -199,9 +199,9 @@ for i = 1, 30 do
     createCoin(i, Vector3.new(math.cos(angle) * radius, 3, math.sin(angle) * radius), 1)
 end
 print("[Quruvchi] Collectible simulator created. Coins are updated on the server.")
-\`;
+`;
 
-const TYCOON = \`-- Quruvchi Free Builder · claimable tycoon starter
+const TYCOON = `-- Quruvchi Free Builder · claimable tycoon starter
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local ROOT_NAME = "QuruvchiFreeWorld"
@@ -267,7 +267,7 @@ Players.PlayerRemoving:Connect(function(player)
     end
 end)
 print("[Quruvchi] Four claimable tycoon plots created.")
-\`;
+`;
 
 function classify(prompt) {
   const s = String(prompt || '').toLowerCase();
@@ -288,7 +288,7 @@ function isUpgradeRequest(prompt) {
 function levelFeatures(kind, level) {
   const pieces = [];
   if (level >= 2) {
-    pieces.push(\`
+    pieces.push(`
 -- PROFESSIONAL PASS 2: safe fall recovery and consistent world boundaries.
 local upgradeWorld = Workspace:FindFirstChild("QuruvchiFreeWorld")
 if upgradeWorld then
@@ -312,10 +312,10 @@ if upgradeWorld then
         if humanoid and humanoid.Health > 0 then humanoid.Health = 0 end
     end)
 end
-\`);
+`);
   }
   if (level >= 3) {
-    pieces.push(\`
+    pieces.push(`
 -- PROFESSIONAL PASS 3: consistent stats and server-side completion tracking.
 local upgradePlayers = game:GetService("Players")
 local function ensureLeaderstat(player, name, initialValue)
@@ -348,10 +348,10 @@ if finish and finish:IsA("BasePart") then
         task.delay(3, function() debounce[player.UserId] = nil end)
     end)
 end
-\`);
+`);
   }
   if (level >= 4) {
-    pieces.push(\`
+    pieces.push(`
 -- PROFESSIONAL PASS 4: lightweight server-side telemetry and lifecycle cleanup.
 local upgradePlayers = game:GetService("Players")
 local function reportProgress(player, reason)
@@ -370,7 +370,7 @@ end
 upgradePlayers.PlayerRemoving:Connect(function(player)
     print("[Quruvchi telemetry]", player.UserId, player:GetAttribute("QuruvchiLastProgress") or "no_progress")
 end)
-\`);
+`);
   }
   return pieces.join('\n');
 }
