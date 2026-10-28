@@ -89,7 +89,7 @@ function render(){
       if(waiting){const seconds=Math.ceil((pause.retryAt-Date.now())/1000),hours=Math.floor(seconds/3600),minutes=Math.floor((seconds%3600)/60),secs=seconds%60;card.append(node('p','pause-countdown','Qolgan vaqt: '+(hours?hours+' soat ':'')+(minutes?minutes+' daqiqa ':'')+secs+' soniya'));}
     }else card.append(node('p','pause-time','Aniq tiklanish vaqti API tomonidan berilmadi. Limit holati tekshirilgach, davom ettirishni sinab ko‘rishingiz mumkin.'));
     if(pause.details)card.append(node('small','pause-details','Tafsilot: '+pause.details));
-    if(pause.reason==='provider_rate_limit'||pause.reason==='credit_limit'||pause.reason==='provider_error')card.append(button('✦  Boshqa AI provayderini ulash','primary-button full',openAiSettings));
+    
     const ready=!pause.retryAt||pause.retryAt<=Date.now();
     card.append(button(ready?'▶  Davom etish':'◷  Limit tiklanishini kutish','resume-button',resumeBuild,!ready||state.busy));
     scroll.append(card);
@@ -170,10 +170,10 @@ function renderModal(shell){
     if(state.notice)card.append(node('div','form-error',state.notice));
   }else if(state.modal==='settings'){
     card.append(node('div','modal-icon','⚙'),node('h2','','Sozlamalar'),node('p','modal-subtitle','Quruvchi ish muhiti, bepul qurish rejimi va xavfsizlik holati.'));
-    card.append(button('✦  AI provayderi va API kalitlari','primary-button full',openAiSettings));
-    for(const [label,value] of [['Server',state.serverOnline?'ONLINE':'OFFLINE'],['Studio bridge',state.status.connected?'ULANGAN':'ULANMAGAN'],['Bugungi tool limiti',state.steps.used+' / '+state.steps.limit],['run_code','Plugin ichida sukut bo‘yicha O‘CHIQ']]){const row=node('div','settings-row'),left=node('div');left.append(node('strong','',label));row.append(left,node('span','state-tag',value));card.append(row);}card.append(node('p','modal-footnote','API kaliti majburiy emas: Studio ulangan bo‘lsa, bepul mahalliy generator oddiy starter loyihalarni yaratadi. Ixtiyoriy AI API kalitini faqat murakkab, erkin suhbat uchun ulang. Kalitni GitHub yoki frontend kodiga qo‘ymang.'));
+    card.append(button('Ixtiyoriy: tashqi AI API sozlamalari','secondary-button full',openAiSettings));
+    for(const [label,value] of [['Server',state.serverOnline?'ONLINE':'OFFLINE'],['Studio bridge',state.status.connected?'ULANGAN':'ULANMAGAN'],['Bugungi tool limiti',state.steps.used+' / '+state.steps.limit],['run_code','Plugin ichida sukut bo‘yicha O‘CHIQ']]){const row=node('div','settings-row'),left=node('div');left.append(node('strong','',label));row.append(left,node('span','state-tag',value));card.append(row);}card.append(node('p','modal-footnote','Quruvchi standart holatda bepul mahalliy generator bilan ishlaydi va tashqi AI API ishlatmaydi. Tashqi API faqat shu sozlamani o‘zingiz ochib, kalitni saqlasangiz ishlaydi. Kalitni GitHub yoki frontend kodiga qo‘ymang.'));
   }else if(state.modal==='ai'){
-    card.append(node('div','modal-icon','✦'),node('h2','','AI provayderini ulash'),node('p','modal-subtitle','Bu bo‘lim ixtiyoriy. Bepul mahalliy qurish rejimi API kalitisiz ham ishlaydi. Kalit faqat kuchli tashqi AI modelidan foydalanmoqchi bo‘lsangiz kerak.'));
+    card.append(node('div','modal-icon','✦'),node('h2','','Ixtiyoriy tashqi AI ulash'),node('p','modal-subtitle','Quruvchi hozir bepul, API-kalitsiz rejimda ishlaydi. Faqat o‘zingiz xohlasangiz tashqi AI kalitini shu yerda ulashing; ulash majburiy emas.'));
     const form=node('form','ai-provider-form');
     const providerLabel=node('label','form-label','AI PROVAYDERI'),providerSelect=node('select');
     for(const p of state.aiProviders){const opt=node('option','',p.label);opt.value=p.id;providerSelect.append(opt);}
@@ -190,7 +190,7 @@ function renderModal(shell){
     if(state.aiCredential?.configured){const current=node('div','ai-current');current.append(node('strong','','Ulangan AI'),node('p','',state.aiCredential.provider+' · '+state.aiCredential.model),button('Kalitni o‘chirish','device-delete',removeAiCredential));card.append(current);}
     if(state.notice)card.append(node('div','form-error',state.notice));
   }else if(state.modal==='help'){
-    card.append(node('div','modal-icon','?'),node('h2','','Quruvchi qanday ishlaydi?'),node('p','modal-subtitle','Brauzer serverga, server Claude API’ga, server esa Studio pluginiga buyruqlar yuboradi.'));
+    card.append(node('div','modal-icon','?'),node('h2','','Quruvchi qanday ishlaydi?'),node('p','modal-subtitle','Brauzer serverga, server esa Studio pluginiga buyruqlar yuboradi. Odatiy rejimda tashqi AI API ishlatilmaydi.'));
     const help=node('div','help-list');for(const line of ['G‘oyangni chatga yoz.','AI avval mavjud Studio ierarxiyasini ko‘radi va reja tuzadi.','Plugin ruxsat etilgan tool buyruqlarini bajaradi.','Play-testni o‘zing bajar; muammo bo‘lsa “logs” deb yoz.'])help.append(node('p','',line));card.append(help,node('p','modal-footnote','AI yaratgan kodda xato bo‘lishi mumkin. Plugin Play rejimini bosmaydi. DataStore uchun Studio API Services sozlamasi kerak.'));
   }
   backdrop.append(card);shell.append(backdrop);
@@ -201,7 +201,7 @@ function serverAddressCardWarning(parent,url){
 }
 async function openAiSettings(){state.modal='ai';state.notice='';try{const data=await api('/api/ai/providers');state.aiProviders=data.providers||[];state.aiCredential=data.credential||{configured:false};const p=state.aiProviders.find(x=>x.id===(state.aiCredential.provider||'anthropic'))||state.aiProviders[0];if(p){state.aiProviderDraft=p.id;state.aiModelDraft=state.aiCredential.model||p.models[0];state.aiEndpointDraft=state.aiCredential.endpoint||p.endpoint;}}catch(e){state.notice=e.message;}render();}
 async function saveAiCredential(){try{const result=await api('/api/ai/credentials',{provider:state.aiProviderDraft,model:state.aiModelDraft,endpoint:state.aiEndpointDraft,key:state.aiKeyDraft});state.aiCredential=result.credential;state.aiKeyDraft='';state.notice='API tekshirildi va saqlandi. Quruvchi shu provayderdan foydalanadi.';render();}catch(e){state.notice=e.message;render();}}
-async function removeAiCredential(){try{const result=await api('/api/ai/credentials',undefined,'DELETE');state.aiCredential=result.credential;state.notice='Shaxsiy API kalit o‘chirildi.';}catch(e){state.notice=e.message;}render();}
+async function removeAiCredential(){try{const result=await api('/api/ai/credentials',undefined,'DELETE');state.aiCredential=result.credential;state.aiKeyDraft='';state.notice='API kalit o‘chirildi. Quruvchi endi bepul API-kalitsiz rejimda ishlaydi.';}catch(e){state.notice=e.message;}render();}
 async function openReferral(){
   state.modal='referral';state.notice='';state.referral=null;render();
   try{state.referral=await api('/api/referral');}
