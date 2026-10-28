@@ -12,24 +12,24 @@ const TECHNOLOGIES = [
 ];
 
 function clean(value, max=12000) {
-  return String(value ?? '').replace(/[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F]/g,'').slice(0,max);
+  return String(value ?? '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'').slice(0,max);
 }
 function analyzeLuau(input={}) {
   const source=clean(input.source);
   if(!source.trim()) return {title:'Luau audit',summary:'Tahlil uchun Luau kodini kiriting.',findings:[],checkedLines:0};
-  const lines=source.split(/\\r?\\n/), findings=[];
+  const lines=source.split(/\r?\n/), findings=[];
   const add=(level,line,message)=>findings.push({level,line,message});
   lines.forEach((line,index)=>{
     const n=index+1;
-    if(/\\bwhile\\s+true\\s+do\\b/.test(line) && !/task\\.wait|\\bwait\\s*\\(/.test(lines.slice(index,index+8).join(' '))) add('warning',n,'Cheksiz loop ichida task.wait() yoki event-yield borligini tekshiring; aks holda server/client qotishi mumkin.');
-    if(/\\bwait\\s*\\(/.test(line)) add('info',n,'wait() o‘rniga ko‘pincha task.wait() afzal.');
-    if(/OnServerEvent\\s*:\\s*Connect/.test(line) && !/math\\.clamp|typeof|IsA|FindFirstChild|\\bassert\\b/.test(lines.slice(index,index+14).join(' '))) add('warning',n,'RemoteEvent server handlerida argument turi, masofa, ownership va cooldown validatsiyasini tekshiring.');
+    if(/\bwhile\s+true\s+do\b/.test(line) && !/task\.wait|\bwait\s*\(/.test(lines.slice(index,index+8).join(' '))) add('warning',n,'Cheksiz loop ichida task.wait() yoki event-yield borligini tekshiring; aks holda server/client qotishi mumkin.');
+    if(/\bwait\s*\(/.test(line)) add('info',n,'wait() o‘rniga ko‘pincha task.wait() afzal.');
+    if(/OnServerEvent\s*:\s*Connect/.test(line) && !/math\.clamp|typeof|IsA|FindFirstChild|\bassert\b/.test(lines.slice(index,index+14).join(' '))) add('warning',n,'RemoteEvent server handlerida argument turi, masofa, ownership va cooldown validatsiyasini tekshiring.');
     if(/DataStoreService|GetDataStore/.test(line) && !/pcall/.test(lines.slice(index,Math.min(lines.length,index+12)).join(' '))) add('warning',n,'DataStore chaqiruvini pcall bilan o‘rash va xatoni boshqarishni tekshiring.');
     if(/BodyVelocity|BodyPosition|BodyGyro/.test(line)) add('info',n,'Legacy BodyMover ishlatilgan bo‘lishi mumkin; yangi tizimlarda constraints/LinearVelocity mosligini tekshiring.');
-    if(/require\\s*\\(\\s*\\d+\\s*\\)/.test(line)) add('warning',n,'Raqamli asset/module require xavfsizligi va manbasini tekshiring.');
+    if(/require\s*\(\s*\d+\s*\)/.test(line)) add('warning',n,'Raqamli asset/module require xavfsizligi va manbasini tekshiring.');
   });
-  const opens=(source.match(/\\b(function|then|do|repeat)\\b/g)||[]).length;
-  const closes=(source.match(/\\b(end|until)\\b/g)||[]).length;
+  const opens=(source.match(/\b(function|then|do|repeat)\b/g)||[]).length;
+  const closes=(source.match(/\b(end|until)\b/g)||[]).length;
   if(opens>closes+2) add('warning',1,'Blok ochilish/yopilish sonida nomutanosiblik bo‘lishi mumkin; Luau parser bilan tasdiqlang.');
   return {title:'Luau statik audit',summary:findings.length?String(findings.length)+' ta tekshiruv topildi. Bu lint yordamchisi, Roblox Luau parserining o‘rnini bosmaydi.':'Oddiy pattern tekshiruvlarida ogohlantirish topilmadi. Bu kod xatosizligini kafolatlamaydi.',findings,checkedLines:lines.length};
 }
@@ -44,12 +44,12 @@ function worldBlueprint(input={}) {
 function performanceAudit(input={}) {
   const source=clean(input.source), findings=[];
   const checks=[
-    [/\\bwhile\\s+true\\s+do\\b/,'Cheksiz looplar: task.wait yoki event-driven model borligini tekshiring.'],
-    [/\\.Touched:Connect/,'Ko‘p .Touched connectionlar fizik event yukini oshirishi mumkin; connectionlarni boshqaring.'],
-    [/GetDescendants\\s*\\(/,'GetDescendants()ni tez-tez loop ichida chaqirmang; natijani kerak bo‘lsa cache qiling.'],
-    [/task\\.spawn|spawn\\s*\\(/,'Ko‘p parallel task ochilishi nazorat qilinsin; lifecycle/cleanup qo‘shing.'],
-    [/RunService\\.Heartbeat/,'Heartbeat callbackini yengil saqlang va keraksiz har frame ishini kamaytiring.'],
-    [/Instance\\.new\\s*\\(/,'Takroriy Instance yaratish joylarini pooling/reuse bilan solishtiring.']
+    [/\bwhile\s+true\s+do\b/,'Cheksiz looplar: task.wait yoki event-driven model borligini tekshiring.'],
+    [/\.Touched:Connect/,'Ko‘p .Touched connectionlar fizik event yukini oshirishi mumkin; connectionlarni boshqaring.'],
+    [/GetDescendants\s*\(/,'GetDescendants()ni tez-tez loop ichida chaqirmang; natijani kerak bo‘lsa cache qiling.'],
+    [/task\.spawn|spawn\s*\(/,'Ko‘p parallel task ochilishi nazorat qilinsin; lifecycle/cleanup qo‘shing.'],
+    [/RunService\.Heartbeat/,'Heartbeat callbackini yengil saqlang va keraksiz har frame ishini kamaytiring.'],
+    [/Instance\.new\s*\(/,'Takroriy Instance yaratish joylarini pooling/reuse bilan solishtiring.']
   ];
   for(const [pattern,message] of checks) if(pattern.test(source)) findings.push({level:'review',message});
   return {title:'Performance audit',summary:findings.length?'Ko‘rib chiqish kerak bo‘lgan '+findings.length+' pattern topildi.':'Kiritilgan kodda ma’lum patternlar topilmadi; bu performance kafolati emas.',findings,recommendations:['StreamingEnabled va map zonalashini tekshiring.','Keraksiz event connectionlarni Destroy/Disconnect qiling.','Profiler va MicroProfiler natijasiga qarab optimallashtiring.','Past quvvatli qurilmada Studio Play-test qiling.']};
@@ -68,8 +68,8 @@ function qaPlan(input={}) {
   ],status:'checklist-only'};
 }
 function architectureGraph(input={}) {
-  const paths=String(clean(input.paths,10000)).split(/\\r?\\n|,/).map(x=>x.trim()).filter(Boolean).slice(0,100);
-  const modules=paths.map(path=>({path:path.replace(/\\\\/g,'/'),kind:/\\.lua$/i.test(path)?'Luau':/\\.js$/i.test(path)?'JavaScript':'file',area:/server|service/i.test(path)?'server':/client|controller|ui/i.test(path)?'client':'shared/unknown'}));
+  const paths=String(clean(input.paths,10000)).split(/\r?\n|,/).map(x=>x.trim()).filter(Boolean).slice(0,100);
+  const modules=paths.map(path=>({path:path.replace(/\\/g,'/'),kind:/\.lua$/i.test(path)?'Luau':/\.js$/i.test(path)?'JavaScript':'file',area:/server|service/i.test(path)?'server':/client|controller|ui/i.test(path)?'client':'shared/unknown'}));
   return {title:'Project module map',modules,notes:['Bu yo‘llar asosidagi dastlabki xarita; import/require bog‘liqliklari to‘liq parse qilinmagan.','Modullar orasidagi aniq bog‘liqlikni tekshirish uchun haqiqiy require/import satrlarini ham audit qilish kerak.']};
 }
 function runV2Toolkit(input={}) {
