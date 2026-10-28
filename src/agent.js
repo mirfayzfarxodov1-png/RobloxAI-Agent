@@ -5,6 +5,7 @@ import { createMessage } from './claude.js';
 import { getCredential } from './providers.js';
 import { tools, truncateOutput, toolSummary } from './tools.js';
 import { systemPrompt } from './prompt.js';
+import { buildFreeProject } from './free-builder.js';
 import { searchWeb } from './research.js';
 import { createProjectPlan, renderProjectPlanMarkdown } from './project-planner.js';
 import { emit, sendCommand, statusForUser, setUserRunning, stateForUser } from './hub.js';
@@ -89,7 +90,6 @@ export async function startTask(user, text) {
   if (running.has(user.id)) return { ok: false, status: 409, error: 'Agent hali ishlayapti' };
   const status = statusForUser(user.id);
   if (!status.connected) return { ok: false, status: 412, error: 'Studio ulanmagan', needPairing: true };
-  if (!getCredential(user.id)) return { ok: false, status: 503, error: 'AI provider sozlanmagan. Sozlamalardan API kalitni kiriting.' };
   if (text.length < 1 || text.length > 30000) return { ok: false, status: 400, error: 'Xabar 1–30 000 belgi oralig‘ida bo‘lishi kerak.' };
   const conversationId = currentConversation(user.id);
   const existingPause = getTaskPause(user.id);
@@ -110,7 +110,7 @@ export async function startTask(user, text) {
   saveMessage(conversationId, 'user', textBlock(text));
   emit(user.id, 'message', { id: crypto.randomUUID(), kind: 'user', text });
   sendState(user.id, conversationId);
-  task.done = runLoop(user.id, task).catch(error => {
+  task.done = (getCredential(user.id) ? runLoop(user.id, task) : runFreeTask(user.id, task, text)).catch(error => {
     console.error('[Quruvchi agent]', error?.status || '', error?.message || error);
     if (error?.name !== 'AbortError') emit(user.id, 'message', { id: crypto.randomUUID(), kind: 'error', text: 'AI xizmati vaqtincha javob bermayapti. API sozlamalari va limitlarni tekshiring.' });
   }).finally(() => {
@@ -121,6 +121,54 @@ export async function startTask(user, text) {
   void task.done;
   return { ok: true, status: 202 };
 }
+async function runFreeTask(userId, task, prompt) {
+  const signal = task.controller.signal;
+  if (signal.aborted) return;
+  const project = buildFreeProject(prompt);
+  const explanation = [
+    '## Quruvchi bepul qurish rejimi',
+    'Tashqi AI API kaliti talab qilinmadi. So‘roving asosida mahalliy shablon tanlandi.',
+    '',
+    '**Loyiha:** ' + project.name,
+    '**Hozir yaratiladigan qism:** ' + project.summary,
+    '**Studio yo‘li:** `' + project.path + '`',
+    '',
+    'Quyidagi Luau kodini nusxalash ham mumkin. Quruvchi uni Studio ichidagi Script fayliga ham joylaydi.',
+    '',
+    '```lua',
+    project.source,
+    '```',
+    '',
+    'Eslatma: bu bepul mahalliy generator — umumiy maqsadli bulut AI emas. Noma’lum yoki juda murakkab g‘oyalar uchun shablonni kengaytirish yoki ixtiyoriy AI provayder ulash kerak bo‘lishi mumkin. Play rejimida o‘zing sinab ko‘r.'
+  ].join('\n');
+  const assistantContent = textBlock(explanation);
+  saveMessage(task.conversationId, 'assistant', assistantContent);
+  emitText(userId, assistantContent);
+  if (signal.aborted) return;
+  const toolId = crypto.randomUUID();
+  emit(userId, 'message', { id: toolId, kind: 'tool', toolId, name: 'create_script', summary: 'create_script: ' + project.path });
+  sendState(userId, task.conversationId);
+  addUsage(userId, 1, 0, 0);
+  const result = await sendCommand(userId, 'create_script', {
+    path: project.path,
+    className: 'Script',
+    source: project.source
+  }, signal);
+  const output = truncateOutput(result.output || '', 20000);
+  saveMessage(task.conversationId, 'user', [{ type: 'tool_result', tool_use_id: toolId, is_error: !result.ok, content: output }]);
+  emit(userId, 'message', { id: crypto.randomUUID(), kind: 'tool_result', toolId, ok: !!result.ok, preview: output.slice(0, 300) });
+  if (!result.ok && !signal.aborted) {
+    const errorText = 'Bepul generator kodi tayyor, lekin Studio’ga joylash amalga oshmadi: ' + output + '\nKod yuqorida nusxalash uchun berilgan.';
+    const block = textBlock(errorText);
+    saveMessage(task.conversationId, 'assistant', block);
+    emitText(userId, block);
+  } else if (result.ok) {
+    const done = textBlock('Bepul generator skripti Studio’ga joylandi. Endi **Play** bosib sinab ko‘r. Bu starter loyiha; keyingi funksiyalarni ham bosqichma-bosqich bepul generator shablonlariga qo‘shamiz.');
+    saveMessage(task.conversationId, 'assistant', done);
+    emitText(userId, done);
+  }
+}
+
 async function runLoop(userId, task) {
   let steps = 0;
   const signal = task.controller.signal;
@@ -229,14 +277,13 @@ export async function resumeTask(user) {
   }
   const status = statusForUser(user.id);
   if (!status.connected) return { ok: false, status: 412, error: 'Studio ulanmagan', needPairing: true };
-  if (!config.anthropicApiKey) return { ok: false, status: 503, error: 'AI provider sozlanmagan. Serverdagi .env fayliga ANTHROPIC_API_KEY kiriting.' };
   const controller = new AbortController();
   const task = { controller, conversationId, startedAt: Date.now(), resumed: true };
   clearTaskPause(user.id);
   running.set(user.id, task);
   setUserRunning(user.id, true);
   sendState(user.id, conversationId);
-  task.done = runLoop(user.id, task).catch(error => {
+  task.done = (getCredential(user.id) ? runLoop(user.id, task) : runFreeTask(user.id, task, 'Davom ettir: bepul qurish rejimi')).catch(error => {
     console.error('[Quruvchi agent resume]', error?.status || '', error?.message || error);
     emit(user.id, 'message', { id: crypto.randomUUID(), kind: 'error', text: 'Davom ettirishda xatolik yuz berdi. Saqlangan loyiha tarixi saqlanib qoldi.' });
   }).finally(() => {
