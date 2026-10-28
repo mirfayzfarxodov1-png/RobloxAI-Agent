@@ -270,19 +270,73 @@ function createWorldVisual(className){
   if(!reduced)raf=requestAnimationFrame(draw);
   return stage;
 }
+function createHeroMascot(){
+  const mascot=node('div','hero-mascot');
+  const aura=node('div','mascot-aura');
+  const hoodie=node('div','mascot-hoodie');
+  const hoodieLogo=node('div','mascot-logo','Q');
+  const neck=node('div','mascot-neck');
+  const head=node('div','mascot-head');
+  const hairBack=node('div','mascot-hair-back');
+  const hair=node('div','mascot-hair');
+  const fringe=node('div','mascot-fringe');
+  const ear=node('div','mascot-ear');
+  const face=node('div','mascot-face');
+  const brow=node('div','mascot-brow');
+  const eye1=node('div','mascot-eye mascot-eye-one');
+  const eye2=node('div','mascot-eye mascot-eye-two');
+  const mouth=node('div','mascot-mouth');
+  mouth.append(node('div','mascot-teeth'),node('div','mascot-tongue'));
+  face.append(ear,brow,eye1,eye2,mouth);
+  head.append(hairBack,face,hair,fringe);
+  const arm=node('div','mascot-arm');
+  const hand=node('div','mascot-hand');
+  const handThumb=node('div','mascot-thumb');
+  hand.append(handThumb);
+  mascot.append(aura,hoodie,hoodieLogo,neck,head,arm,hand);
+  return mascot;
+}
 function renderAuth(){
-  const wrap=node('div','auth-page');
-  const visual=node('section','auth-visual');
-  visual.append(createWorldVisual('world-stage world-stage-auth'),node('div','auth-visual-copy'),node('p','auth-visual-kicker','ROBLOX WORLDS · REIMAGINED'),node('h2','auth-visual-title','G‘oyangdan boshlanadi. Cheksiz dunyolar.'),node('p','auth-visual-description','Tasavvur qil. Quruvchi bilan reja tuz. Roblox Studio’da jonlantir.'));
-  const card=node('section','auth-card');card.append(node('div','brand-mark','Q'),node('h1','','Quruvchi'),node('p','auth-intro','Roblox Studio uchun AI quruvchi'));
-  const tabs=node('div','auth-tabs');tabs.append(button('Kirish',state.authMode==='login'?'active':'',()=>{state.authMode='login';state.notice='';render();}),button('Ro‘yxatdan o‘tish',state.authMode==='register'?'active':'',()=>{state.authMode='register';state.notice='';render();}));card.append(tabs);
-  const form=node('form'),loginLabel=node('label','form-label','LOGIN'),loginInput=node('input');loginInput.name='login';loginInput.autocomplete='username';loginInput.required=true;loginInput.minLength=3;loginInput.maxLength=32;loginInput.value=state.login;loginInput.placeholder='foydalanuvchi';loginInput.addEventListener('input',e=>state.login=e.target.value);loginLabel.append(loginInput);form.append(loginLabel);
-  const passLabel=node('label','form-label','PAROL'),passInput=node('input');passInput.type='password';passInput.name='password';passInput.autocomplete=state.authMode==='login'?'current-password':'new-password';passInput.required=true;passInput.minLength=8;passInput.maxLength=200;passInput.value=state.password;passInput.placeholder='Kamida 8 belgi';passInput.addEventListener('input',e=>state.password=e.target.value);passLabel.append(passInput);form.append(passLabel);
+  const wrap=node('div','auth-page auth-page-v2');
+  const topbar=node('header','auth-v2-topbar');
+  const brand=node('div','auth-v2-brand');
+  brand.append(node('div','auth-v2-brand-mark','Q'));
+  const brandText=node('div','auth-v2-brand-text');
+  const brandTitle=node('strong','','Quruvchi');
+  brandTitle.append(node('span','auth-v2-badge','V2'));
+  brandText.append(brandTitle,node('small','','Roblox Studio uchun AI quruvchi'));
+  brand.append(brandText);
+  const topMeta=node('div','auth-v2-meta');
+  topMeta.append(node('span','auth-v2-status','●  AI WORLD ENGINE'),node('span','auth-v2-language','O‘ZBEKCHA'));
+  topbar.append(brand,topMeta);
+  const visual=node('section','auth-visual auth-v2-visual');
+  visual.append(createWorldVisual('world-stage world-stage-auth'),createHeroMascot());
+  const copy=node('div','auth-v2-copy');
+  copy.append(node('p','auth-visual-kicker','G‘OYADAN — HAQIQIY O‘YINGACHA'),node('h2','auth-visual-title','Orzularingni'),node('h2','auth-v2-gradient-title','yarat!'),node('p','auth-visual-description','Quruvchi bilan g‘oyangni Roblox dunyosiga aylantir. Reja tuz, kod yarat va Roblox Studio’da davom et.'));
+  const features=node('div','auth-v2-features');
+  [['✦','Tezkor','Bir necha soniyada'],['⌘','Aqlli AI','Siz bilan birga o‘rganadi'],['▣','Roblox','O‘yinlaring uchun']].forEach(([symbol,title,desc])=>{
+    const item=node('div','auth-v2-feature');
+    item.append(node('span','auth-v2-feature-icon',symbol));
+    const words=node('span','auth-v2-feature-copy');
+    words.append(node('strong','',title),node('small','',desc));item.append(words);features.append(item);
+  });
+  copy.append(features,node('div','auth-v2-scroll-hint','↓  PASTGA AYLAN TIRING'));
+  visual.append(copy);
+  const card=node('section','auth-card auth-card-v2');
+  const cardMark=node('div','brand-mark','Q');
+  const cardTitle=node('h1','','Quruvchi');
+  const cardBadge=node('span','auth-v2-badge auth-v2-card-badge','V2');cardTitle.append(cardBadge);
+  card.append(cardMark,cardTitle,node('p','auth-intro','Roblox Studio uchun AI quruvchi'));
+  const tabs=node('div','auth-tabs');tabs.append(button('↪  Kirish',state.authMode==='login'?'active':'',()=>{state.authMode='login';state.notice='';render();}),button('♧  Ro‘yxatdan o‘tish',state.authMode==='register'?'active':'',()=>{state.authMode='register';state.notice='';render();}));card.append(tabs);
+  const form=node('form'),loginLabel=node('label','form-label','LOGIN'),loginInput=node('input');loginInput.name='login';loginInput.autocomplete='username';loginInput.required=true;loginInput.minLength=3;loginInput.maxLength=32;loginInput.value=state.login;loginInput.placeholder='Foydalanuvchi nomi yoki email';loginInput.addEventListener('input',e=>state.login=e.target.value);loginLabel.append(loginInput);form.append(loginLabel);
+  const passLabel=node('label','form-label','PAROL'),passInput=node('input');passInput.type='password';passInput.name='password';passInput.autocomplete=state.authMode==='login'?'current-password':'new-password';passInput.required=true;passInput.minLength=8;passInput.maxLength=200;passInput.value=state.password;passInput.placeholder='Parolingiz';passLabel.append(passInput);form.append(passLabel);
   if(state.authMode==='register'){const label=node('label','form-label','TAKLIF HAVOLASI / KODI'),input=node('input');input.name='invite';input.value=state.invite;input.placeholder='Taklif havolasidan avtomatik tushadi';input.autocomplete='off';input.addEventListener('input',e=>state.invite=e.target.value.trim());label.append(input);form.append(label);if(new URLSearchParams(location.search).has('ref'))form.append(node('p','referral-auth-note','Siz taklif havolasi orqali keldingiz. Ro‘yxatdan o‘tish ushbu serverda davom etadi.'));}
   if(state.notice)form.append(node('div','form-error',state.notice));
-  const submit=button(state.authMode==='login'?'Kirish':'Hisob yaratish','primary-button full',()=>{});submit.type='submit';form.append(submit);
+  const submit=button(state.authMode==='login'?'➜  Kirish':'✦  Hisob yaratish','primary-button full',()=>{});submit.type='submit';form.append(submit);
   form.addEventListener('submit',async e=>{e.preventDefault();state.notice='';try{const data=await api(state.authMode==='login'?'/api/login':'/api/register',{login:state.login,password:state.password,...(state.authMode==='register'?{invite:state.invite}:{})});state.user={login:data.login||state.login};state.password='';state.notice='';await loadApp();}catch(error){state.notice=error.message;render();}});
-  card.append(form,node('p','auth-security','Sessiya xavfsiz cookie bilan saqlanadi. API kalit chat tarixiga kiritilmaydi va serverda shifrlanadi.'));wrap.append(card);root.append(wrap);
+  card.append(form,node('div','auth-v2-divider','YOKI'),node('div','auth-v2-social-note','Hisobingiz xavfsiz himoyalanadi'),node('p','auth-security','Sessiya xavfsiz cookie bilan saqlanadi. API kalit chat tarixiga kiritilmaydi va serverda shifrlanadi.'));
+  const footer=node('footer','auth-v2-footer','Created with ♥ by Quruvchi Team');
+  wrap.append(topbar,visual,copy,card,footer);root.append(wrap);
 }
 function renderModal(shell){
   const backdrop=node('div','modal-backdrop');backdrop.addEventListener('mousedown',e=>{if(e.target===backdrop)closeModal();});
