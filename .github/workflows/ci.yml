@@ -16,7 +16,7 @@ jobs:
       - name: Verify Node version
         run: node --version
       - name: Syntax check browser script
-        run: node --check public/app.js
+        run: node --check public/app.js && node --check public/v2.js && node --check public/avatar-3d.js
       - name: Syntax check server modules
         run: |
           for file in src/*.js test/*.js; do node --check "$file"; done
