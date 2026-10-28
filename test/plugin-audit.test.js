@@ -18,7 +18,7 @@ test('audit_project is exposed to the agent and implemented by the Studio plugin
 test('plugin panel has one activity log title and stable audit layout order', () => {
   assert.equal((plugin.match(/local logTitle=/g) || []).length, 1);
   assert.match(plugin, /local quickTools3=.*LayoutOrder=8/);
-  assert.match(plugin, /Text="FAOLIYAT JURNALI  ·  LOGS".*LayoutOrder=9/);
+  assert.match(plugin, /Text="FAOLIYAT JURNALI  ·  LOGS".*LayoutOrder=10/);
   assert.match(plugin, /logFrame\.LayoutOrder=10/);
 });
 
