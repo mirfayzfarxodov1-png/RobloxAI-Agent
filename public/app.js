@@ -1,7 +1,7 @@
 const root = document.getElementById('app');
 const state = {
   user:null,messages:[],busy:false,paused:null,status:{connected:false,placeName:'',deviceId:null},
-  steps:{used:0,limit:300},modal:null,authMode:'login',login:'',password:'',invite:'',
+  steps:{used:0,limit:300},modal:null,authMode:new URLSearchParams(location.search).has('ref')?'register':'login',login:'',password:'',invite:new URLSearchParams(location.search).get('ref')||'',referral:null,
   notice:'',prompt:'',code:'',expiresAt:0,devices:[],serverOnline:false,mobileMenu:false,ownerServerUrl:location.origin
 };
 let stream=null,codeTicker=null,pauseReadyState=null;
@@ -47,7 +47,7 @@ function render(){
   const shell=node('div','app-shell'),sidebar=node('aside','sidebar'+(state.mobileMenu?' open':''));
   const brand=node('div','brand-row');brand.append(node('div','brand-mark','Q'));const brandCopy=node('div','brand-copy');brandCopy.append(node('strong','','Quruvchi'),node('small','','ROBLOX AI STUDIO'));brand.append(brandCopy,iconButton('Menyuni yopish','×',()=>{state.mobileMenu=false;render();}));brand.lastElementChild.className='icon-button mobile-close';sidebar.append(brand);
   sidebar.append(button('＋  Yangi chat','new-chat',newChat),node('div','side-label','ISH MAYDONI'),button('◫  AI bilan qurish','side-link active',()=>{}));
-  const studioLink=button('▣  Studio ulash','side-link',openPair);studioLink.append(node('span','tiny-status'+(state.status.connected?' online':'')));sidebar.append(studioLink,button('⚙  Sozlamalar','side-link',()=>{state.modal='settings';render();}),node('div','side-label','YORDAM'),button('?  Qanday ishlaydi?','side-link',()=>{state.modal='help';render();}),node('div','sidebar-spacer'));
+  const studioLink=button('▣  Studio ulash','side-link',openPair);studioLink.append(node('span','tiny-status'+(state.status.connected?' online':'')));sidebar.append(studioLink,button('↗  Taklif havolasi','side-link',openReferral),button('⚙  Sozlamalar','side-link',()=>{state.modal='settings';render();}),node('div','side-label','YORDAM'),button('?  Qanday ishlaydi?','side-link',()=>{state.modal='help';render();}),node('div','sidebar-spacer'));
   const usage=node('div','usage-card'),usageTitle=node('div','usage-title','ϟ  Kunlik limit');usageTitle.append(node('span','',state.steps.used+' / '+state.steps.limit));usage.append(usageTitle);
   const track=node('div','usage-track'),fill=node('span');const pct=state.steps.limit?Math.min(100,state.steps.used/state.steps.limit*100):0;fill.className=pct>=100?'bar-full':pct>=66?'bar-two-thirds':pct>=33?'bar-one-third':'bar-low';track.append(fill);usage.append(track,node('p','','Bugungi AI tool qadamlari'));sidebar.append(usage);
   const profile=node('div','profile-row');profile.append(node('div','avatar',state.user.login.slice(0,1).toUpperCase()));const profileInfo=node('div','profile-info');profileInfo.append(node('strong','',state.user.login),node('small','',state.serverOnline?'Server ulangan':'Server offline'));profile.append(profileInfo,iconButton('Chiqish','↪',logout));sidebar.append(profile);shell.append(sidebar);
@@ -117,7 +117,7 @@ function renderAuth(){
   const tabs=node('div','auth-tabs');tabs.append(button('Kirish',state.authMode==='login'?'active':'',()=>{state.authMode='login';state.notice='';render();}),button('Ro‘yxatdan o‘tish',state.authMode==='register'?'active':'',()=>{state.authMode='register';state.notice='';render();}));card.append(tabs);
   const form=node('form'),loginLabel=node('label','form-label','LOGIN'),loginInput=node('input');loginInput.name='login';loginInput.autocomplete='username';loginInput.required=true;loginInput.minLength=3;loginInput.maxLength=32;loginInput.value=state.login;loginInput.placeholder='foydalanuvchi';loginInput.addEventListener('input',e=>state.login=e.target.value);loginLabel.append(loginInput);form.append(loginLabel);
   const passLabel=node('label','form-label','PAROL'),passInput=node('input');passInput.type='password';passInput.name='password';passInput.autocomplete=state.authMode==='login'?'current-password':'new-password';passInput.required=true;passInput.minLength=8;passInput.maxLength=200;passInput.value=state.password;passInput.placeholder='Kamida 8 belgi';passInput.addEventListener('input',e=>state.password=e.target.value);passLabel.append(passInput);form.append(passLabel);
-  if(state.authMode==='register'){const label=node('label','form-label','TAKLIF KODI (Ixtiyoriy)'),input=node('input');input.name='invite';input.value=state.invite;input.placeholder='Taklif kodi';input.addEventListener('input',e=>state.invite=e.target.value);label.append(input);form.append(label);}
+  if(state.authMode==='register'){const label=node('label','form-label','TAKLIF HAVOLASI / KODI'),input=node('input');input.name='invite';input.value=state.invite;input.placeholder='Taklif havolasidan avtomatik tushadi';input.autocomplete='off';input.addEventListener('input',e=>state.invite=e.target.value.trim());label.append(input);form.append(label);if(new URLSearchParams(location.search).has('ref'))form.append(node('p','referral-auth-note','Siz taklif havolasi orqali keldingiz. Ro‘yxatdan o‘tish ushbu serverda davom etadi.'));}
   if(state.notice)form.append(node('div','form-error',state.notice));
   const submit=button(state.authMode==='login'?'Kirish':'Hisob yaratish','primary-button full',()=>{});submit.type='submit';form.append(submit);
   form.addEventListener('submit',async e=>{e.preventDefault();state.notice='';try{const data=await api(state.authMode==='login'?'/api/login':'/api/register',{login:state.login,password:state.password,...(state.authMode==='register'?{invite:state.invite}:{})});state.user={login:data.login||state.login};state.password='';state.notice='';await loadApp();}catch(error){state.notice=error.message;render();}});
@@ -141,6 +141,27 @@ function renderModal(shell){
     const remaining=Math.max(0,Math.ceil((state.expiresAt-Date.now())/1000));card.append(node('div','pair-timer',state.code?(remaining?'Kod muddati: '+Math.floor(remaining/60)+':'+String(remaining%60).padStart(2,'0'):'Kod muddati tugagan'):'Kod olish uchun tugmani bosing'),button(state.code?'Yangi kod olish':'Ulash kodini olish','primary-button full',createPair),link('Plugin faylini yuklab olish','/plugin.lua','plugin-download'));
     const list=node('div','device-list');for(const d of state.devices){const item=node('div','device-item');item.append(node('span','device-status'+(d.connected?' connected':'')));const info=node('div');info.append(node('strong','',d.placeName||'Roblox Studio'),node('small','',d.connected?'Ulangan':'Uzilgan'));item.append(info,button('O‘chirish','device-delete',async()=>{if(!confirm('Ushbu Studio qurilmasini uzasizmi?'))return;try{await api('/api/devices/'+d.id,undefined,'DELETE');await loadDevices();render();}catch(e){state.notice=e.message;render();}}));list.append(item);}card.append(list);
     if(state.notice)card.append(node('div','form-error',state.notice));
+  }else if(state.modal==='referral'){
+    card.append(node('div','modal-icon','↗'),node('h2','','Taklif havolasi'),node('p','modal-subtitle','Do‘stingizga shu havolani yuboring. U ochganda sizning serveringizga kiradi; o‘z localhost serveriga emas.'));
+    if(!state.referral){
+      card.append(node('p','referral-loading','Taklif havolasi yuklanmoqda…'));
+    }else{
+      const linkCard=node('div','referral-link-card');
+      linkCard.append(node('strong','','Sizning shaxsiy havolangiz'));
+      const linkRow=node('div','referral-link-row'),urlInput=node('input','referral-url');
+      urlInput.readOnly=true;urlInput.value=state.referral.referralUrl;urlInput.setAttribute('aria-label','Taklif havolasi');
+      linkRow.append(urlInput,button('Nusxalash','primary-button',async()=>{try{await navigator.clipboard.writeText(state.referral.referralUrl);state.notice='Taklif havolasi nusxalandi';}catch{urlInput.select();state.notice='Havola tanlandi — Ctrl+C bosing.';}render();}));
+      linkCard.append(linkRow);
+      const stats=node('div','referral-stats');stats.append(node('div','referral-stat',String(state.referral.referrals)),node('small','referral-stat-label','Sizning havolangiz orqali ro‘yxatdan o‘tganlar'));
+      linkCard.append(stats);
+      if(state.referral.localOnly){
+        linkCard.append(node('p','referral-warning','Muhim: hozir PUBLIC_URL localhost manzilida. Bu havola boshqa kompyuterda ishlamaydi. Boshqa kompyuterdan foydalanish uchun PUBLIC_URL ni server egasining LAN IP manziliga o‘zgartiring va bir xil Wi‑Fi/LAN tarmog‘ida bo‘ling. Internet orqali ulanish uchun ommaviy HTTPS server kerak.'));
+      }else{
+        linkCard.append(node('p','referral-success','Taklif havolasi server egasining manziliga bog‘langan. Sherik shu manzilda ro‘yxatdan o‘tadi.'));
+      }
+      card.append(linkCard);
+    }
+    if(state.notice)card.append(node('div','form-error',state.notice));
   }else if(state.modal==='settings'){
     card.append(node('div','modal-icon','⚙'),node('h2','','Sozlamalar'),node('p','modal-subtitle','Quruvchi ish muhiti va xavfsizlik holati.'));
     for(const [label,value] of [['Server',state.serverOnline?'ONLINE':'OFFLINE'],['Studio bridge',state.status.connected?'ULANGAN':'ULANMAGAN'],['Bugungi tool limiti',state.steps.used+' / '+state.steps.limit],['run_code','Plugin ichida sukut bo‘yicha O‘CHIQ']]){const row=node('div','settings-row'),left=node('div');left.append(node('strong','',label));row.append(left,node('span','state-tag',value));card.append(row);}card.append(node('p','modal-footnote','API kalitni .env ichida saqlang. GitHub yoki frontend kodiga qo‘ymang.'));
@@ -153,6 +174,12 @@ function renderModal(shell){
 function serverAddressCardWarning(parent,url){
   const local=/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(url);
   parent.append(node('p','modal-footnote',local?'Diqqat: localhost faqat shu kompyuterda ishlaydi. Boshqa kompyuter uchun .env ichida PUBLIC_URL ni server egasining LAN IP manziliga o‘zgartiring; boshqa tarmoqdan ulanish uchun server ommaviy HTTPS manzilda bo‘lishi kerak.':'Sherik shu manzil orqali server egasining API’siga ulanadi. Manzil sherikka yetib borishi va server porti firewall’da ruxsat etilgan bo‘lishi kerak.'));
+}
+async function openReferral(){
+  state.modal='referral';state.notice='';state.referral=null;render();
+  try{state.referral=await api('/api/referral');}
+  catch(error){state.notice=error.message||'Taklif havolasi olinmadi.';}
+  if(state.modal==='referral')render();
 }
 function closeModal(){state.modal=null;state.notice='';if(codeTicker){clearInterval(codeTicker);codeTicker=null;}render();}
 async function openPair(){state.modal='pair';state.notice='';try{const info=await api('/server-info');state.ownerServerUrl=info.serverUrl||location.origin;}catch{state.ownerServerUrl=location.origin;}render();await loadDevices();if(state.modal==='pair')render();if(codeTicker)clearInterval(codeTicker);codeTicker=setInterval(()=>{if(state.modal==='pair')render();else{clearInterval(codeTicker);codeTicker=null;}},1000);}
