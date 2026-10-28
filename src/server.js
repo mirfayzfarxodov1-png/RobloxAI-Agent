@@ -12,6 +12,7 @@ import { attachSse, addDevice, pollDevice, receiveResult, listDevices, disconnec
 import { startTask, stopTask, newConversation, isRunning, resumeTask } from './agent.js';
 import { listProviders, credentialStatus, saveCredential } from './providers.js';
 import { V2_CAPABILITIES, buildV2Plan, getProjectMemory, saveProjectMemory } from './v2.js';
+import { V2_TECHNOLOGIES, runV2Toolkit } from './v2-engine.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pluginFile = path.resolve(__dirname, '..', 'plugin', 'Quruvchi.lua');
@@ -204,7 +205,14 @@ const server = http.createServer(async (req, res) => {
         const usage = getUsage(user.id);
         return json(res, 200, { login:user.login, steps:{ used:usage.steps, limit:config.dailyStepLimit }, running:isRunning(user.id), status:statusForUser(user.id), conversationId:currentConversation(user.id), paused:stateForUser(user.id).paused, ai:credentialStatus(user.id) });
       }
-      if (method === 'GET' && pathname === '/api/v2/capabilities') return json(res, 200, { version:'2.0.0', capabilities:V2_CAPABILITIES });
+      if (method === 'GET' && pathname === '/api/v2/capabilities') return json(res, 200, { version:'2.1.0', capabilities:V2_CAPABILITIES });
+      if (method === 'GET' && pathname === '/api/v2/engines') return json(res, 200, { version:'2.1.0', technologies:V2_TECHNOLOGIES });
+      if (method === 'POST' && pathname === '/api/v2/toolkit') {
+        const input = await getBody(req, res); if (!input) return;
+        const limit = consumeLimit('chatUser', 'v2-toolkit:' + user.id);
+        if (!limit.allowed) return json(res, 429, { error:'V2 tekshiruvlari juda tez-tez bajarildi. Biroz kutib qayta urinib ko‘ring.' }, { 'Retry-After':String(limit.retryAfter) });
+        return json(res, 200, runV2Toolkit(input));
+      }
       if (method === 'POST' && pathname === '/api/v2/plan') {
         const input = await getBody(req, res); if (!input) return;
         const limit = consumeLimit('chatUser', 'v2-plan:' + user.id);
