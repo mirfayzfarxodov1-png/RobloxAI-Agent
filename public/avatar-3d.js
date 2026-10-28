@@ -82,6 +82,52 @@ export async function mountAvatar3D(stage) {
   makeBox(legR,'right-leg',[.52,1.05,.58],pants,[0,-.48,0]); makeBox(legR,'right-shoe',[.58,.25,.78],shoes,[0,-1.05,.09]);
   // Raised, welcoming hand and subtle cyan wrist band.
   makeBox(armR,'wrist-band',[.44,.09,.5],cyanMat,[.02,-.78,.04]);
+  // V2 character polish: layered techwear, backpack, shoulder armor and emissive accents.
+  const armor = mat(0x344c91, .38, .35), armorDark = mat(0x111a35, .42, .28);
+  const silver = mat(0x8aa8d6, .28, .72), glowBlue = new THREE.MeshStandardMaterial({color:0x7ceeff,emissive:0x19a9ff,emissiveIntensity:1.8,roughness:.25,metalness:.25});
+  // Jacket seams and utility belt make the block avatar read clearly at smaller sizes.
+  makeBox(avatar,'jacket-left-seam',[.045,1.15,.035],silver,[-.57,.05,.405]);
+  makeBox(avatar,'jacket-right-seam',[.045,1.15,.035],silver,[.57,.05,.405]);
+  makeBox(avatar,'utility-belt',[1.42,.14,.82],armorDark,[0,-.62,.015]);
+  makeBox(avatar,'belt-buckle',[.22,.16,.07],glowBlue,[0,-.62,.45]);
+  makeBox(avatar,'shoulder-armor-left',[.56,.25,.57],armor,[-.91,.98,0]);
+  makeBox(avatar,'shoulder-armor-right',[.56,.25,.57],armor,[.91,.98,0]);
+  makeBox(avatar,'shoulder-light-left',[.28,.055,.05],glowBlue,[-.91,1.12,.29]);
+  makeBox(avatar,'shoulder-light-right',[.28,.055,.05],glowBlue,[.91,1.12,.29]);
+  // Compact backpack silhouette with luminous power cell.
+  const pack = new THREE.Group(); pack.position.set(0,.1,-.53); avatar.add(pack);
+  makeBox(pack,'backpack-shell',[.92,1.08,.28],armorDark,[0,0,0]);
+  makeBox(pack,'backpack-top',[.72,.18,.31],armor,[0,.55,0]);
+  makeBox(pack,'backpack-power-cell',[.3,.58,.035],glowBlue,[0,.02,-.16]);
+  makeBox(pack,'backpack-left-strap',[.12,.78,.07],silver,[-.29,.02,.16]);
+  makeBox(pack,'backpack-right-strap',[.12,.78,.07],silver,[.29,.02,.16]);
+  // Headset and visor details.
+  makeBox(head,'headset-band',[1.34,.12,.16],armor, [0,.36,-.02]);
+  makeBox(head,'headset-left',[.16,.32,.22],armor,[-.68,.02,.03]);
+  makeBox(head,'headset-right',[.16,.32,.22],armor,[.68,.02,.03]);
+  makeBox(head,'visor-edge',[.82,.19,.045],silver,[0,.07,.505]);
+  makeBox(head,'visor-glow',[.68,.055,.025],glowBlue,[0,.07,.535]);
+  makeBox(head,'cheek-mark-left',[.12,.055,.035],glowBlue,[-.48,-.2,.49]);
+  makeBox(head,'cheek-mark-right',[.12,.055,.035],glowBlue,[.48,-.2,.49]);
+  // Glove plates and boot trim.
+  makeBox(armL,'left-glove-cuff',[.43,.12,.5],armor,[-.02,-.91,.02]);
+  makeBox(armR,'right-glove-cuff',[.45,.12,.5],armor,[.02,-.83,.04]);
+  makeBox(legL,'left-boot-trim',[.59,.07,.79],glowBlue,[0,-.91,.11]);
+  makeBox(legR,'right-boot-trim',[.59,.07,.79],glowBlue,[0,-.91,.11]);
+  // A small hovering hologram pair adds depth without heavy imported assets.
+  const drones = new THREE.Group(); scene.add(drones);
+  const droneMat = new THREE.MeshStandardMaterial({color:0x5cecff,emissive:0x168bff,emissiveIntensity:1.4,metalness:.35,roughness:.28});
+  for (const side of [-1,1]) {
+    const drone = new THREE.Group(); drone.position.set(side*1.85,.35,0); drones.add(drone);
+    const core = new THREE.Mesh(new THREE.BoxGeometry(.2,.2,.2),droneMat); drone.add(core);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(.25,.018,5,24),silver); ring.rotation.x=Math.PI/2; drone.add(ring);
+    const pin = new THREE.Mesh(new THREE.BoxGeometry(.06,.32,.06),glowBlue); pin.position.y=.24; drone.add(pin);
+  }
+  // Subtle circular holographic platform under the character.
+  const platform = new THREE.Group(); platform.position.set(0,-2.1,-.05); scene.add(platform);
+  const ringA = new THREE.Mesh(new THREE.TorusGeometry(1.42,.018,5,64),glowBlue); ringA.rotation.x=Math.PI/2; platform.add(ringA);
+  const ringB = new THREE.Mesh(new THREE.TorusGeometry(1.68,.009,4,64),silver); ringB.rotation.x=Math.PI/2; platform.add(ringB);
+  const platformDisc = new THREE.Mesh(new THREE.CylinderGeometry(1.08,1.18,.055,8),mat(0x141f46,.5,.35)); platformDisc.position.y=-.035; platform.add(platformDisc);
   avatar.position.y=-.05;
   avatar.rotation.y=-.12;
 
@@ -104,6 +150,9 @@ export async function mountAvatar3D(stage) {
     avatar.position.y=-.05+Math.sin(t*1.25)*.075;
     avatar.rotation.y=-.12+pointer.x*.32+Math.sin(t*.45)*.035;
     avatar.rotation.x=-pointer.y*.09;
+    drones.rotation.y=t*.28+pointer.x*.1;
+    drones.position.y=.35+Math.sin(t*1.4)*.09;
+    platform.rotation.y=-t*.12;
     head.rotation.y=pointer.x*.2; head.rotation.x=-pointer.y*.12;
     armR.rotation.z=-.16+Math.sin(t*1.4)*.055-pointer.y*.08;
     renderer.render(scene,camera);

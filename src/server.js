@@ -11,6 +11,7 @@ import { sendJson, readJson, checkCsrf, clientIp, serveStatic, securityHeaders }
 import { attachSse, addDevice, pollDevice, receiveResult, listDevices, disconnectDevice, statusForUser, stateForUser, emit } from './hub.js';
 import { startTask, stopTask, newConversation, isRunning, resumeTask } from './agent.js';
 import { listProviders, credentialStatus, saveCredential } from './providers.js';
+import { V2_CAPABILITIES, buildV2Plan, getProjectMemory, saveProjectMemory } from './v2.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pluginFile = path.resolve(__dirname, '..', 'plugin', 'Quruvchi.lua');
@@ -202,6 +203,18 @@ const server = http.createServer(async (req, res) => {
       if (method === 'GET' && pathname === '/api/me') {
         const usage = getUsage(user.id);
         return json(res, 200, { login:user.login, steps:{ used:usage.steps, limit:config.dailyStepLimit }, running:isRunning(user.id), status:statusForUser(user.id), conversationId:currentConversation(user.id), paused:stateForUser(user.id).paused, ai:credentialStatus(user.id) });
+      }
+      if (method === 'GET' && pathname === '/api/v2/capabilities') return json(res, 200, { version:'2.0.0', capabilities:V2_CAPABILITIES });
+      if (method === 'POST' && pathname === '/api/v2/plan') {
+        const input = await getBody(req, res); if (!input) return;
+        const limit = consumeLimit('chatUser', 'v2-plan:' + user.id);
+        if (!limit.allowed) return json(res, 429, { error:'Reja juda tez-tez so‘raldi. Biroz kutib qayta urinib ko‘ring.' }, { 'Retry-After':String(limit.retryAfter) });
+        return json(res, 200, buildV2Plan(input));
+      }
+      if (method === 'GET' && pathname === '/api/v2/memory') return json(res, 200, getProjectMemory(user.id));
+      if (method === 'POST' && pathname === '/api/v2/memory') {
+        const input = await getBody(req, res); if (!input) return;
+        return json(res, 200, saveProjectMemory(user.id, input));
       }
       if (method === 'GET' && pathname === '/api/ai/providers') return json(res, 200, {providers:listProviders(),credential:credentialStatus(user.id)});
       if (method === 'POST' && pathname === '/api/ai/credentials') {
