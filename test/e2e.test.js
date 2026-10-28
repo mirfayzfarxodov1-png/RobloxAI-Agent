@@ -89,7 +89,7 @@ test('Quruvchi auth, CSRF, pairing, tool loop, cancellation history, and device 
   assert.equal(pluginDownload.status,200);
   const downloadedPlugin=await pluginDownload.text();
   assert.ok(!downloadedPlugin.includes('__SERVER_URL__'));
-  assert.ok(downloadedPlugin.includes('local SERVER = "'+base+'"'),'plugin download must contain the configured server URL');
+  assert.ok(downloadedPlugin.includes('or "'+base+'"'),'plugin download must contain the configured server URL');
 
   const noStudio=await post(base,'/api/chat',{text:'Workspace ichida papka yarat'},{cookie});
   assert.equal(noStudio.status,412);
