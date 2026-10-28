@@ -49,6 +49,14 @@ CREATE TABLE IF NOT EXISTS task_pauses (
  created_at INTEGER NOT NULL,
  updated_at INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS game_dna_projects (
+ user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+ title TEXT NOT NULL,
+ idea TEXT NOT NULL,
+ manifest_json TEXT NOT NULL,
+ version INTEGER NOT NULL DEFAULT 1,
+ updated_at INTEGER NOT NULL
+);
 CREATE INDEX IF NOT EXISTS idx_messages_conv ON messages(conversation_id,id);
 CREATE INDEX IF NOT EXISTS idx_devices_user ON devices(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_expiry ON sessions(expires_at);
@@ -116,4 +124,18 @@ export function cleanupExpired() {
   const now = Date.now();
   db.prepare('DELETE FROM sessions WHERE expires_at<?').run(now);
   db.prepare('DELETE FROM pairings WHERE expires_at<? OR used_at IS NOT NULL').run(now);
+}
+
+export function getGameDNAProject(userId) {
+ const row=db.prepare('SELECT title,idea,manifest_json,version,updated_at FROM game_dna_projects WHERE user_id=?').get(userId);
+ if(!row)return {project:null};
+ try{return {project:{title:row.title,idea:row.idea,manifest:JSON.parse(row.manifest_json),version:row.version,updatedAt:row.updated_at}};}
+ catch{return {project:null,error:'Game DNA xotirasi o‘qilmadi; qayta saqlang.'};}
+}
+export function saveGameDNAProject(userId,manifest) {
+ const now=Date.now(),row=db.prepare('SELECT version FROM game_dna_projects WHERE user_id=?').get(userId),version=(row?.version||0)+1;
+ const next={...manifest,version,updatedAt:new Date(now).toISOString()};
+ db.prepare(`INSERT INTO game_dna_projects(user_id,title,idea,manifest_json,version,updated_at) VALUES(?,?,?,?,?,?)
+ ON CONFLICT(user_id) DO UPDATE SET title=excluded.title,idea=excluded.idea,manifest_json=excluded.manifest_json,version=excluded.version,updated_at=excluded.updated_at`).run(userId,next.title,next.idea,JSON.stringify(next),version,now);
+ return {project:{title:next.title,idea:next.idea,manifest:next,version,updatedAt:now}};
 }

@@ -111,3 +111,10 @@ V3 adds a deterministic, API-keyless architecture planner; a connected-Studio bu
 The architecture planner is deterministic, not a generative model. Build Spec is copied into the existing chat so the connected agent can inspect the Studio tree and use supported plugin tools. Audit is heuristic/static, not a full Luau parser. QA matrices remain not-run until tests happen in Studio. Model specs do not create mesh files by themselves.
 
 Run npm test on Node.js 22.13+ to verify V3 tests with the existing suite.
+
+
+## Game DNA Engine
+
+Open **Quruvchi V2 → Game DNA**. The authenticated `/api/game-dna` endpoint saves a versioned per-user SQLite manifest containing exact Roblox paths, folder structure, Script/LocalScript/ModuleScript responsibilities, dependencies, phases and safety gates. The **Luau kodlarni yozdirib Studio’da yaratish** button sends the manifest into the existing agent chat. With an external AI provider and connected Studio plugin, the agent is instructed to inspect the place and create/update complete Luau scripts at those paths; the plugin's `create_script` handler creates missing parent folders automatically.
+
+The local planner is deterministic and does not itself generate general-purpose Luau source. Without a configured provider, code generation remains limited to existing starter templates. A manifest is a plan, not proof that Studio objects exist. The agent must report actual tool acknowledgements, and Play-test remains not-run until tested in Studio.

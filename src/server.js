@@ -14,6 +14,7 @@ import { listProviders, credentialStatus, saveCredential } from './providers.js'
 import { V2_CAPABILITIES, buildV2Plan, getProjectMemory, saveProjectMemory } from './v2.js';
 import { V2_TECHNOLOGIES, runV2Toolkit } from './v2-engine.js';
 import { runV3Action } from './v3-engine.js';
+import { buildGameDNA } from './game-dna.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pluginFile = path.resolve(__dirname, '..', 'plugin', 'Quruvchi.lua');
@@ -205,6 +206,17 @@ const server = http.createServer(async (req, res) => {
       if (method === 'GET' && pathname === '/api/me') {
         const usage = getUsage(user.id);
         return json(res, 200, { login:user.login, steps:{ used:usage.steps, limit:config.dailyStepLimit }, running:isRunning(user.id), status:statusForUser(user.id), conversationId:currentConversation(user.id), paused:stateForUser(user.id).paused, ai:credentialStatus(user.id) });
+      }
+      if (method === 'GET' && pathname === '/api/game-dna') return json(res, 200, getGameDNAProject(user.id));
+      if (method === 'POST' && pathname === '/api/game-dna') {
+        const input = await getBody(req, res); if (!input) return;
+        const limit = consumeLimit('chatUser', 'game-dna:' + user.id);
+        if (!limit.allowed) return json(res, 429, { error:'Game DNA amallari tez-tez bajarildi. Biroz kutib qayta urinib ko‘ring.' }, { 'Retry-After':String(limit.retryAfter) });
+        try {
+          const built = buildGameDNA(input);
+          const saved = saveGameDNAProject(user.id, built.manifest);
+          return json(res, 200, { ...built, project:saved.project });
+        } catch (error) { return json(res, error?.status || 400, { error:error?.message || 'Game DNA tuzilmadi' }); }
       }
       if (method === 'GET' && pathname === '/api/v2/capabilities') return json(res, 200, { version:'2.1.0', capabilities:V2_CAPABILITIES });
       if (method === 'GET' && pathname === '/api/v2/engines') return json(res, 200, { version:'2.1.0', technologies:V2_TECHNOLOGIES });

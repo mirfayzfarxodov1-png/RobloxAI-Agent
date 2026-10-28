@@ -30,16 +30,27 @@
     const head=el('div','v2-panel-head'),titleWrap=el('div','');
     titleWrap.append(el('span','v2-eyebrow','QURUVCHI AI · V2.1'),el('h2','','V2 Command Center'),el('p','','Loyihani rejalashtir, xotirani saqla va tekshiruvlarni kuzat.'));
     head.append(titleWrap,btn('×','v2-close',()=>backdrop.remove()));panel.append(head);
-    const tabs=el('div','v2-tabs'),tabPlan=btn('Loyiha arxitektori','active',()=>showTab('plan')),tabMemory=btn('Loyiha xotirasi','',()=>showTab('memory')),tabV3=btn('V3 AI Studio','',()=>showTab('v3')),tabCaps=btn('V2 imkoniyatlari','',()=>showTab('caps')),tabEngines=btn('10 texnologiya','',()=>showTab('engines'));
-    tabs.append(tabPlan,tabMemory,tabV3,tabEngines,tabCaps);panel.append(tabs);
+    const tabs=el('div','v2-tabs'),tabDNA=btn('Game DNA','',()=>showTab('dna')),tabPlan=btn('Loyiha arxitektori','active',()=>showTab('plan')),tabMemory=btn('Loyiha xotirasi','',()=>showTab('memory')),tabV3=btn('V3 AI Studio','',()=>showTab('v3')),tabCaps=btn('V2 imkoniyatlari','',()=>showTab('caps')),tabEngines=btn('10 texnologiya','',()=>showTab('engines'));
+    tabs.append(tabDNA,tabPlan,tabMemory,tabV3,tabEngines,tabCaps);panel.append(tabs);
     const content=el('div','v2-content');panel.append(content);const status=el('p','v2-status','Tayyor');panel.append(status);
     const foot=el('div','v2-foot');foot.append(el('span','','Studio ulanishi mavjud bo‘lsa, reja chatga yuborib qurishni boshlash mumkin.'));
     const link=el('a','','GitHub main');link.href='https://github.com/mirfayzfarxodov1-png/RobloxAI-Agent';link.target='_blank';link.rel='noreferrer';foot.append(link);panel.append(foot);
     backdrop.append(panel);backdrop.addEventListener('click',e=>{if(e.target===backdrop)backdrop.remove();});document.body.append(backdrop);
     async function showTab(name){
-      for(const [key,b] of [['plan',tabPlan],['memory',tabMemory],['v3',tabV3],['caps',tabCaps],['engines',tabEngines]])b.classList.toggle('active',key===name);
+      for(const [key,b] of [['dna',tabDNA],['plan',tabPlan],['memory',tabMemory],['v3',tabV3],['caps',tabCaps],['engines',tabEngines]])b.classList.toggle('active',key===name);
       content.replaceChildren();status.textContent='Tayyor';
-      if(name==='plan'){
+      if(name==='dna'){
+        content.append(el('p','v2-muted','Game DNA o‘yin rejasini, papkalar xaritasini va script vazifalarini hisobingizda saqlaydi. Tashqi AI va Studio plugin ulanganida agent to‘liq Luau kod yozib, scriptlarni joylaydi.'));
+        let savedManifest=null;
+        const title=field('O‘yin nomi','Masalan: Steal an Egg'),idea=field('O‘yin g‘oyasi','Mexanika, dunyo, progression, UI va kerakli tizimlarni yozing.'),output=el('pre','v2-tool-output','Saqlangan Game DNA yoki yangi reja shu yerda ko‘rinadi.');
+        const display=data=>{savedManifest=data.manifest||data.project?.manifest||null;output.textContent=JSON.stringify(savedManifest||data,null,2);};
+        const load=btn('Saqlangan Game DNA’ni yuklash','v2-secondary',async()=>{load.disabled=true;try{const data=await api('/api/game-dna');if(data.project){title.input.value=data.project.title;idea.input.value=data.project.idea;display({manifest:data.project.manifest});status.textContent='Game DNA yuklandi · v'+data.project.version;}else status.textContent='Hozircha saqlangan Game DNA yo‘q.';}catch(e){status.textContent=e.message;}finally{load.disabled=false;}});
+        const create=btn('Game DNA yaratish va saqlash','v2-primary',async()=>{create.disabled=true;status.textContent='Reja tuzilmoqda…';try{const data=await api('/api/game-dna',{title:title.input.value,idea:idea.input.value});display(data);status.textContent='Game DNA saqlandi · v'+data.project.version;}catch(e){status.textContent=e.message;}finally{create.disabled=false;}});
+        const build=btn('Luau kodlarni yozdirib Studio’da yaratish','v2-primary',()=>{if(!savedManifest){status.textContent='Avval Game DNA yarating yoki yuklang.';return;}const task=['GAME DNA IMPLEMENTATION · v'+savedManifest.version,'Quyidagi manifestni amalda bajargin. Faqat maslahat yoki snippet qaytarma. Ulangan Studio’da mavjud loyihani tekshir, parent folderlarni create_script orqali yarat, har bir listed path uchun to‘liq Luau source yoz va scriptlarni haqiqatan joyla. Kichik batchlar bilan ishlagin; mavjud kodni ko‘r-ko‘rona almashtirma; audit_project/get_logs bilan tekshir. Play-testni o‘zing bajara olmasang not-run deb belgilagin.','',JSON.stringify(savedManifest,null,2)].join('\n');const composer=document.querySelector('#prompt');if(!composer){status.textContent='Chat input topilmadi.';return;}composer.value=task;composer.dispatchEvent(new Event('input',{bubbles:true}));composer.focus();status.textContent='Game DNA chatga tayyor. Endi chatning yuborish tugmasini bos.';});
+        const copy=btn('Game DNA nusxalash','v2-secondary',async()=>{try{await navigator.clipboard.writeText(output.textContent);status.textContent='Nusxalandi.';}catch{status.textContent='Clipboard ruxsati yo‘q; qo‘lda nusxalang.';}});
+        const actions=el('div','v2-tool-actions');actions.append(load,create,build,copy);content.append(title.wrap,idea.wrap,actions,output);
+        try{const data=await api('/api/game-dna');if(data.project){title.input.value=data.project.title;idea.input.value=data.project.idea;display({manifest:data.project.manifest});status.textContent='Game DNA yuklandi · v'+data.project.version;}}catch(e){status.textContent=e.message;}
+      }else if(name==='plan'){
         content.append(el('p','v2-muted','G‘oyani yozing. Quruvchi uni 8 ta ish fazasi va QA mezonlariga ajratadi.'));
         const title=field('Loyiha nomi','Masalan: Steal an Egg'),idea=field('O‘yin g‘oyasi','Mexanika, xarita, UI, multiplayer va kerakli tizimlar...');
         const generate=btn('✦  Reja yaratish','v2-primary',async()=>{generate.disabled=true;status.textContent='Reja tuzilmoqda…';
