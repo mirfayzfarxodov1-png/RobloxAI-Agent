@@ -24,7 +24,7 @@ function safeInline(parent,text){
 function safeMarkdown(parent,text){
   const parts=String(text||'').split(/\x60{3}([a-zA-Z0-9_-]*)\n?([\s\S]*?)\x60{3}/g);
   for(let i=0;i<parts.length;i++){
-    if(i%3===1){const pre=node('pre');pre.append(node('code','',parts[i+1]||''));parent.append(pre);i++;continue;}
+    if(i%3===1){const pre=node('pre'),source=parts[i+1]||'',code=node('code','',source);const copy=button('⧉  Kodni nusxalash','code-copy',async()=>{try{await navigator.clipboard.writeText(source);copy.textContent='✓  Nusxalandi';}catch{copy.textContent='Ctrl+C bilan nusxalang';}});pre.append(code,copy);parent.append(pre);i++;continue;}
     const lines=parts[i].split('\n');let paragraph=[];
     const flush=()=>{if(!paragraph.length)return;const p=node('p');safeInline(p,paragraph.join('\n'));parent.append(p);paragraph=[];};
     for(const line of lines){if(!line.trim()){flush();continue;}if(/^\s*[-*]\s+/.test(line)){flush();let list=parent.lastElementChild;if(!list||list.tagName!=='UL'){list=node('ul');parent.append(list);}const li=node('li');safeInline(li,line.replace(/^\s*[-*]\s+/,''));list.append(li);}else paragraph.push(line);}flush();
