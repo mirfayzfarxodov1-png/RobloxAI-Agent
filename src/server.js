@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import { config } from './config.js';
-import { db, createConversation, currentConversation, getMessages, getUsage, cleanupExpired } from './db.js';
+import { db, createConversation, currentConversation, getMessages, getUsage, cleanupExpired, getGameDNAProject, saveGameDNAProject } from './db.js';
 import { hashPassword, verifyPassword, verifyInvite, createSession, sessionCookie, clearSessionCookie, getUserFromRequest, revokeSession, sha256 } from './auth.js';
 import { consumeLimit } from './ratelimit.js';
 import { sendJson, readJson, checkCsrf, clientIp, serveStatic, securityHeaders } from './http-util.js';
