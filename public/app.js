@@ -169,11 +169,11 @@ function renderModal(shell){
     }
     if(state.notice)card.append(node('div','form-error',state.notice));
   }else if(state.modal==='settings'){
-    card.append(node('div','modal-icon','⚙'),node('h2','','Sozlamalar'),node('p','modal-subtitle','Quruvchi ish muhiti va xavfsizlik holati.'));
+    card.append(node('div','modal-icon','⚙'),node('h2','','Sozlamalar'),node('p','modal-subtitle','Quruvchi ish muhiti, bepul qurish rejimi va xavfsizlik holati.'));
     card.append(button('✦  AI provayderi va API kalitlari','primary-button full',openAiSettings));
-    for(const [label,value] of [['Server',state.serverOnline?'ONLINE':'OFFLINE'],['Studio bridge',state.status.connected?'ULANGAN':'ULANMAGAN'],['Bugungi tool limiti',state.steps.used+' / '+state.steps.limit],['run_code','Plugin ichida sukut bo‘yicha O‘CHIQ']]){const row=node('div','settings-row'),left=node('div');left.append(node('strong','',label));row.append(left,node('span','state-tag',value));card.append(row);}card.append(node('p','modal-footnote','API kalitni .env ichida saqlang. GitHub yoki frontend kodiga qo‘ymang.'));
+    for(const [label,value] of [['Server',state.serverOnline?'ONLINE':'OFFLINE'],['Studio bridge',state.status.connected?'ULANGAN':'ULANMAGAN'],['Bugungi tool limiti',state.steps.used+' / '+state.steps.limit],['run_code','Plugin ichida sukut bo‘yicha O‘CHIQ']]){const row=node('div','settings-row'),left=node('div');left.append(node('strong','',label));row.append(left,node('span','state-tag',value));card.append(row);}card.append(node('p','modal-footnote','API kaliti majburiy emas: Studio ulangan bo‘lsa, bepul mahalliy generator oddiy starter loyihalarni yaratadi. Ixtiyoriy AI API kalitini faqat murakkab, erkin suhbat uchun ulang. Kalitni GitHub yoki frontend kodiga qo‘ymang.'));
   }else if(state.modal==='ai'){
-    card.append(node('div','modal-icon','✦'),node('h2','','AI provayderini ulash'),node('p','modal-subtitle','Rasmiy saytdan API kalit oling. Kalit tekshiriladi va serverda shifrlangan holda saqlanadi; hech qachon chatga yubormang.'));
+    card.append(node('div','modal-icon','✦'),node('h2','','AI provayderini ulash'),node('p','modal-subtitle','Bu bo‘lim ixtiyoriy. Bepul mahalliy qurish rejimi API kalitisiz ham ishlaydi. Kalit faqat kuchli tashqi AI modelidan foydalanmoqchi bo‘lsangiz kerak.'));
     const form=node('form','ai-provider-form');
     const providerLabel=node('label','form-label','AI PROVAYDERI'),providerSelect=node('select');
     for(const p of state.aiProviders){const opt=node('option','',p.label);opt.value=p.id;providerSelect.append(opt);}
