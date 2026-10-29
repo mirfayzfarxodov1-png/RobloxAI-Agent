@@ -644,6 +644,88 @@ do
 end
 `);
   }
+  if (/portal|teleport|warp|dimension|portal orqali/.test(text)) {
+    packs.push(String.raw`
+-- QURUVCHI MAX FEATURE: linked world portals with server-side touch debounce.
+do
+    local portalFolder = world:FindFirstChild("WorldPortals") or Instance.new("Folder")
+    portalFolder.Name = "WorldPortals"
+    portalFolder.Parent = world
+    local pads = {}
+    local cooldown = {}
+    for i = 1, 3 do
+        local pad = portalFolder:FindFirstChild("PortalPad_" .. i)
+        if not pad or not pad:IsA("BasePart") then
+            pad = Instance.new("Part")
+            pad.Name = "PortalPad_" .. i
+            pad.Size = Vector3.new(16, 1, 16)
+            pad.Position = Vector3.new((i - 2) * 42, 0, -72)
+        end
+        pad.Anchored = true
+        pad.CanTouch = true
+        pad.Material = Enum.Material.Neon
+        pad.Color = Color3.fromRGB(110, 100 + i * 35, 255)
+        pad.Parent = portalFolder
+        pads[i] = pad
+    end
+    for index, pad in ipairs(pads) do
+        pad.Touched:Connect(function(hit)
+            local character = hit:FindFirstAncestorOfClass("Model")
+            local player = character and Players:GetPlayerFromCharacter(character)
+            if not player or not character or cooldown[player.UserId] then return end
+            cooldown[player.UserId] = true
+            local target = pads[index % #pads + 1]
+            if target and character.Parent then character:PivotTo(target.CFrame + Vector3.new(0, 5, 0)) end
+            task.delay(1.5, function() cooldown[player.UserId] = nil end)
+        end)
+    end
+end
+`);
+  }
+  if (/npc|villager|merchant|savdogar|personaj|dialog|suhbat|quest|mission|vazifa/.test(text)) {
+    packs.push(String.raw`
+-- QURUVCHI MAX FEATURE: interactable NPC quest-givers with server-side cooldowns.
+do
+    local npcFolder = world:FindFirstChild("InteractionPoints") or Instance.new("Folder")
+    npcFolder.Name = "InteractionPoints"
+    npcFolder.Parent = world
+    local cooldown = {}
+    for i = 1, 3 do
+        local npc = npcFolder:FindFirstChild("QuestNPC_" .. i)
+        if not npc or not npc:IsA("Part") then
+            npc = Instance.new("Part")
+            npc.Name = "QuestNPC_" .. i
+            npc.Size = Vector3.new(4, 7, 4)
+            npc.Position = Vector3.new((i - 2) * 18, 3.5, 46)
+        end
+        npc.Anchored = true
+        npc.Color = Color3.fromRGB(110, 100 + i * 30, 220)
+        npc.Material = Enum.Material.SmoothPlastic
+        npc.Parent = npcFolder
+        local prompt = npc:FindFirstChildOfClass("ProximityPrompt") or Instance.new("ProximityPrompt")
+        prompt.ActionText = "Vazifani bajarish"
+        prompt.ObjectText = "Quruvchi NPC " .. i
+        prompt.HoldDuration = 0.3
+        prompt.MaxActivationDistance = 12
+        prompt.Parent = npc
+        prompt.Triggered:Connect(function(player)
+            local now = os.time()
+            local last = cooldown[player.UserId] or 0
+            if now - last < 30 then return end
+            cooldown[player.UserId] = now
+            local stats = player:FindFirstChild("leaderstats")
+            if not stats then stats = Instance.new("Folder"); stats.Name = "leaderstats"; stats.Parent = player end
+            local currency = stats:FindFirstChild("Coins") or stats:FindFirstChild("Cash")
+            if not currency then currency = Instance.new("IntValue"); currency.Name = "Coins"; currency.Value = 0; currency.Parent = stats end
+            currency.Value += 15
+            player:SetAttribute("QuruvchiLastNPCQuest", i)
+            player:SetAttribute("QuruvchiLastNPCQuestAt", now)
+        end)
+    end
+    Players.PlayerRemoving:Connect(function(player) cooldown[player.UserId] = nil end)
+end
+`);
+  }
   return packs;
 }
 
