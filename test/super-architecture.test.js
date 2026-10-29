@@ -26,8 +26,8 @@ test('V2 and SUPER browser bundles are served from organized directories', () =>
   assert.ok(fs.existsSync(new URL('../public/super/README.md',import.meta.url)));
 });
 
-test('legacy source entry points remain compatibility re-exports', () => {
-  assert.match(fs.readFileSync(new URL('../src/v2.js',import.meta.url),'utf8'),/\.\/v2\/index\.js/);
-  assert.match(fs.readFileSync(new URL('../src/v2-engine.js',import.meta.url),'utf8'),/\.\/v2\/engine\.js/);
-  assert.match(fs.readFileSync(new URL('../src/v3-engine.js',import.meta.url),'utf8'),/\.\/super\/engine\.js/);
+test('unused legacy V2/V3 entry points are removed after migration', () => {
+  for (const path of ['../src/v2.js','../src/v2-engine.js','../src/v3-engine.js']) {
+    assert.equal(fs.existsSync(new URL(path,import.meta.url)),false,path+' should not remain');
+  }
 });
