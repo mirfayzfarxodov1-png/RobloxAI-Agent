@@ -117,7 +117,7 @@ test('Quruvchi auth, CSRF, pairing, API-free local build, and device removal', a
     return result.response.ok&&result.data.type==='command'?result:null;
   },7000);
   assert.equal(command.data.name,'create_script');
-  assert.match(command.data.input.path,/QuruvchiFreeBuilder\\/FreeGame\\.server\\.lua$/);
+  assert.match(command.data.input.path,/QuruvchiFreeBuilder\/FreeGame\.server\.lua$/);
   assert.match(command.data.input.source,/QuruvchiFreeWorld|JumpPlatform/);
   const result=await sendPluginResult(base,token,{id:command.data.id,ok:true,output:{created:1,path:command.data.input.path,warnings:[]}});
   assert.equal(result.response.status,200);
