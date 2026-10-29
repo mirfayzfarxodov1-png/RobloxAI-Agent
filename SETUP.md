@@ -3,11 +3,11 @@
 ## Local Windows
 
 1. Install Node.js 22.13 or newer.
-2. Copy .env.example to .env.
-4. Keep PUBLIC_URL=http://localhost:3000 and COOKIE_SECURE=false for local HTTP.
-5. Run npm start and open http://localhost:3000.
-6. Register, choose Studio ulash, then create the one-time code.
-7. Download /plugin.lua, install it as a local Studio plugin, enable HTTP requests in Studio settings, enter the code, and connect.
+2. Optional: copy .env.example to .env if you need to change server settings.
+3. Keep PUBLIC_URL=http://localhost:3000 and COOKIE_SECURE=false for local HTTP.
+4. Run npm start and open http://localhost:3000.
+5. Register, choose Studio ulash, then create the one-time code.
+6. Download /plugin.lua, install it as a local Studio plugin, enable HTTP requests in Studio settings, enter the code, and connect.
 
 No npm install is required. The runtime uses only built-in Node.js modules.
 
@@ -15,7 +15,7 @@ No npm install is required. The runtime uses only built-in Node.js modules.
 
 Set NODE_ENV=production, PORT to the host port, PUBLIC_URL to the exact HTTPS origin, COOKIE_SECURE=true, DATA_DIR to persistent storage, and DATA_DIR to persistent storage. Set INVITE_CODE if you need registration restrictions.
 
-After deploy, check /healthz, register a test account, connect a disposable Studio place, run a simple create_tree request, and revoke the device. Do not treat a successful HTTP health check as proof that Claude or Studio tools are working.
+After deploy, check /healthz, register a test account, connect a disposable Studio place, run a simple create_tree request, and revoke the device. Do not treat a successful HTTP health check as proof that the Studio plugin is connected.
 
 ## Troubleshooting
 
