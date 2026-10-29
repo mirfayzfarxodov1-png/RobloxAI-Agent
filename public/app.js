@@ -303,7 +303,7 @@ function renderAuth(){
   const wrap=node('div','auth-page auth-page-v2');
   const topbar=node('header','auth-v2-topbar');
   const brand=node('div','auth-v2-brand');
-  brand.append(node('div','auth-v2-brand-mark','Q'));
+  const topMark=createBrandMark();topMark.classList.add('auth-v2-brand-mark');brand.append(topMark);
   const brandText=node('div','auth-v2-brand-text');
   const brandTitle=node('strong','','Quruvchi');
   brandTitle.append(node('span','auth-v2-badge','V2'));
@@ -339,7 +339,7 @@ function renderAuth(){
   form.addEventListener('submit',async e=>{e.preventDefault();state.notice='';try{const data=await api(state.authMode==='login'?'/api/login':'/api/register',{login:state.login,password:state.password,...(state.authMode==='register'?{invite:state.invite}:{})});state.user={login:data.login||state.login};state.password='';state.notice='';await loadApp();}catch(error){state.notice=error.message;render();}});
   card.append(form,node('div','auth-v2-divider','YOKI'),node('div','auth-v2-social-note','Hisobingiz xavfsiz himoyalanadi'),node('p','auth-security','Sessiya xavfsiz cookie bilan saqlanadi. API kalit chat tarixiga kiritilmaydi va serverda shifrlanadi.'));
   const footer=node('footer','auth-v2-footer','Created with ♥ by Quruvchi Team');
-  wrap.append(topbar,visual,copy,card,footer);root.append(wrap);
+  wrap.append(topbar,visual,card,footer);root.append(wrap);
 }
 function renderModal(shell){
   const backdrop=node('div','modal-backdrop');backdrop.addEventListener('mousedown',e=>{if(e.target===backdrop)closeModal();});
