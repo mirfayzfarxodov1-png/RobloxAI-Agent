@@ -242,8 +242,9 @@ if not world then
 end
 
 local function part(name, size, pos, color, material, parent)
-    local p = Instance.new("Part")
-    p.Name = name
+    local target = parent or world
+    local p = target:FindFirstChild(name)
+    if not p or not p:IsA("Part") then p = Instance.new("Part"); p.Name = name end
     p.Size = size
     p.Position = pos
     p.Anchored = true
@@ -251,7 +252,7 @@ local function part(name, size, pos, color, material, parent)
     p.Material = material or Enum.Material.SmoothPlastic
     p.TopSurface = Enum.SurfaceType.Smooth
     p.BottomSurface = Enum.SurfaceType.Smooth
-    p.Parent = parent or world
+    p.Parent = target
     return p
 end
 
@@ -263,7 +264,7 @@ spawn.Position = Vector3.new(0, 0, 0)
 spawn.Anchored = true
 spawn.Neutral = true
 spawn.Parent = world
-local folder = Instance.new("Folder")
+local folder = world:FindFirstChild("Collectibles") or Instance.new("Folder")
 folder.Name = "Collectibles"
 folder.Parent = world
 
@@ -318,8 +319,8 @@ if not world then
 end
 
 local function part(name, size, pos, color, material)
-    local p = Instance.new("Part")
-    p.Name = name
+    local p = world:FindFirstChild(name)
+    if not p or not p:IsA("Part") then p = Instance.new("Part"); p.Name = name end
     p.Size = size
     p.Position = pos
     p.Anchored = true
@@ -712,7 +713,7 @@ export function buildFreeProject(prompt, history = []) {
     sceneTree,
     uiTree,
     name: projectTitle,
-    path: 'ServerScriptService/QuruvchiFreeBuilder/FreeGame.server.lua',
+    path: 'ServerScriptService/QuruvchiAgents/GameplayAgent/FreeGame.server.lua',
     source,
     summary: [...featureList, ...packs.map(pack => pack.includes('MaxUpgradeShop') ? 'do‘kon va tezlik yaxshilash' : pack.includes('QuruvchiMAX_PlayerData_v1') ? 'DataStore saqlash' : pack.includes('MaxMissionBoard') ? 'vazifalar paneli' : 'qo‘shimcha tizim')].join('; '),
     features: [...featureList, ...packs.map(pack => pack.includes('MaxUpgradeShop') ? 'do‘kon va tezlik yaxshilash' : pack.includes('QuruvchiMAX_PlayerData_v1') ? 'DataStore saqlash' : pack.includes('MaxMissionBoard') ? 'vazifalar paneli' : 'qo‘shimcha tizim')]
