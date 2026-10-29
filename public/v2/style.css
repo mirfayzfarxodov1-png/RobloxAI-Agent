@@ -1,0 +1,7 @@
+/* Quruvchi V2 · isolated component refinements. Core panel rules remain backward-compatible in /style.css. */
+.v2-panel :focus-visible,.v2-floating-trigger:focus-visible,.v2-side-link:focus-visible{outline:2px solid #a5a0ff;outline-offset:3px}
+.v2-panel button:disabled{opacity:.58;cursor:wait}
+.v2-panel pre,.v2-tool-output{overflow-wrap:anywhere;white-space:pre-wrap;word-break:break-word}
+.v2-panel textarea{max-width:100%;resize:vertical}
+@media(max-width:640px){.v2-panel{padding:18px 14px}.v2-panel-head{gap:12px}.v2-tool-actions{flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){.v2-backdrop,.v2-panel{animation:none!important;transition:none!important}}
