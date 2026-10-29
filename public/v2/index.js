@@ -12,15 +12,7 @@
     if(!res.ok) throw new Error(data.error||'So‘rov bajarilmadi'); return data;
   }
   function mount() {
-    const sidebar=root.querySelector('.sidebar'); if(!sidebar)return;
-    if(!sidebar.querySelector('.v2-side-link')){
-      const entry=btn('Quruvchi V2','side-link v2-side-link',openPanel);entry.prepend(markIcon());entry.title='V2 imkoniyatlari va loyiha xotirasi';
-      const settings=[...sidebar.querySelectorAll('.side-link')].find(n=>n.textContent.includes('Sozlamalar'));
-      if(settings)settings.before(entry);else sidebar.append(entry);
-    }
-    if(!document.querySelector('.v2-floating-trigger')){
-      const trigger=btn('','v2-floating-trigger',openPanel);trigger.append(markIcon());trigger.setAttribute('aria-label','Quruvchi V2 panelini ochish');document.body.append(trigger);
-    }
+    root.querySelectorAll('.v2-side-link,.v2-floating-trigger').forEach(n=>n.remove());
     root.dataset.quruvchiV2='ready';
   }
   function field(label, placeholder, value='') {
