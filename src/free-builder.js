@@ -508,7 +508,7 @@ function applyThemeToSource(source, prompt) {
     .replaceAll('Color3.fromRGB(62, 150, 94)', 'Color3.fromRGB(' + theme.floor + ')')
     .replaceAll('Color3.fromRGB(70, 170, 255)', 'Color3.fromRGB(' + theme.accent + ')')
     .replaceAll('Enum.Material.Grass', 'Enum.Material.' + theme.material)
-    .replace('Quruvchi MAX (local deterministic engine)', 'Quruvchi MAX (local deterministic engine) · ' + theme.material);
+    .replace('Quruvchi MAX (local deterministic engine)', 'Quruvchi MAX (local deterministic engine) · theme: ' + theme.material);
 }
 const SUMMARIES = {
   obby: ['30 bosqichli obby, spawn va rangli platformalar', 'har 5 bosqichda checkpoint va qayta tug‘ilish', 'timer, Coins/Wins/Stage/BestTime leaderboard va 100 Coins mukofoti', 'mobil ekranga mos HUD va progress atributlari'],
