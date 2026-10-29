@@ -310,7 +310,7 @@ function renderAuth(){
   brandText.append(brandTitle,node('small','','Roblox Studio uchun AI quruvchi'));
   brand.append(brandText);
   const topMeta=node('div','auth-v2-meta');
-  topMeta.append(node('span','auth-v2-status','●  AI WORLD ENGINE'),node('span','auth-v2-language','O‘ZBEKCHA'));
+  topMeta.append(node('span','auth-v2-status','●  QURUVCHI MAX · LOCAL ENGINE'),node('span','auth-v2-language','O‘ZBEKCHA'));
   topbar.append(brand,topMeta);
   const visual=node('section','auth-visual auth-v2-visual');
   visual.append(createWorldVisual('world-stage world-stage-auth'));
