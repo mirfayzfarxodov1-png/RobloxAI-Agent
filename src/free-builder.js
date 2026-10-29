@@ -1,5 +1,5 @@
-import { buildWorldScene } from './agents/world-agent.js';
-import { buildGameUi } from './agents/ui-agent.js';
+import { buildWorldScene } from './agents/world/agent.js';
+import { buildGameUi } from './agents/ui/agent.js';
 const COMMON = `-- Quruvchi Free Builder · 3D world starter
 -- API-free generated Luau. All gameplay changes are server-authoritative where practical.
 local Players = game:GetService("Players")
