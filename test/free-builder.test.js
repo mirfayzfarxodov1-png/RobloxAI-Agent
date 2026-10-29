@@ -86,3 +86,18 @@ test('Quruvchi MAX adapts game size and adds requested feature packs', () => {
   assert.match(saved.source, /QuruvchiMAX_PlayerData_v1/);
   assert.match(saved.source, /UpdateAsync/);
 });
+
+test('Quruvchi MAX returns editable Workspace scene trees, not code alone', () => {
+  const obby = buildFreeProject('Menga 12 bosqichli obby yarat');
+  assert.equal(obby.sceneTree.className, 'Folder');
+  assert.equal(obby.sceneTree.name, 'QuruvchiFreeWorld');
+  assert.ok(obby.sceneTree.children.some(node => node.name === 'StartSpawn'));
+  assert.ok(obby.sceneTree.children.some(node => node.name === 'JumpPlatform12'));
+  assert.ok(obby.sceneTree.children.some(node => node.name === 'FinishPlatform'));
+
+  const simulator = buildFreeProject('Menga 15 ta coinli simulator yarat');
+  assert.ok(simulator.sceneTree.children.some(node => node.name === 'Collectible15'));
+  const tycoon = buildFreeProject('4 ta plotli tycoon yarat');
+  assert.ok(tycoon.sceneTree.children.some(node => node.name === 'Plot4'));
+  assert.ok(tycoon.sceneTree.children[0].children.some(node => node.name === 'ClaimPad'));
+});
