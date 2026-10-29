@@ -73,41 +73,61 @@ async function runFreeTask(userId, task, prompt) {
   const historyMessages = getMessages(task.conversationId);
   const project = buildFreeProject(prompt, historyMessages);
   const explanation = [
-    '## Quruvchi MAX — mahalliy o‘yin qurish tizimi',
-    'Tashqi AI API kaliti ishlatilmaydi. MAX mahalliy generatori o‘yin turini aniqlaydi, so‘ralgan o‘lchamlarni moslaydi va mos keladigan do‘kon, vazifa hamda DataStore kabi qo‘shimcha tizimlarni Luau kodiga qo‘shadi. Ulangan Roblox Studio’ga joylaydi.',
+    '## Quruvchi MAX — Studio’da haqiqiy qurish',
+    'MAX endi faqat kod matnini bermaydi: avval xarita va obyektlarni Roblox Studio’ning Explorer/Workspace qismiga joylaydi, keyin gameplay skriptini qo‘shadi.',
     '',
     '**Loyiha:** ' + project.name,
+    '**Tur:** ' + project.kind,
     '**Bosqich:** ' + project.level + ' / 4',
-    '**Yaratilayotgan qism:** ' + project.summary,
-    '**Studio yo‘li:** `' + project.path + '`',
+    '**Quriladigan qismlar:** ' + project.summary,
+    '**Obyektlar yo‘li:** Workspace/QuruvchiFreeWorld',
+    '**Gameplay skripti:** ' + project.path,
     '',
-    'Kod Studio’ga joylangach, Play bosib tekshiring. MAX hozir obby, tycoon, collectible simulator va 3D world asoslarini hamda so‘rovda ko‘rsatilgan ayrim qo‘shimcha tizimlarni quradi. Har bir yangi mexanika va murakkab o‘yin uchun Studio’da alohida Play-test kerak; istalgan g‘oyani to‘liq avtomatik tushunishi kafolatlanmaydi.',
-    '',
-    '```lua',
-    project.source,
-    '```'
+    'Qurish tugagach, Roblox Studio → Explorer ichida QuruvchiFreeWorld modelini ko‘r. Keyin Play bosib gameplayni tekshir.'
   ].join('\n');
   const assistantContent = textBlock(explanation);
   saveMessage(task.conversationId, 'assistant', assistantContent);
   emitText(userId, assistantContent);
   if (signal.aborted) return;
-  const toolId = crypto.randomUUID();
-  emit(userId, 'message', { id: toolId, kind: 'tool', toolId, name: 'create_script', summary: 'create_script: ' + project.path });
-  sendState(userId, task.conversationId);
-  addUsage(userId, 1, 0, 0);
-  const result = await sendCommand(userId, 'create_script', { path: project.path, className: 'Script', source: project.source }, signal);
-  const output = String(result.output || '');
-  saveMessage(task.conversationId, 'user', [{ type: 'tool_result', tool_use_id: toolId, is_error: !result.ok, content: output.slice(0, 20000) }]);
-  emit(userId, 'message', { id: crypto.randomUUID(), kind: 'tool_result', toolId, ok: !!result.ok, preview: output.slice(0, 300) });
-  if (!result.ok && !signal.aborted) {
-    const block = textBlock('Kod mahalliy rejimda yaratildi, lekin Roblox Studio’ga joylash muvaffaqiyatsiz bo‘ldi. Sabab: ' + (output.slice(0, 1000) || 'Studio plugin javob bermadi') + '\nKod yuqorida mavjud; Studio ulanishini tekshiring.');
+
+  const results = [];
+  const commands = [
+    { name:'create_tree', summary:'Workspace xaritasi va 3D obyektlar', input:{ parent:'Workspace', tree:project.sceneTree } },
+    { name:'create_script', summary:'Gameplay va o‘yin tizimlari', input:{ path:project.path, className:'Script', source:project.source } }
+  ];
+  for (const command of commands) {
+    if (signal.aborted) return;
+    const toolId = crypto.randomUUID();
+    emit(userId, 'message', { id:toolId, kind:'tool', toolId, name:command.name, summary:command.summary });
+    sendState(userId, task.conversationId);
+    const result = await sendCommand(userId, command.name, command.input, signal);
+    const output = String(result.output || '');
+    results.push({ ...result, name:command.name, summary:command.summary });
+    saveMessage(task.conversationId, 'user', [{ type:'tool_result', tool_use_id:toolId, is_error:!result.ok, content:output.slice(0,20000) }]);
+    emit(userId, 'message', { id:crypto.randomUUID(), kind:'tool_result', toolId, ok:!!result.ok, text:command.summary, preview:output.slice(0,500) });
+  }
+  addUsage(userId, commands.length, 0, 0);
+  if (signal.aborted) return;
+  const failed = results.filter(result => !result.ok);
+  if (failed.length) {
+    const details = failed.map(result => '- **'+result.summary+'**: '+(result.output||'noma’lum xato').slice(0,500)).join('\n');
+    const block = textBlock('## Qurish to‘liq yakunlanmadi\n'+details+'\n\nStudio ulanishini tekshir. Bajarilgan qism Explorer’da qolishi mumkin; qayta urinayotganda mavjud obyektlar yangilanadi.');
     saveMessage(task.conversationId, 'assistant', block);
     emitText(userId, block);
-  } else if (result.ok) {
-    const done = textBlock('Kod Roblox Studio’ga joylandi. Endi **Play** bosib sinab ko‘ring. Bu mahalliy generator shabloni; sinov natijasi alohida tekshirilishi kerak.');
-    saveMessage(task.conversationId, 'assistant', done);
-    emitText(userId, done);
+    return;
   }
+  const done = textBlock('## Tayyor — Studio loyihasi o‘zgartirildi\n- Xarita va 3D obyektlar Workspace/QuruvchiFreeWorld ichiga joylandi.\n- Gameplay skripti '+project.path+' ichiga yozildi.\n- Endi **Play** bosib tekshir. Agar xato chiqsa, logs deb yoz — keyingi tuzatishda Studio Output’ni tekshiramiz.');
+  saveMessage(task.conversationId, 'assistant', done);
+  emitText(userId, done);
+  emit(userId, 'message', {
+    id:crypto.randomUUID(), kind:'choices',
+    text:'Keyingi qadamni tanla:',
+    options:[
+      {label:'Xaritani kengaytir',prompt:'Ayni loyihani davom ettir: Workspace/QuruvchiFreeWorld xaritasini kengaytir, mavjud obyektlarni saqla va yangi hududlarni Studio ichida yarat.'},
+      {label:'UI va gameplay qo‘sh',prompt:'Ayni loyihaga mos ishlaydigan UI va qo‘shimcha gameplay mexanikasini Roblox Studio ichida yarat; mavjud kod va xaritani buzma.'},
+      {label:'Xatolarni tekshir',prompt:'Ayni Roblox Studio loyihasini audit qil, Output loglarini tekshir va topilgan xatolarni tuzat. Kodni faqat ko‘rsatma, Studio ichida qo‘lla.'}
+    ]
+  });
 }
 export async function resumeTask(user) {
   if (running.has(user.id)) return { ok: false, status: 409, error: 'Agent hali ishlayapti' };
