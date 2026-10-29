@@ -13,7 +13,7 @@ No npm install is required. The runtime uses only built-in Node.js modules.
 
 ## Production
 
-Set NODE_ENV=production, PORT to the host port, PUBLIC_URL to the exact HTTPS origin, COOKIE_SECURE=true, DATA_DIR to persistent storage, and DATA_DIR to persistent storage. Set INVITE_CODE if you need registration restrictions.
+Set NODE_ENV=production, PORT to the host port, PUBLIC_URL to the exact HTTPS origin, COOKIE_SECURE=true, and DATA_DIR to persistent storage. Set INVITE_CODE if you need registration restrictions.
 
 After deploy, check /healthz, register a test account, connect a disposable Studio place, run a simple create_tree request, and revoke the device. Do not treat a successful HTTP health check as proof that the Studio plugin is connected.
 
