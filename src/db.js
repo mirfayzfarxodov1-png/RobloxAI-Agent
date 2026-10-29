@@ -9,7 +9,6 @@ export const db = new DatabaseSync(path.join(config.dataDir, 'quruvchi.db'));
 db.exec('PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;');
 // Remove saved credentials from earlier API-enabled versions; this app is local-generator-only.
 db.exec('DROP TABLE IF EXISTS ai_credentials;');
-db.prepare("DELETE FROM task_pauses WHERE reason IN ('provider_rate_limit','credit_limit','provider_error')").run();
 db.exec(`
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS users (
@@ -64,6 +63,7 @@ CREATE INDEX IF NOT EXISTS idx_messages_conv ON messages(conversation_id,id);
 CREATE INDEX IF NOT EXISTS idx_devices_user ON devices(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_expiry ON sessions(expires_at);
 `);
+db.prepare("DELETE FROM task_pauses WHERE reason IN ('provider_rate_limit','credit_limit','provider_error')").run();
 // Backward-compatible schema migration for existing local databases.
 const userColumns = new Set(db.prepare('PRAGMA table_info(users)').all().map(column => column.name));
 if (!userColumns.has('referral_code')) db.exec('ALTER TABLE users ADD COLUMN referral_code TEXT');
