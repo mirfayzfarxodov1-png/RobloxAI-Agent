@@ -6,6 +6,7 @@ const state = {
 };
 let stream=null,codeTicker=null,pauseReadyState=null;
 function node(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined&&text!==null)n.textContent=String(text);return n;}
+function createBrandMark(){const mark=node('div','brand-mark');mark.setAttribute('role','img');mark.setAttribute('aria-label','Quruvchi');mark.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="quruvchiMark" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a9a0ff"/><stop offset="1" stop-color="#69f0d0"/></linearGradient></defs><path d="M32 9a23 23 0 1 0 14.8 40.6l7.1 6.1 4.2-4.8-7.2-6.2A23 23 0 0 0 32 9Zm0 8a15 15 0 1 1 0 30 15 15 0 0 1 0-30Z" fill="url(#quruvchiMark)" fill-rule="evenodd"/><path d="M13 12h8v4h-8zM10 20h4v8h-4z" fill="#f3d77b"/></svg>';return mark;}
 function button(text,cls,action,disabled=false){const b=node('button',cls,text);b.type='button';b.disabled=disabled;b.addEventListener('click',action);return b;}
 function link(text,href,cls){const a=node('a',cls,text);a.href=href;if(/^https?:\/\//.test(href)){a.target='_blank';a.rel='noreferrer';}return a;}
 function iconButton(label,glyph,action){const b=button(glyph,'icon-button',action);b.setAttribute('aria-label',label);b.title=label;return b;}
@@ -47,7 +48,7 @@ function render(){
   const oldPrompt=root.querySelector('#prompt');const promptFocused=oldPrompt===document.activeElement;const selectionStart=oldPrompt?oldPrompt.selectionStart:0;const selectionEnd=oldPrompt?oldPrompt.selectionEnd:0;
   root.replaceChildren();if(!state.user){renderAuth();return;}
   const shell=node('div','app-shell'),sidebar=node('aside','sidebar'+(state.mobileMenu?' open':''));
-  const brand=node('div','brand-row');brand.append(node('div','brand-mark','Q'));const brandCopy=node('div','brand-copy');brandCopy.append(node('strong','','Quruvchi'),node('small','','ROBLOX AI STUDIO'));brand.append(brandCopy,iconButton('Menyuni yopish','×',()=>{state.mobileMenu=false;render();}));brand.lastElementChild.className='icon-button mobile-close';sidebar.append(brand);
+  const brand=node('div','brand-row');brand.append(createBrandMark());const brandCopy=node('div','brand-copy');brandCopy.append(node('strong','','Quruvchi'),node('small','','ROBLOX AI STUDIO'));brand.append(brandCopy,iconButton('Menyuni yopish','×',()=>{state.mobileMenu=false;render();}));brand.lastElementChild.className='icon-button mobile-close';sidebar.append(brand);
   sidebar.append(button('＋  Yangi chat','new-chat',newChat),node('div','side-label','ISH MAYDONI'),button('◫  AI bilan qurish','side-link active',()=>{}));
   const studioLink=button('▣  Studio ulash','side-link',openPair);studioLink.append(node('span','tiny-status'+(state.status.connected?' online':'')));sidebar.append(studioLink,button('↗  Taklif havolasi','side-link',openReferral),button('⚙  Sozlamalar','side-link',()=>{state.modal='settings';render();}),node('div','side-label','YORDAM'),button('?  Qanday ishlaydi?','side-link',()=>{state.modal='help';render();}),node('div','sidebar-spacer'));
   const usage=node('div','usage-card'),usageTitle=node('div','usage-title','ϟ  Kunlik limit');usageTitle.append(node('span','',state.steps.used+' / '+state.steps.limit));usage.append(usageTitle);
@@ -325,7 +326,7 @@ function renderAuth(){
   copy.append(features,node('div','auth-v2-scroll-hint','↓  PASTGA AYLAN TIRING'));
   visual.append(copy);
   const card=node('section','auth-card auth-card-v2');
-  const cardMark=node('div','brand-mark','Q');
+  const cardMark=createBrandMark();
   const cardTitle=node('h1','','Quruvchi');
   const cardBadge=node('span','auth-v2-badge auth-v2-card-badge','V2');cardTitle.append(cardBadge);
   card.append(cardMark,cardTitle,node('p','auth-intro','Roblox Studio uchun AI quruvchi'));
