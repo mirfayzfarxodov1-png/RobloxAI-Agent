@@ -28,3 +28,15 @@ Verification boundary:
 - Multi-Agent analysis is not available in the API-free template mode.
 - Static audits and Output logs do not replace Roblox Studio Play or multiplayer tests.
 - The new orchestrator has unit tests; repository-wide checks must be confirmed by CI after the main commit.
+
+## Research-grounded planning and title preservation
+
+- Project plans now preserve the user's exact game title and provide a detailed 10-phase default roadmap for large projects.
+- Data persistence is explicitly classified as a planning decision; the plan does not claim DataStore has passed Roblox Studio runtime tests.
+- Plans can include sanitized HTTPS research sources, summaries, official-domain labels, and a visible quality checklist.
+- Research instructions require searching before building, carrying source URLs into the plan, and continuing into Studio implementation when the user asked to build.
+- Search parsing pairs snippets with their result containers where available to reduce mismatched source summaries.
+
+Verification boundary:
+- Research search results are references, not proof that all content on linked pages was fully read or that code/runtime behavior was tested.
+- Roblox Studio Play, DataStore API Services, and multiplayer behavior still require real Studio testing.

@@ -35,3 +35,19 @@ test('searchWeb prioritizes official results and honors officialOnly', async () 
 test('searchWeb reports empty queries without making a request', async () => {
   await assert.rejects(searchWeb({queries:['','  '],fetchImpl:async()=>{throw new Error('must not call');}}), /Kamida bitta/);
 });
+
+
+test('pairs snippets with the correct result URL when search HTML has result containers', () => {
+  const grouped = `<div class="result">
+      <a class="result__a" href="https://example.com/one">One</a>
+      <a class="result__snippet">SNIPPET_ONE</a>
+    </div>
+    <div class="result">
+      <a class="result__a" href="https://example.com/two">Two</a>
+      <a class="result__snippet">SNIPPET_TWO</a>
+    </div>`;
+  const results = parseSearchResults(grouped, 'paired query');
+  assert.equal(results.length, 2);
+  assert.match(results[0].snippet, /SNIPPET_ONE/);
+  assert.match(results[1].snippet, /SNIPPET_TWO/);
+});
