@@ -7,6 +7,8 @@ import { config } from './config.js';
 fs.mkdirSync(config.dataDir, { recursive: true });
 export const db = new DatabaseSync(path.join(config.dataDir, 'quruvchi.db'));
 db.exec('PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;');
+// Remove saved credentials from earlier API-enabled versions; this app is local-generator-only.
+db.exec('DROP TABLE IF EXISTS ai_credentials;');
 db.exec(`
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS users (
