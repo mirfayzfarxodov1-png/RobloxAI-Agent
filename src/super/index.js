@@ -9,3 +9,5 @@ export const SUPER_WORKFLOWS = Object.freeze([
   { id:'implementation', label:'Implementation', description:'Studio ulanganida kichik, tekshiriladigan batchlar bilan haqiqiy obyekt va scriptlarni joylash.' },
   { id:'qa', label:'Quality assurance', description:'Statik audit va Output logini ko‘rib, Play-test qilinmagan ishni PASS deb belgilamaslik.' }
 ]);
+
+export { buildSuperBuildPlan } from './build-pipeline.js';
