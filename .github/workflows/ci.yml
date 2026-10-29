@@ -15,10 +15,14 @@ jobs:
           node-version: 22.13.0
       - name: Verify Node version
         run: node --version
-      - name: Syntax check browser script
-        run: node --check public/app.js && node --check public/v2.js && node --check public/avatar-3d.js
-      - name: Syntax check server modules
+      - name: Syntax check browser scripts
         run: |
-          for file in src/*.js test/*.js; do node --check "$file"; done
+          node --check public/app.js
+          node --check public/v2/index.js
+          node --check public/super/index.js
+          node --check public/avatar-3d.js
+      - name: Syntax check all server and agent modules
+        run: |
+          find src test -type f -name '*.js' -print0 | xargs -0 -n1 node --check
       - name: End-to-end tests
         run: npm test
