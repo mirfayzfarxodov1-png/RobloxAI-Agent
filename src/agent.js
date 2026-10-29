@@ -106,12 +106,12 @@ async function runFreeTask(userId, task, prompt) {
   if (!localQa.ok) throw new Error('MAX oldindan tekshiruvdan o‘tmadi: ' + localQa.errors.join('; '));
   const explanation = [
     '## Quruvchi MAX — ko‘p agentli Studio qurish',
-    'Bu ish alohida World, UI, Gameplay, Tool Scout va QA agentlariga bo‘lingan. Avval obyektlar va interfeys yaratiladi, so‘ng gameplay skripti joylanadi; mavjud xarita o‘chirib yuborilmaydi.',
+    'Bu ish alohida World, UI, Gameplay, Tool Scout va QA agentlariga bo‘lingan. Agentlar faqat so‘rovdagi otlarni sanab chiqmaydi: mavzu, zonalar, dekor, spawn, o‘zaro ta’sir va zarur qo‘llab-quvvatlovchi tizimlarni ham aniqlaydi. Mavjud xarita ko‘r-ko‘rona o‘chirib yuborilmaydi.',
     '',
     '**Loyiha:** ' + project.name,
     '**Tur:** ' + project.kind,
     '**Bosqich:** ' + project.level + ' / 4',
-    '**World Agent:** ' + localQa.nodeCount + ' ta obyekt node’i rejalashtirildi.',
+    '**World Agent:** ' + localQa.nodeCount + ' ta obyekt node’i · mavzu: ' + (project.sceneTree.attributes?.WorldTheme || 'adventure') + ' · zonalar, dekor va so‘rovga mos obyektlar.',
     '**UI Agent:** Do‘kon, inventar, vazifalar va yordam tugmalari.',
     '**Gameplay Agent:** ' + gameplayPlan.systems.join(', '),
     '**Gameplay kod tekshiruvi:** ' + gameplayPlan.status + ' · ' + gameplayPlan.checks.filter(item=>item.ok).length + '/' + gameplayPlan.checks.length + ' local tekshiruv, ' + gameplayPlan.sourceLength + ' belgili server Luau.',
