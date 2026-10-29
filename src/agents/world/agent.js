@@ -1,4 +1,17 @@
-export function buildWorldScene({ kind, title, counts }) {
+const bounded = (value, fallback, min, max) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(min, Math.min(max, Math.floor(number))) : fallback;
+};
+
+export function buildWorldScene(input = {}) {
+  const kind = ['obby','simulator','tycoon','world'].includes(input.kind) ? input.kind : 'world';
+  const title = String(input.title || 'Quruvchi MAX').replace(/[\u0000-\u001F]/g, ' ').trim().slice(0,100);
+  const rawCounts = input.counts && typeof input.counts === 'object' ? input.counts : {};
+  const counts = {
+    stages: bounded(rawCounts.stages, 30, 5, 100),
+    collectibles: bounded(rawCounts.collectibles, 30, 5, 150),
+    plots: bounded(rawCounts.plots, 4, 2, 12)
+  };
   const children = [];
   const part = (name,size,position,color,material='Material.SmoothPlastic',className='Part',attributes) => {
     const node={className,name,properties:{Size:{Vector3:size},Position:{Vector3:position},Anchored:true,Color:{Color3:color},Material:{Enum:material},TopSurface:{Enum:'SurfaceType.Smooth'},BottomSurface:{Enum:'SurfaceType.Smooth'}}};
