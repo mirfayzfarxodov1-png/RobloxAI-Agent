@@ -524,8 +524,10 @@ do
     prompt.Parent = shop
     prompt.Triggered:Connect(function(player)
         local stats = player:FindFirstChild("leaderstats")
-        local currency = stats and (stats:FindFirstChild("Coins") or stats:FindFirstChild("Cash"))
-        if not currency or currency.Value < 25 then return end
+        if not stats then stats = Instance.new("Folder"); stats.Name = "leaderstats"; stats.Parent = player end
+        local currency = stats:FindFirstChild("Coins") or stats:FindFirstChild("Cash")
+        if not currency then currency = Instance.new("IntValue"); currency.Name = "Coins"; currency.Value = 0; currency.Parent = stats end
+        if currency.Value < 25 then return end
         local level = player:GetAttribute("QuruvchiSpeedLevel") or 0
         if level >= 5 then return end
         currency.Value -= 25
@@ -595,8 +597,9 @@ do
         local now = os.time()
         if cooldown[player.UserId] and now - cooldown[player.UserId] < 60 then return end
         local stats = player:FindFirstChild("leaderstats")
-        local currency = stats and (stats:FindFirstChild("Coins") or stats:FindFirstChild("Cash"))
-        if not currency then return end
+        if not stats then stats = Instance.new("Folder"); stats.Name = "leaderstats"; stats.Parent = player end
+        local currency = stats:FindFirstChild("Coins") or stats:FindFirstChild("Cash")
+        if not currency then currency = Instance.new("IntValue"); currency.Name = "Coins"; currency.Value = 0; currency.Parent = stats end
         cooldown[player.UserId] = now
         currency.Value += 10
         player:SetAttribute("QuruvchiLastMission", "completed")
