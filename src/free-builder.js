@@ -1,5 +1,5 @@
 import { buildWorldScene } from './agents/world/agent.js';
-import { buildGameUi } from './agents/ui/agent.js';
+import { buildGameUi, UI_CONTROLLER_SOURCE } from './agents/ui/agent.js';
 const COMMON = `-- Quruvchi Free Builder · 3D world starter
 -- API-free generated Luau. All gameplay changes are server-authoritative where practical.
 local Players = game:GetService("Players")
@@ -712,6 +712,7 @@ export function buildFreeProject(prompt, history = []) {
     counts,
     sceneTree,
     uiTree,
+    uiSource: UI_CONTROLLER_SOURCE,
     name: projectTitle,
     path: 'ServerScriptService/QuruvchiAgents/GameplayAgent/FreeGame.server.lua',
     source,
