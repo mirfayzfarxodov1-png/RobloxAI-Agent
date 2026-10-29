@@ -3,6 +3,8 @@
   if (!root) return;
   const el = (tag, cls, text) => { const n=document.createElement(tag); if(cls)n.className=cls; if(text!==undefined)n.textContent=text; return n; };
   const btn = (label, cls, fn) => { const b=el('button',cls,label); b.type='button'; b.addEventListener('click',fn); return b; };
+  function markIcon(){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 64 64');svg.setAttribute('aria-hidden','true');svg.innerHTML='<defs><linearGradient id="quruvchiPanelMark" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a9a0ff"/><stop offset="1" stop-color="#69f0d0"/></linearGradient></defs><path d="M32 9a23 23 0 1 0 14.8 40.6l7.1 6.1 4.2-4.8-7.2-6.2A23 23 0 0 0 32 9Zm0 8a15 15 0 1 1 0 30 15 15 0 0 1 0-30Z" fill="url(#quruvchiPanelMark)" fill-rule="evenodd"/><path d="M13 12h8v4h-8zM10 20h4v8h-4z" fill="#f3d77b"/>';return svg;}
+
   async function api(path, body) {
     const opts={credentials:'same-origin',headers:{}};
     if(body!==undefined){opts.method='POST';opts.headers['Content-Type']='application/json';opts.body=JSON.stringify(body);}
@@ -12,12 +14,12 @@
   function mount() {
     const sidebar=root.querySelector('.sidebar'); if(!sidebar)return;
     if(!sidebar.querySelector('.v2-side-link')){
-      const entry=btn('✦  Quruvchi V2','side-link v2-side-link',openPanel);entry.title='V2 imkoniyatlari va loyiha xotirasi';
+      const entry=btn('Quruvchi V2','side-link v2-side-link',openPanel);entry.prepend(markIcon());entry.title='V2 imkoniyatlari va loyiha xotirasi';
       const settings=[...sidebar.querySelectorAll('.side-link')].find(n=>n.textContent.includes('Sozlamalar'));
       if(settings)settings.before(entry);else sidebar.append(entry);
     }
     if(!document.querySelector('.v2-floating-trigger')){
-      const trigger=btn('✦','v2-floating-trigger',openPanel);trigger.setAttribute('aria-label','Quruvchi V2 panelini ochish');document.body.append(trigger);
+      const trigger=btn('','v2-floating-trigger',openPanel);trigger.append(markIcon());trigger.setAttribute('aria-label','Quruvchi V2 panelini ochish');document.body.append(trigger);
     }
     root.dataset.quruvchiV2='ready';
   }
