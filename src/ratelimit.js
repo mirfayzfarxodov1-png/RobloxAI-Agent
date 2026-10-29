@@ -1,8 +1,8 @@
 const buckets = new Map();
 const rules = {
-  loginIp: { limit: 10, windowMs: 10 * 60 * 1000 },
-  loginName: { limit: 5, windowMs: 10 * 60 * 1000 },
-  registerIp: { limit: 5, windowMs: 60 * 60 * 1000 },
+  loginIp: { limit: 30, windowMs: 10 * 60 * 1000 },
+  loginName: { limit: 12, windowMs: 10 * 60 * 1000 },
+  registerIp: { limit: 15, windowMs: 30 * 60 * 1000 },
   pairIp: { limit: 10, windowMs: 10 * 60 * 1000 },
   chatUser: { limit: 20, windowMs: 60 * 1000 },
 };
