@@ -99,5 +99,5 @@ test('Quruvchi MAX returns editable Workspace scene trees, not code alone', () =
   assert.ok(simulator.sceneTree.children.some(node => node.name === 'Collectible15'));
   const tycoon = buildFreeProject('4 ta plotli tycoon yarat');
   assert.ok(tycoon.sceneTree.children.some(node => node.name === 'Plot4'));
-  assert.ok(tycoon.sceneTree.children[0].children.some(node => node.name === 'ClaimPad'));
+  assert.ok(tycoon.sceneTree.children.find(node => node.name === 'Plot1').children.some(node => node.name === 'ClaimPad'));
 });
