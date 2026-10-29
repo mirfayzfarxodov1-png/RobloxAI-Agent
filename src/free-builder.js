@@ -648,7 +648,7 @@ export function buildFreeProject(prompt, history = []) {
   const featureList = SUMMARIES[kind].slice(0, level);
   const projectTitle = extractExplicitTitle(prompt) || titleFromHistory(history) || NAMES[kind];
   const counts = { stages: stageCount, collectibles: collectibleCount, plots: plotCount };
-  const sceneTree = buildWorldScene({ kind, title:projectTitle, counts });
+  const sceneTree = buildWorldScene({ kind, title:projectTitle, counts, prompt });
   const uiTree = buildGameUi(projectTitle, kind);
   return {
     kind,
