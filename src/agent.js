@@ -27,10 +27,8 @@ function pauseTaskForUser(userId, conversationId, reason, retryAt = null, detail
 }
 function pauseMessage(pause) {
   if (pause.reason === 'daily_step_limit') return 'Kunlik Quruvchi qadam limiti tugadi. Loyiha saqlandi va pauzaga qo‘yildi.';
-  if (pause.reason === 'provider_rate_limit') return 'AI provayder limiti tugadi. Loyiha va bajarilgan ishlar saqlandi.';
-  if (pause.reason === 'credit_limit') return 'AI provayder kredit/foydalanish limiti tugadi. Loyiha saqlandi.';
   if (pause.reason === 'batch_step_limit') return 'Ushbu ish bosqichi xavfsiz checkpoint’da pauzaga qo‘yildi.';
-  return 'AI xizmati vaqtincha to‘xtadi. Loyiha holati saqlandi.';
+  return 'Qurish bosqichi pauzaga qo‘yildi. Loyiha holati saqlandi.';
 }
 export function isRunning(userId) { return running.has(userId); }
 
@@ -121,7 +119,7 @@ export async function resumeTask(user) {
     return { ok: false, status: 409, error: 'Pauzadagi loyiha chatidan chiqib ketilgan. Chat tarixini tekshiring.' };
   }
   if (pause.retryAt && pause.retryAt > Date.now()) {
-    return { ok: false, status: 429, error: 'AI limiti hali tiklanmagan.', paused: pause };
+    return { ok: false, status: 429, error: 'Qurish limiti hali tiklanmagan.', paused: pause };
   }
   const status = statusForUser(user.id);
   if (!status.connected) return { ok: false, status: 412, error: 'Studio ulanmagan', needPairing: true };
