@@ -176,3 +176,12 @@ test('local Luau generator applies requested theme colors and materials', () => 
   const forest = buildFreeProject('Forest world yarat');
   assert.match(forest.source, /theme: Grass/);
 });
+
+test('local generator implements portal travel and NPC interactions when requested', () => {
+  const project = buildFreeProject('Fantasy world with 3 teleport portals, NPC, quests and coins');
+  assert.match(project.source, /PortalPad_/);
+  assert.match(project.source, /character:PivotTo/);
+  assert.match(project.source, /QuestNPC_/);
+  assert.match(project.source, /prompt.Triggered:Connect/);
+  assert.match(project.summary, /qo‘shimcha tizim|vazifalar paneli/);
+});
