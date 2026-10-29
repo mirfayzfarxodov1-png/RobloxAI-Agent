@@ -6,9 +6,18 @@ const btn=(s,c,f)=>{const n=el('button',c,s);n.type='button';n.onclick=f;return 
 const read=(k,d=[])=>{try{return JSON.parse(localStorage.getItem(k)||'null')??d}catch{return d}};
 const write=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch{return false}};
 const api=async p=>{const r=await fetch(p,{credentials:'same-origin'}),d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||'So‘rov bajarilmadi');return d};
-function mount(){const side=root.querySelector('.sidebar');if(side&&!side.querySelector('.super-suite-link')){const b=btn('✦  Super laboratoriya','side-link super-suite-link',open);const target=[...side.querySelectorAll('.side-link')].find(x=>x.textContent.includes('Quruvchi V2'));if(target)target.after(b);else side.append(b)}if(!document.querySelector('.super-suite-fab')){const f=btn('✦','super-suite-fab',open);f.title='Super laboratoriya';f.setAttribute('aria-label','Super laboratoriyani ochish');document.body.append(f)}}
+function mount(){
+  root.querySelectorAll('.super-suite-link,.super-suite-fab,.v2-side-link,.v2-floating-trigger').forEach(n=>n.remove());
+  const actions=root.querySelector('.topbar-actions');
+  if(actions&&!actions.querySelector('.super-topbar-link')){
+    const entry=btn('✦  AI laboratoriya','super-topbar-link',open);
+    entry.title='Multi-agent qurish, tadqiqot va QA vositalari';
+    entry.setAttribute('aria-label','AI laboratoriyani ochish');
+    actions.prepend(entry);
+  }
+}
 function open(){if(document.querySelector('.super-suite-backdrop'))return;const back=el('div','super-suite-backdrop'),panel=el('section','super-suite-panel'),head=el('header','super-suite-head'),intro=el('div','');intro.append(el('span','super-kicker','QURUVCHI · SUPER LAB'),el('h2','','O‘yin ishlab chiqish markazi'),el('p','','Tadqiqot, arxitektura, versiyalar, sinov va iqtisodiyot.'));head.append(intro,btn('×','super-close',()=>back.remove()));panel.append(head);
-const tabs=el('nav','super-tabs'),body=el('div','super-body'),status=el('p','super-status','Tayyor'),names=[['agents','Multi-Agent AI'],['research','Deep Research'],['map','Requirement → Code'],['history','Plan History'],['tests','Play-Test'],['economy','Economy']],buttons={};let active='research';
+const tabs=el('nav','super-tabs'),body=el('div','super-body'),status=el('p','super-status','Tayyor'),names=[['agents','Multi-Agent AI'],['research','Deep Research'],['map','Requirement → Code'],['history','Plan History'],['tests','Play-Test'],['economy','Economy']],buttons={};let active='agents';
 names.forEach(([id,label])=>{buttons[id]=btn(label,id===active?'active':'',()=>show(id));tabs.append(buttons[id])});panel.append(tabs,body,status);back.append(panel);back.onclick=e=>{if(e.target===back)back.remove()};document.body.append(back);
 const field=(label,placeholder,value='')=>{const w=el('label','super-field');w.append(el('span','',label));const i=el('textarea','',value);i.placeholder=placeholder;i.rows=3;w.append(i);return {wrap:w,input:i}};
 const actions=(...items)=>{const n=el('div','super-actions');n.append(...items);return n};
