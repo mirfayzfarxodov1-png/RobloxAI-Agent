@@ -116,15 +116,25 @@ test('Quruvchi auth, CSRF, pairing, API-free local build, and device removal', a
     const result=await pollPlugin(base,token,1);
     return result.response.ok&&result.data.type==='command'?result:null;
   },7000);
-  assert.equal(command.data.name,'create_script');
-  assert.match(command.data.input.path,/QuruvchiFreeBuilder\/FreeGame\.server\.lua$/);
-  assert.match(command.data.input.source,/QuruvchiFreeWorld|JumpPlatform/);
-  const result=await sendPluginResult(base,token,{id:command.data.id,ok:true,output:{created:1,path:command.data.input.path,warnings:[]}});
+  assert.equal(command.data.name,'create_tree');
+  assert.equal(command.data.input.parent,'Workspace');
+  assert.equal(command.data.input.tree.name,'QuruvchiFreeWorld');
+  assert.ok(command.data.input.tree.children.some(item=>item.name==='JumpPlatform30'));
+  const sceneResult=await sendPluginResult(base,token,{id:command.data.id,ok:true,output:{created:40,path:'Workspace/QuruvchiFreeWorld',warnings:[]}});
+  assert.equal(sceneResult.response.status,200);
+  const scriptCommand=await waitUntil(async()=>{
+    const result=await pollPlugin(base,token,1);
+    return result.response.ok&&result.data.type==='command'?result:null;
+  },7000);
+  assert.equal(scriptCommand.data.name,'create_script');
+  assert.match(scriptCommand.data.input.path,/QuruvchiFreeBuilder\/FreeGame\.server\.lua$/);
+  assert.match(scriptCommand.data.input.source,/QuruvchiFreeWorld|JumpPlatform/);
+  const result=await sendPluginResult(base,token,{id:scriptCommand.data.id,ok:true,output:{created:1,path:scriptCommand.data.input.path,warnings:[]}});
   assert.equal(result.response.status,200);
-  await waitUntil(async()=>{const r=await fetch(base+'/api/me',{headers:{Cookie:cookie}});const d=await r.json();return !d.running&&d.steps.used===1?d:null;},7000);
+  await waitUntil(async()=>{const r=await fetch(base+'/api/me',{headers:{Cookie:cookie}});const d=await r.json();return !d.running&&d.steps.used===2?d:null;},7000);
   const history=await (await fetch(base+'/api/chat/history',{headers:{Cookie:cookie}})).json();
-  assert.ok(history.messages.some(m=>m.role==='assistant'&&m.text.includes('Quruvchi MAX — mahalliy o‘yin qurish tizimi')));
-  assert.ok(history.messages.some(m=>m.role==='assistant'&&m.text.includes('Play bosib tekshiring')));
+  assert.ok(history.messages.some(m=>m.role==='assistant'&&m.text.includes('Quruvchi MAX — Studio’da haqiqiy qurish')));
+  assert.ok(history.messages.some(m=>m.role==='assistant'&&m.text.includes('Studio loyihasi o‘zgartirildi')));
   
   const removed=await fetch(base+'/api/devices/'+deviceId,{method:'DELETE',headers:{Cookie:cookie,Origin:base,'Content-Type':'application/json'}});
   assert.equal(removed.status,200);
