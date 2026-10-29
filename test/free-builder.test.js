@@ -66,3 +66,23 @@ test('API-free builder preserves explicit game titles instead of replacing them 
   const upgraded = buildFreeProject('Endi uni yaxshila', history);
   assert.equal(upgraded.name, 'Steal an Legacy');
 });
+
+test('Quruvchi MAX adapts game size and adds requested feature packs', () => {
+  const obby = buildFreeProject('Menga 45 bosqichli obby yarat');
+  assert.match(obby.source, /local STAGE_COUNT = 45/);
+
+  const simulator = buildFreeProject('Menga 75 ta coinli simulator, do‘kon va vazifalar yarat');
+  assert.equal(simulator.kind, 'simulator');
+  assert.match(simulator.source, /for i = 1, 75 do/);
+  assert.match(simulator.source, /MaxUpgradeShop/);
+  assert.match(simulator.source, /MaxMissionBoard/);
+  assert.match(simulator.summary, /do‘kon/);
+  assert.match(simulator.summary, /vazifalar paneli/);
+
+  const tycoon = buildFreeProject('12 ta plotli tycoon yarat');
+  assert.match(tycoon.source, /for i = 1, 12 do/);
+
+  const saved = buildFreeProject('Collectible simulator yarat va progressni saqlashni qo‘sh');
+  assert.match(saved.source, /QuruvchiMAX_PlayerData_v1/);
+  assert.match(saved.source, /UpdateAsync/);
+});
