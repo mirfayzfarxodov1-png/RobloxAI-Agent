@@ -638,7 +638,7 @@ export function buildFreeProject(prompt, history = []) {
     name: projectTitle,
     path: 'ServerScriptService/QuruvchiFreeBuilder/FreeGame.server.lua',
     source,
-    summary: [...featureList, ...packs.map((_, index) => ['do‘kon va tezlik yaxshilash', 'DataStore saqlash', 'vazifalar paneli'][index] || 'qo‘shimcha tizim')].join('; '),
-    features: [...featureList, ...packs.map((_, index) => ['do‘kon va tezlik yaxshilash', 'DataStore saqlash', 'vazifalar paneli'][index] || 'qo‘shimcha tizim')]
+    summary: [...featureList, ...packs.map(pack => pack.includes('MaxUpgradeShop') ? 'do‘kon va tezlik yaxshilash' : pack.includes('QuruvchiMAX_PlayerData_v1') ? 'DataStore saqlash' : pack.includes('MaxMissionBoard') ? 'vazifalar paneli' : 'qo‘shimcha tizim')].join('; '),
+    features: [...featureList, ...packs.map(pack => pack.includes('MaxUpgradeShop') ? 'do‘kon va tezlik yaxshilash' : pack.includes('QuruvchiMAX_PlayerData_v1') ? 'DataStore saqlash' : pack.includes('MaxMissionBoard') ? 'vazifalar paneli' : 'qo‘shimcha tizim')]
   };
 }
