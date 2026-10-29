@@ -204,7 +204,7 @@ const server = http.createServer(async (req, res) => {
       }
       if (method === 'GET' && pathname === '/api/me') {
         const usage = getUsage(user.id);
-        return json(res, 200, { login:user.login, steps:{ used:usage.steps, limit:config.dailyStepLimit }, running:isRunning(user.id), status:statusForUser(user.id), conversationId:currentConversation(user.id), paused:stateForUser(user.id).paused, ai:credentialStatus(user.id) });
+        return json(res, 200, { login:user.login, steps:{ used:usage.steps, limit:config.dailyStepLimit }, running:isRunning(user.id), status:statusForUser(user.id), conversationId:currentConversation(user.id), paused:stateForUser(user.id).paused });
       }
       if (method === 'GET' && pathname === '/api/game-dna') return json(res, 200, getGameDNAProject(user.id));
       if (method === 'POST' && pathname === '/api/game-dna') {
