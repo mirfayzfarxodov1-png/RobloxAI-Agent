@@ -504,7 +504,7 @@ function maxFeaturePacks(prompt) {
   const text = String(prompt || '').toLowerCase();
   const packs = [];
   if (/do['’]?kon|shop|magazin|sotib ol|upgrade shop/.test(text)) {
-    packs.push(String.raw\`
+    packs.push(String.raw`
 -- QURUVCHI MAX FEATURE: in-world upgrade shop (server authoritative).
 do
     local shop = Instance.new("Part")
@@ -536,10 +536,10 @@ do
         if humanoid then humanoid.WalkSpeed = math.min(16 + level * 3, 31) end
     end)
 end
-\`);
+`);
   }
   if (/saqla|saqlash|save|data.?store|progress.*saq/.test(text)) {
-    packs.push(String.raw\`
+    packs.push(String.raw`
 -- QURUVCHI MAX FEATURE: optional Roblox DataStore persistence.
 -- Publish the experience and enable Studio Access to API Services to test saving in Studio.
 do
@@ -571,10 +571,10 @@ do
     Players.PlayerRemoving:Connect(savePlayer)
     game:BindToClose(function() for _, player in ipairs(Players:GetPlayers()) do savePlayer(player) end end)
 end
-\`);
+`);
   }
   if (/quest|vazifa|topshiriq|missiya|mission/.test(text)) {
-    packs.push(String.raw\`
+    packs.push(String.raw`
 -- QURUVCHI MAX FEATURE: repeatable timed mission board.
 do
     local mission = Instance.new("Part")
@@ -604,7 +604,7 @@ do
     end)
     Players.PlayerRemoving:Connect(function(player) cooldown[player.UserId] = nil end)
 end
-\`);
+`);
   }
   return packs;
 }
@@ -617,16 +617,16 @@ export function buildFreeProject(prompt, history = []) {
   const priorUpgrades = (history || []).filter(message => message.role === 'user' && isUpgradeRequest(flattenMessage(message.content))).length;
   const level = upgrade ? Math.min(4, Math.max(2, priorUpgrades + 2)) : 1;
   const base = kind === 'obby' ? OBBY : kind === 'tycoon' ? TYCOON : kind === 'simulator' ? SIMULATOR : COMMON;
-  const stageCount = boundedCount(prompt, [/(\\d{1,3})\\s*(?:ta\\s*)?(?:bosqich|stage|level)/i], 30, 5, 100);
-  const collectibleCount = boundedCount(prompt, [/(\\d{1,3})\\s*(?:ta\\s*)?(?:tanga|coin|collectible|tuxum|egg|pet)/i], 30, 5, 150);
-  const plotCount = boundedCount(prompt, [/(\\d{1,2})\\s*(?:ta\\s*)?(?:plot|baza|base|uy)/i], 4, 2, 12);
+  const stageCount = boundedCount(prompt, [/(\d{1,3})\s*(?:ta\s*)?(?:bosqich|stage|level)/i], 30, 5, 100);
+  const collectibleCount = boundedCount(prompt, [/(\d{1,3})\s*(?:ta\s*)?(?:tanga|coin|collectible|tuxum|egg|pet)/i], 30, 5, 150);
+  const plotCount = boundedCount(prompt, [/(\d{1,2})\s*(?:ta\s*)?(?:plot|baza|base|uy)/i], 4, 2, 12);
   let customizedBase = base;
   if (kind === 'obby') customizedBase = customizedBase.replace('local STAGE_COUNT = 30', 'local STAGE_COUNT = ' + stageCount);
   if (kind === 'simulator') customizedBase = customizedBase.replace('for i = 1, 30 do', 'for i = 1, ' + collectibleCount + ' do');
   if (kind === 'tycoon') customizedBase = customizedBase.replace('for i = 1, 4 do', 'for i = 1, ' + plotCount + ' do').replace('(i - 1) * 55 - 82', '(i - 1) * 55 - (((' + plotCount + ' - 1) * 55) / 2)');
-  const title = (extractExplicitTitle(prompt) || titleFromHistory(history) || NAMES[kind]).replace(/[\\r\\n]+/g, ' ').slice(0, 100);
+  const title = (extractExplicitTitle(prompt) || titleFromHistory(history) || NAMES[kind]).replace(/[\r\n]+/g, ' ').slice(0, 100);
   const packs = maxFeaturePacks(prompt);
-  const source = '-- Project title: ' + title + '\\n-- Generator: Quruvchi MAX (local deterministic engine)\\n' + customizedBase + (level > 1 ? '\\n\\n' + levelFeatures(kind, level) : '') + (packs.length ? '\\n\\n' + packs.join('\\n\\n') : '');
+  const source = '-- Project title: ' + title + '\n-- Generator: Quruvchi MAX (local deterministic engine)\n' + customizedBase + (level > 1 ? '\n\n' + levelFeatures(kind, level) : '') + (packs.length ? '\n\n' + packs.join('\n\n') : '');
   const featureList = SUMMARIES[kind].slice(0, level);
   const projectTitle = extractExplicitTitle(prompt) || titleFromHistory(history) || NAMES[kind];
   return {
