@@ -23,5 +23,5 @@ start "" "http://localhost:3000"
 echo.
 echo Sayt: http://localhost:3000
 echo Server ishlashi uchun ochilgan qora oynani yopmang.
-echo AI funksiyasi uchun .env ichiga ANTHROPIC_API_KEY kiritish kerak.
+echo Quruvchi tashqi AI API kalitisiz ishlaydi.
 pause
