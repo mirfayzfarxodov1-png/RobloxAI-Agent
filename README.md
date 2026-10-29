@@ -16,7 +16,7 @@ The application intentionally has **no external npm runtime dependencies and no 
 2. Clone or download this repository and open PowerShell in the project folder.
 3. Start the server with **npm start**. The website works without any external AI configuration.
 4. Open **http://localhost:3000**. If you only want to see the website, that is enough.
-5. Optional: copy `.env.example` to `.env` to configure the local server address and registration options. No AI API key is used.
+5. Optional: copy `.env.example` to `.env` to configure the local server address and registration options. No external AI provider is used.
 6. Start `npm start`. Create an account, then use **Studio ulash** to generate a one-time pairing code.
 
 No npm install is required because the project has no external dependencies. SQLite database files are created under data/.
@@ -39,9 +39,9 @@ For another computer to reach the same server, `PUBLIC_URL` must be a reachable 
 
 The plugin uses long-polling with bearer-token authentication. Pairing codes expire after ten minutes and can only be used once. You can revoke a device from the website.
 
-## API-free step-by-step game building
+## Local step-by-step game building
 
-Without an API key, Quruvchi supports starter templates for obby/parkour, collectible simulators, tycoons, and a decorative 3D world. In the same conversation, follow-up requests such as “endi yaxshila” advance the current template through bounded professional passes: fall recovery, progress/leaderstats, and lifecycle telemetry. The full updated Luau script is returned for copying and written to `ServerScriptService/QuruvchiFreeBuilder/FreeGame.server.lua` when Studio is connected. Always use Studio Play mode and Output to verify the generated game; the template generator does not replace a general-purpose reasoning model or automatic runtime testing.
+Quruvchi supports starter templates for obby/parkour, collectible simulators, tycoons, and a decorative 3D world. In the same conversation, follow-up requests such as “endi yaxshila” advance the current template through bounded professional passes: fall recovery, progress/leaderstats, and lifecycle telemetry. The full updated Luau script is returned for copying and written to `ServerScriptService/QuruvchiFreeBuilder/FreeGame.server.lua` when Studio is connected. Always use Studio Play mode and Output to verify the generated game; the template generator does not replace a general-purpose reasoning model or automatic runtime testing.
 
 ## Large-project planning
 
