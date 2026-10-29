@@ -79,7 +79,7 @@ The V2 and SUPER code is organized into dedicated folders instead of keeping all
 - `src/super/build-pipeline.js`: composes architecture, build spec, model spec, local QA plan, and explicit Studio/Play-test status into one deterministic build package.
 - Each module folder includes a README describing its responsibilities.
 
-The HTTP server now imports the organized modules directly. The old `src/v2.js`, `src/v2-engine.js`, and `src/v3-engine.js` remain small compatibility re-exports so existing consumers do not break. The website loads browser bundles from `/v2/` and `/super/`.
+The HTTP server now imports the organized modules directly. Unused root-level `src/v2.js`, `src/v2-engine.js`, and `src/v3-engine.js` duplicates were removed after all runtime imports and tests migrated to the organized modules. The website loads browser bundles from `/v2/` and `/super/`.
 
 This is a code organization and local build-planning improvement, not a claim that an external AI model exists or that Roblox Studio automatically runs without the connected plugin. Studio changes require plugin confirmation; Play-testing still needs a real Studio session.
 
