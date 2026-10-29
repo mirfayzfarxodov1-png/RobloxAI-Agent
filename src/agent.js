@@ -71,6 +71,29 @@ async function runFreeTask(userId, task, prompt) {
   const signal = task.controller.signal;
   if (signal.aborted) return;
   const historyMessages = getMessages(task.conversationId);
+  if (/(^|\\b)(logs|audit|xatolarni tekshir|xatolarni ko‘r|loyihani tekshir)(\\b|$)/i.test(prompt)) {
+    const checks = [
+      {name:'audit_project',summary:'Studio loyiha auditi',input:{maxNodes:8000}},
+      {name:'get_logs',summary:'Studio Output xatolari',input:{limit:100,onlyErrors:true}}
+    ];
+    const reports = [];
+    for (const check of checks) {
+      if (signal.aborted) return;
+      const toolId = crypto.randomUUID();
+      emit(userId,'message',{id:toolId,kind:'tool',toolId,name:check.name,summary:check.summary});
+      const result = await sendCommand(userId,check.name,check.input,signal);
+      const output = String(result.output || '');
+      reports.push({ ...check, ...result, output });
+      emit(userId,'message',{id:crypto.randomUUID(),kind:'tool_result',toolId,ok:!!result.ok,text:check.summary,preview:output.slice(0,700)});
+      saveMessage(task.conversationId,'user',[{type:'tool_result',tool_use_id:toolId,is_error:!result.ok,content:output.slice(0,20000)}]);
+    }
+    addUsage(userId,checks.length,0,0);
+    const report = reports.map(item=>'### '+item.summary+'\\n'+(item.ok?item.output.slice(0,3500):'Tekshiruv bajarilmadi: '+item.output.slice(0,500))).join('\\n\\n');
+    const resultBlock = textBlock('## Roblox Studio tekshiruvi\\n'+report+'\\n\\nBu statik audit va Output jurnali; o‘yin ichidagi Play-testni to‘liq almashtirmaydi. Agar xato topilgan bo‘lsa, uni tuzatish uchun shu natijaga asoslanib keyingi topshiriq yubor.');
+    saveMessage(task.conversationId,'assistant',resultBlock);
+    emitText(userId,resultBlock);
+    return;
+  }
   const project = buildFreeProject(prompt, historyMessages);
   const explanation = [
     '## Quruvchi MAX — Studio’da haqiqiy qurish',
@@ -123,9 +146,9 @@ async function runFreeTask(userId, task, prompt) {
     id:crypto.randomUUID(), kind:'choices',
     text:'Keyingi qadamni tanla:',
     options:[
-      {label:'Xaritani kengaytir',prompt:'Ayni loyihani davom ettir: Workspace/QuruvchiFreeWorld xaritasini kengaytir, mavjud obyektlarni saqla va yangi hududlarni Studio ichida yarat.'},
-      {label:'UI va gameplay qo‘sh',prompt:'Ayni loyihaga mos ishlaydigan UI va qo‘shimcha gameplay mexanikasini Roblox Studio ichida yarat; mavjud kod va xaritani buzma.'},
-      {label:'Xatolarni tekshir',prompt:'Ayni Roblox Studio loyihasini audit qil, Output loglarini tekshir va topilgan xatolarni tuzat. Kodni faqat ko‘rsatma, Studio ichida qo‘lla.'}
+      {label:'Do‘kon va vazifalar qo‘sh',prompt:'Ayni o‘yinga ishlaydigan do‘kon va vazifalar tizimini qo‘sh; mavjud xarita va gameplayni saqla.'},
+      {label:'Progress saqlash qo‘sh',prompt:'Ayni o‘yinga Roblox DataStore orqali progress saqlash va qayta yuklashni qo‘sh.'},
+      {label:'Xatolarni tekshir',prompt:'Xatolarni tekshir: Roblox Studio auditini va Output loglarini o‘qi.'}
     ]
   });
 }
