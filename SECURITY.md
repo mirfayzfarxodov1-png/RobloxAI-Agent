@@ -2,7 +2,6 @@
 
 ## Secrets and sessions
 
-- Keep ANTHROPIC_API_KEY in the server environment only. Never put it in public/app.js, HTML, the plugin source, or Git.
 - Passwords use Node.js scrypt with a per-password random salt. Session tokens are random and only their SHA-256 hashes are stored.
 - Session cookies are HttpOnly and SameSite=Lax. Set COOKIE_SECURE=true only behind HTTPS.
 - Browser POST/DELETE requests require JSON content type and an Origin matching PUBLIC_URL. Plugin routes use a separate bearer token.
@@ -16,7 +15,7 @@
 - Tool handlers validate paths and cap tree size, source length, tool output, and command timeouts.
 - Protected services cannot be deleted through delete_instance.
 - run_code is off by default and can execute code in the Studio plugin environment after the user explicitly enables it. Only enable it for code and places you trust.
-- AI output is untrusted. Review generated scripts and use a test place before applying important changes.
+- Generated code may contain errors. Review scripts and use a test place before applying important changes.
 - Enable Roblox HTTP requests only for projects you control.
 
 ## Deployment
