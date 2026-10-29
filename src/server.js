@@ -10,7 +10,6 @@ import { consumeLimit } from './ratelimit.js';
 import { sendJson, readJson, checkCsrf, clientIp, serveStatic, securityHeaders } from './http-util.js';
 import { attachSse, addDevice, pollDevice, receiveResult, listDevices, disconnectDevice, statusForUser, stateForUser, emit } from './hub.js';
 import { startTask, stopTask, newConversation, isRunning, resumeTask } from './agent.js';
-import { listProviders, credentialStatus, saveCredential } from './providers.js';
 import { V2_CAPABILITIES, buildV2Plan, getProjectMemory, saveProjectMemory } from './v2.js';
 import { V2_TECHNOLOGIES, runV2Toolkit } from './v2-engine.js';
 import { runV3Action } from './v3-engine.js';
@@ -243,18 +242,6 @@ const server = http.createServer(async (req, res) => {
       if (method === 'POST' && pathname === '/api/v2/memory') {
         const input = await getBody(req, res); if (!input) return;
         return json(res, 200, saveProjectMemory(user.id, input));
-      }
-      if (method === 'GET' && pathname === '/api/ai/providers') return json(res, 200, {providers:listProviders(),credential:credentialStatus(user.id)});
-      if (method === 'POST' && pathname === '/api/ai/credentials') {
-        const input=await getBody(req,res); if(!input)return;
-        const limit=consumeLimit('chatUser','ai-key:'+user.id);
-        if(!limit.allowed)return json(res,429,{error:'Juda ko‘p API tekshiruvi. Keyinroq urinib ko‘ring.'},{'Retry-After':String(limit.retryAfter)});
-        const result=await saveCredential(user.id,input);
-        return json(res,200,{ok:true,credential:result,message:'API kalit tekshirildi va xavfsiz saqlandi.'});
-      }
-      if (method === 'DELETE' && pathname === '/api/ai/credentials') {
-        db.prepare('DELETE FROM ai_credentials WHERE user_id=?').run(user.id);
-        return json(res,200,{ok:true,credential:credentialStatus(user.id)});
       }
       if (method === 'GET' && pathname === '/api/referral') {
         let account = db.prepare('SELECT referral_code FROM users WHERE id=?').get(user.id);
