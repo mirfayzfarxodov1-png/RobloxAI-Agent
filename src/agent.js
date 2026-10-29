@@ -73,15 +73,15 @@ async function runFreeTask(userId, task, prompt) {
   const historyMessages = getMessages(task.conversationId);
   const project = buildFreeProject(prompt, historyMessages);
   const explanation = [
-    '## Quruvchi — mahalliy bepul qurish rejimi',
-    'Tashqi AI provayder yoki kalit ishlatilmaydi. Mahalliy generator mavjud Luau shablonidan kod tayyorlab, ulangan Roblox Studio’ga joylaydi.',
+    '## Quruvchi MAX — mahalliy o‘yin qurish tizimi',
+    'Tashqi AI API kaliti ishlatilmaydi. MAX mahalliy generatori o‘yin turini aniqlaydi, so‘ralgan o‘lchamlarni moslaydi va mos keladigan do‘kon, vazifa hamda DataStore kabi qo‘shimcha tizimlarni Luau kodiga qo‘shadi. Ulangan Roblox Studio’ga joylaydi.',
     '',
     '**Loyiha:** ' + project.name,
     '**Bosqich:** ' + project.level + ' / 4',
     '**Yaratilayotgan qism:** ' + project.summary,
     '**Studio yo‘li:** `' + project.path + '`',
     '',
-    'Kod Studio’ga joylangach, Play bosib tekshiring. Hozirgi generator obby, tycoon, collectible simulator va 3D world starter shablonlarini qo‘llaydi. Murakkab yoki noodatiy g‘oyalar uchun shablon kodini keyin kengaytirish kerak.',
+    'Kod Studio’ga joylangach, Play bosib tekshiring. MAX hozir obby, tycoon, collectible simulator va 3D world asoslarini hamda so‘rovda ko‘rsatilgan ayrim qo‘shimcha tizimlarni quradi. Har bir yangi mexanika va murakkab o‘yin uchun Studio’da alohida Play-test kerak; istalgan g‘oyani to‘liq avtomatik tushunishi kafolatlanmaydi.',
     '',
     '```lua',
     project.source,
