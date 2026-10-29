@@ -627,62 +627,6 @@ end
   return packs;
 }
 
-function studioPart(name, size, position, color, material = 'Material.SmoothPlastic', className = 'Part') {
-  return { className, name, properties: {
-    Size: { Vector3: size }, Position: { Vector3: position }, Anchored: true,
-    Color: { Color3: color }, Material: { Enum: material }, TopSurface: { Enum: 'SurfaceType.Smooth' },
-    BottomSurface: { Enum: 'SurfaceType.Smooth' }
-  } };
-}
-function buildStudioScene(kind, title, counts) {
-  const children = [];
-  const add = (name, size, pos, color, material) => children.push(studioPart(name, size, pos, color, material));
-  if (kind === 'obby') {
-    children.push(studioPart('StartSpawn', [14,1,14], [0,2,0], [80,220,140], 'Material.Neon', 'SpawnLocation'));
-    add('StartPlatform',[24,2,24],[0,0,0],[60,180,110],'Material.Grass');
-    for (let i=1;i<=counts.stages;i++) {
-      const x=i*12, z=i%2===0?8:-8, y=2+Math.floor(i/6)*2;
-      const hue=(i/counts.stages);
-      const color=[Math.round(127+127*Math.sin(hue*Math.PI*2)),Math.round(127+127*Math.sin(hue*Math.PI*2+2.1)),Math.round(127+127*Math.sin(hue*Math.PI*2+4.2))].map(v=>Math.max(20,Math.min(255,v)));
-      const platform=studioPart('JumpPlatform'+i,[9,2,9],[x,y,z],color,'Material.Neon');
-      platform.attributes={Stage:i}; children.push(platform);
-      if(i%5===0) children.push(studioPart('Checkpoint'+i,[10,1,10],[x,y+2,z],[80,190,255],'Material.Neon'));
-    }
-    add('FinishPlatform',[22,2,22],[counts.stages*12+22,2,0],[255,205,70],'Material.Neon');
-    add('WelcomeSign',[22,8,1],[0,7,-20],[22,30,52],'Material.SmoothPlastic');
-  } else if (kind === 'simulator') {
-    add('MainIsland',[180,4,180],[0,-3,0],[62,150,94],'Material.Grass');
-    children.push(studioPart('PlayerSpawn',[12,1,12],[0,0,0],[70,170,255],'Material.Neon','SpawnLocation'));
-    children.push({className:'Folder',name:'Collectibles',children:[]});
-    for(let i=1;i<=counts.collectibles;i++){
-      const angle=2*Math.PI*i/counts.collectibles, x=Math.round(Math.cos(angle)*58), z=Math.round(Math.sin(angle)*58);
-      const gem=studioPart('Collectible'+i,[3,3,3],[x,3,z],[Math.round(80+150*(i%2)),Math.round(110+100*(i%3)),255],'Material.Neon');
-      gem.attributes={CollectibleId:i,Reward:1}; children.push(gem);
-    }
-  } else if (kind === 'tycoon') {
-    add('TycoonGround',[Math.max(150,counts.plots*55),2,90],[0,-1,0],[50,65,83],'Material.Concrete');
-    for(let i=1;i<=counts.plots;i++){
-      const x=(i-(counts.plots+1)/2)*55;
-      const base={className:'Model',name:'Plot'+i,children:[
-        studioPart('BaseFloor',[42,1,42],[x,1,0],[70,100,140],'Material.Metal'),
-        studioPart('ClaimPad',[8,1,8],[x,2,14],[80,220,140],'Material.Neon'),
-        studioPart('UpgradePad',[8,1,8],[x+12,2,-12],[160,100,255],'Material.Neon'),
-        studioPart('Dropper',[6,8,6],[x-12,5,-12],[255,190,65],'Material.Metal')
-      ]};
-      children.push(base);
-    }
-  } else {
-    add('MainIsland',[180,4,180],[0,-3,0],[62,150,94],'Material.Grass');
-    children.push(studioPart('PlayerSpawn',[12,1,12],[0,0,0],[70,170,255],'Material.Neon','SpawnLocation'));
-    for(let i=1;i<=12;i++){
-      const angle=2*Math.PI*i/12;
-      add('SceneryPillar'+i,[5,12+(i%4)*3,5],[Math.round(Math.cos(angle)*65),4,Math.round(Math.sin(angle)*65)],[80+(i%3)*35,100,210],'Material.Neon');
-    }
-    add('WelcomeSign',[24,8,1],[0,8,-18],[22,30,52],'Material.SmoothPlastic');
-  }
-  return { className:'Folder', name:'QuruvchiFreeWorld', attributes:{QuruvchiGenerated:true,GameKind:kind,ProjectTitle:title}, children };
-}
-
 export function buildFreeProject(prompt, history = []) {
   const upgrade = isUpgradeRequest(prompt);
   const currentKind = classify(prompt);
