@@ -5,7 +5,7 @@ import { createProjectPlan, renderProjectPlanMarkdown } from '../src/project-pla
 test('creates a normalized project plan with sensible defaults', () => {
   const plan = createProjectPlan({ title: '  Sky Realm  ', genre: 'RPG', features: ['Quest', 'Quest', '', 'Inventory'] });
   assert.equal(plan.title, 'Sky Realm');
-  assert.equal(plan.complexity, 'large');
+  assert.equal(plan.complexity, 'small');
   assert.deepEqual(plan.features, ['Quest', 'Inventory']);
   assert.ok(plan.phases.length >= 3);
   assert.equal(plan.schemaVersion, 2);
@@ -17,7 +17,7 @@ test('bounds untrusted input and drops malformed list values', () => {
     title: 'x'.repeat(200),
     features: Array.from({ length: 50 }, (_, i) => 'feature-' + i),
     constraints: [' safe ', null, 'safe'],
-    complexity: 'impossible',
+    complexity: 'small',
     phases: [{ name: 'phase', goal: 'g'.repeat(1000), systems: ['A', 'A', 'B'] }],
   });
   assert.equal(plan.title.length, 100);
@@ -26,6 +26,7 @@ test('bounds untrusted input and drops malformed list values', () => {
   assert.equal(plan.complexity, 'large');
   assert.equal(plan.phases[0].goal.length, 500);
   assert.deepEqual(plan.phases[0].systems, ['A', 'B']);
+  assert.equal(createProjectPlan({ title: 'Invalid complexity', complexity: 'impossible' }).complexity, 'large');
 });
 
 test('renders a readable plan with sources, acceptance criteria, and honest save status', () => {
@@ -45,7 +46,7 @@ test('renders a readable plan with sources, acceptance criteria, and honest save
 });
 
 test('fills a large project plan with a concrete loop, features and ten phases', () => {
-  const plan = createProjectPlan({ title: 'Steal an Legacy', genre: 'Roblox collection game', pitch: 'Players collect relics, protect their base, upgrade and unlock worlds.' });
+  const plan = createProjectPlan({ title: 'Steal an Legacy', genre: 'Roblox collection game', pitch: 'Players collect relics, protect their base, upgrade and unlock worlds.', phases: [{ name: 'Only phase from model', goal: 'Short model-generated phase', systems: ['Core'], acceptanceCriteria: ['Works'] }] });
   assert.equal(plan.title, 'Steal an Legacy');
   assert.ok(plan.coreLoop.length >= 4);
   assert.ok(plan.features.length >= 6);

@@ -100,12 +100,22 @@ export function createProjectPlan(input = {}) {
   const contextText = [title, genre, pitch, ...(Array.isArray(input.coreLoop) ? input.coreLoop : []), ...(Array.isArray(input.features) ? input.features : [])].join(' ');
   const gameType = detectGameType(contextText);
   const coreLoop = cleanList(input.coreLoop, 8, 180);
-  const normalizedLoop = coreLoop.length ? coreLoop : defaultLoop(gameType);
+  const defaultLoopItems = defaultLoop(gameType);
+  const normalizedLoop = coreLoop.length >= 4
+    ? coreLoop
+    : [...coreLoop, ...defaultLoopItems.filter(item => !coreLoop.some(existing => existing.toLocaleLowerCase() === item.toLocaleLowerCase()))].slice(0, 8);
   const features = cleanList(input.features, MAX_FEATURES, 180);
-  const normalizedFeatures = features.length ? features : defaultFeatures(gameType);
+  const defaultFeatureItems = defaultFeatures(gameType);
+  const normalizedFeatures = features.length >= 6
+    ? features
+    : [...features, ...defaultFeatureItems.filter(item => !features.some(existing => existing.toLocaleLowerCase() === item.toLocaleLowerCase()))].slice(0, MAX_FEATURES);
   const constraints = cleanList(input.constraints, MAX_CONSTRAINTS, 180);
   const phasesInput = Array.isArray(input.phases) ? input.phases.slice(0, MAX_PHASES) : [];
-  const phases = (phasesInput.length ? phasesInput : DEFAULT_PHASES).map((phase, index) => ({
+  // Large projects must not degrade into a short, vague roadmap when the model
+  // returns only a few phases. Use the complete tested template as the fallback.
+  const useDefaultRoadmap = (complexity === 'large' || complexity === 'very-large') && phasesInput.length < 8;
+  const selectedPhases = useDefaultRoadmap || phasesInput.length === 0 ? DEFAULT_PHASES : phasesInput;
+  const phases = selectedPhases.map((phase, index) => ({
     order: index + 1,
     name: cleanText(phase?.name, 80, 'Phase ' + (index + 1)) || 'Phase ' + (index + 1),
     goal: cleanText(phase?.goal, 500, 'Talablarni tekshirish va testlash.') || 'Talablarni tekshirish va testlash.',
@@ -117,12 +127,12 @@ export function createProjectPlan(input = {}) {
   const dataPersistence = typeof input.dataPersistence === 'boolean' ? input.dataPersistence : inferredPersistence;
   const sources = cleanSources(input.sources);
   const researchSummary = cleanText(input.researchSummary, 2500);
-  const researchDate = cleanText(input.researchDate, 60);
+  const researchDate = cleanText(input.researchDate, 60, sources.length ? new Date().toISOString() : '');
   const qualityChecks = [
     { id: 'identity', label: 'Loyiha nomi va g‘oya saqlandi', passed: Boolean(title && pitch) },
     { id: 'gameplay-loop', label: 'Gameplay loop aniq', passed: normalizedLoop.length >= 3 },
     { id: 'features', label: 'Funksiyalar ro‘yxati bor', passed: normalizedFeatures.length >= 5 },
-    { id: 'phases', label: 'Bosqichlar acceptance criteria bilan belgilangan', passed: phases.length >= 5 && phases.every(phase => phase.goal && phase.systems.length > 0 && phase.acceptanceCriteria.length > 0) },
+    { id: 'phases', label: 'Bosqichlar acceptance criteria bilan belgilangan', passed: phases.length >= ((complexity === 'large' || complexity === 'very-large') ? 8 : 3) && phases.every(phase => phase.goal && phase.systems.length > 0 && phase.acceptanceCriteria.length > 0) },
     { id: 'persistence', label: 'Ma’lumot saqlash qarori belgilangan', passed: typeof dataPersistence === 'boolean' },
     { id: 'research', label: 'Internet manbalari biriktirilgan', passed: sources.length > 0 },
   ];
