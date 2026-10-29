@@ -46,15 +46,35 @@ export function parseSearchResults(html, query, maxResults = 6) {
     if (!url || !title) continue;
     links.push({ title, url, domain: new URL(url).hostname.replace(/^www\./, ''), official: isOfficialUrl(url), query });
   }
-  const snippets = [...String(html).matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi)]
-    .filter(match => ((match[1].match(/\bclass=["']([^"']*)["']/i)?.[1] || '').split(/\s+/)).includes('result__snippet'))
-    .map(match => plainText(match[2]));
   const seen = new Set();
-  return links.filter(item => {
+  const uniqueLinks = links.filter(item => {
     if (seen.has(item.url)) return false;
     seen.add(item.url);
     return true;
-  }).slice(0, maxResults).map((item, i) => ({ ...item, snippet: (snippets[i] || '').slice(0, 700) }));
+  });
+  // Keep each result's own snippet paired with its URL. Global snippet indexing
+  // can attach another page's description after DuckDuckGo changes result order.
+  const blocks = [...String(html).matchAll(/<div\b(?=[^>]*\bclass=["'][^"']*\bresult\b[^"']*["'])[^>]*>([\s\S]*?)(?=<div\b(?=[^>]*\bclass=["'][^"']*\bresult\b[^"']*["'])[^>]*>|$)/gi)]
+    .map(match => match[1]);
+  const snippetByUrl = new Map();
+  for (const block of blocks) {
+    const linkMatch = block.match(/<a\b([^>]*)>([\s\S]*?)<\/a>/i);
+    const anchorMatch = [...block.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi)]
+      .find(match => ((match[1].match(/\bclass=["']([^"']*)["']/i)?.[1] || '').split(/\s+/)).includes('result__a'));
+    const href = anchorMatch?.[1].match(/\bhref=["']([^"']+)["']/i)?.[1];
+    const url = href && unwrapSearchUrl(href);
+    const snippetMatch = [...block.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi)]
+      .find(match => ((match[1].match(/\bclass=["']([^"']*)["']/i)?.[1] || '').split(/\s+/)).includes('result__snippet'));
+    if (url && snippetMatch) snippetByUrl.set(url, plainText(snippetMatch[2]).slice(0, 700));
+    void linkMatch;
+  }
+  const fallbackSnippets = [...String(html).matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi)]
+    .filter(match => ((match[1].match(/\bclass=["']([^"']*)["']/i)?.[1] || '').split(/\s+/)).includes('result__snippet'))
+    .map(match => plainText(match[2]).slice(0, 700));
+  return uniqueLinks.slice(0, maxResults).map((item, i) => ({
+    ...item,
+    snippet: (snippetByUrl.get(item.url) || fallbackSnippets[i] || '').slice(0, 700),
+  }));
 }
 export async function searchWeb({ queries, officialOnly = false, maxResults = 6, fetchImpl = fetch, signal } = {}) {
   const cleanQueries = (Array.isArray(queries) ? queries : [queries])
