@@ -123,7 +123,7 @@ test('Quruvchi auth, CSRF, pairing, API-free local build, and device removal', a
   assert.equal(result.response.status,200);
   await waitUntil(async()=>{const r=await fetch(base+'/api/me',{headers:{Cookie:cookie}});const d=await r.json();return !d.running&&d.steps.used===1?d:null;},7000);
   const history=await (await fetch(base+'/api/chat/history',{headers:{Cookie:cookie}})).json();
-  assert.ok(history.messages.some(m=>m.role==='assistant'&&m.text.includes('mahalliy bepul qurish rejimi')));
+  assert.ok(history.messages.some(m=>m.role==='assistant'&&m.text.includes('Quruvchi MAX — mahalliy o‘yin qurish tizimi')));
   assert.ok(history.messages.some(m=>m.role==='assistant'&&m.text.includes('Play bosib tekshiring')));
   
   const removed=await fetch(base+'/api/devices/'+deviceId,{method:'DELETE',headers:{Cookie:cookie,Origin:base,'Content-Type':'application/json'}});
