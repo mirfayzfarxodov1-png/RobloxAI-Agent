@@ -66,6 +66,23 @@ Use HTTPS and persistent storage. Set these environment variables in your host's
 
 Use the included Dockerfile or render.yaml as a deployment starting point. A public site is **not deployed by committing these files**; hosting must still be configured and started.
 
+## Organized V2 and SUPER modules
+
+The V2 and SUPER code is organized into dedicated folders instead of keeping all entry points flat:
+
+- `public/v2/index.js` and `public/v2/style.css`: V2 browser command center and isolated responsive/accessibility refinements.
+- `public/super/index.js` and `public/super/style.css`: SUPER Lab browser interface and isolated responsive/accessibility refinements.
+- `src/v2/index.js`: V2 project planner, capability registry, and per-user project memory.
+- `src/v2/engine.js`: local Luau/performance audit, QA plan, architecture graph, world blueprint, and rollback/toolkit helpers.
+- `src/super/index.js`: SUPER workflow registry and public module entry point.
+- `src/super/engine.js`: higher-level architecture, build specification, model specification, static audit, and QA matrix.
+- `src/super/build-pipeline.js`: composes architecture, build spec, model spec, local QA plan, and explicit Studio/Play-test status into one deterministic build package.
+- Each module folder includes a README describing its responsibilities.
+
+The HTTP server now imports the organized modules directly. The old `src/v2.js`, `src/v2-engine.js`, and `src/v3-engine.js` remain small compatibility re-exports so existing consumers do not break. The website loads browser bundles from `/v2/` and `/super/`.
+
+This is a code organization and local build-planning improvement, not a claim that an external AI model exists or that Roblox Studio automatically runs without the connected plugin. Studio changes require plugin confirmation; Play-testing still needs a real Studio session.
+
 ## Architecture
 
 - public/ — static HTML, CSS, and browser JavaScript. No framework and no inline scripts.
