@@ -10,9 +10,9 @@ import { consumeLimit } from './ratelimit.js';
 import { sendJson, readJson, checkCsrf, clientIp, serveStatic, securityHeaders } from './http-util.js';
 import { attachSse, addDevice, pollDevice, receiveResult, listDevices, disconnectDevice, statusForUser, stateForUser, emit } from './hub.js';
 import { startTask, stopTask, newConversation, isRunning, resumeTask } from './agent.js';
-import { V2_CAPABILITIES, buildV2Plan, getProjectMemory, saveProjectMemory } from './v2.js';
-import { V2_TECHNOLOGIES, runV2Toolkit } from './v2-engine.js';
-import { runV3Action } from './v3-engine.js';
+import { V2_CAPABILITIES, buildV2Plan, getProjectMemory, saveProjectMemory } from './v2/index.js';
+import { V2_TECHNOLOGIES, runV2Toolkit } from './v2/engine.js';
+import { runV3Action } from './super/engine.js';
 import { buildGameDNA } from './game-dna.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
