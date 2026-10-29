@@ -40,3 +40,11 @@ Verification boundary:
 Verification boundary:
 - Research search results are references, not proof that all content on linked pages was fully read or that code/runtime behavior was tested.
 - Roblox Studio Play, DataStore API Services, and multiplayer behavior still require real Studio testing.
+
+## Organized V2 and SUPER modules
+
+- Added dedicated `public/v2/` and `public/super/` browser bundles and isolated style refinements.
+- Added `src/v2/` for project planning/memory and local toolkit engine.
+- Added `src/super/` for architecture/build specifications, QA, model specs, and a deterministic build-package orchestrator.
+- Server and tests use the organized module paths; legacy root entry points remain compatibility re-exports.
+- The SUPER package explicitly labels Studio application as requiring plugin confirmation and Play-test as not run until a real Studio test is performed.
