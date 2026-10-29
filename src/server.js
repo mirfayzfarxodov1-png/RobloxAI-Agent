@@ -322,7 +322,7 @@ const server = http.createServer(async (req, res) => {
 
 const cleanupTimer = setInterval(cleanupExpired, 60 * 60 * 1000);
 cleanupTimer.unref();
-server.listen(config.port, () => console.log('[Quruvchi] http://localhost:' + config.port + ' · model=' + config.claudeModel));
+server.listen(config.port, () => console.log('[Quruvchi MAX] http://localhost:' + config.port + ' · local deterministic game builder · no external AI API'));
 function shutdown() {
   cleanupTimer.unref();
   server.close(() => { try { db.close(); } finally { process.exit(0); } });
