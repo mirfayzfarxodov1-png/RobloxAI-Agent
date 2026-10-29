@@ -14,7 +14,7 @@ async function api(path,body,method){
   const options={method:method||(body===undefined?'GET':'POST'),credentials:'same-origin',headers:{}};
   if(body!==undefined){options.headers['Content-Type']='application/json';options.body=JSON.stringify(body);}else if(options.method==='POST'||options.method==='DELETE'){options.headers['Content-Type']='application/json';}
   const response=await fetch(path,options);const data=await response.json().catch(()=>({}));
-  if(!response.ok){const error=new Error(data.error||'So‘rov bajarilmadi');error.status=response.status;error.data=data;throw error;}return data;
+  if(!response.ok){const error=new Error(data.error||'So‘rov bajarilmadi');error.status=response.status;error.data=data;error.retryAfter=Number(response.headers.get('Retry-After')||0);throw error;}return data;
 }
 function addMessage(message){const id=String(message.id||Date.now()+'-'+Math.random());const idx=state.messages.findIndex(m=>String(m.id)===id);const item={...message,id};if(idx>=0)state.messages[idx]=item;else state.messages.push(item);state.scrollBottom=true;render();}
 function safeInline(parent,text){
@@ -336,7 +336,7 @@ function renderAuth(){
   if(state.authMode==='register'){const label=node('label','form-label','TAKLIF HAVOLASI / KODI'),input=node('input');input.name='invite';input.value=state.invite;input.placeholder='Taklif havolasidan avtomatik tushadi';input.autocomplete='off';input.addEventListener('input',e=>state.invite=e.target.value.trim());label.append(input);form.append(label);if(new URLSearchParams(location.search).has('ref'))form.append(node('p','referral-auth-note','Siz taklif havolasi orqali keldingiz. Ro‘yxatdan o‘tish ushbu serverda davom etadi.'));}
   if(state.notice)form.append(node('div','form-error',state.notice));
   const submit=button(state.authMode==='login'?'➜  Kirish':'✦  Hisob yaratish','primary-button full',()=>{});submit.type='submit';form.append(submit);
-  form.addEventListener('submit',async e=>{e.preventDefault();state.notice='';try{const data=await api(state.authMode==='login'?'/api/login':'/api/register',{login:state.login,password:state.password,...(state.authMode==='register'?{invite:state.invite}:{})});state.user={login:data.login||state.login};state.password='';state.notice='';await loadApp();}catch(error){state.notice=error.message;render();}});
+  form.addEventListener('submit',async e=>{e.preventDefault();state.notice='';try{const data=await api(state.authMode==='login'?'/api/login':'/api/register',{login:state.login,password:state.password,...(state.authMode==='register'?{invite:state.invite}:{})});state.user={login:data.login||state.login};state.password='';state.notice='';await loadApp();}catch(error){state.notice=error.status===429?`${error.message}. ${error.retryAfter>0?'Qayta urinish uchun '+error.retryAfter+' soniya kuting.':'Biroz kutib qayta urinib ko‘ring.'}`:error.message;render();}});
   card.append(form,node('div','auth-v2-divider','YOKI'),node('div','auth-v2-social-note','Hisobingiz xavfsiz himoyalanadi'),node('p','auth-security','Sessiya xavfsiz cookie bilan saqlanadi. Login ma’lumotlari chat tarixida ko‘rsatilmaydi.'));
   const footer=node('footer','auth-v2-footer','Created with ♥ by Quruvchi Team');
   wrap.append(topbar,visual,card,footer);root.append(wrap);
