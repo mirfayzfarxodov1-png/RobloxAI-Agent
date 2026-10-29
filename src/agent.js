@@ -114,7 +114,7 @@ async function runFreeTask(userId, task, prompt) {
     '**World Agent:** ' + localQa.nodeCount + ' ta obyekt node’i rejalashtirildi.',
     '**UI Agent:** Do‘kon, inventar, vazifalar va yordam tugmalari.',
     '**Gameplay Agent:** ' + gameplayPlan.systems.join(', '),
-    '**Gameplay kod tekshiruvi:** ' + gameplayPlan.status + ' · ' + gameplayPlan.checks.filter(item=>item.ok).length + '/' + gameplayPlan.checks.length + ' local checks, ' + gameplayPlan.sourceLength + ' belgili server Luau,',
+    '**Gameplay kod tekshiruvi:** ' + gameplayPlan.status + ' · ' + gameplayPlan.checks.filter(item=>item.ok).length + '/' + gameplayPlan.checks.length + ' local tekshiruv, ' + gameplayPlan.sourceLength + ' belgili server Luau.',
     '**Tool Scout:** ' + toolReport.recommendations.map(item => item.name + ' (' + item.cost + ')').join('; '),
     '**QA Agent:** ' + localQa.agents.join(', ') + ' — mahalliy tekshiruv o‘tdi.',
     '**Obyektlar yo‘li:** Workspace/QuruvchiFreeWorld',
@@ -135,7 +135,7 @@ async function runFreeTask(userId, task, prompt) {
     { name:'create_tree', summary:'World Agent — xarita va 3D obyektlar', input:{ parent:'Workspace', tree:project.sceneTree } },
     { name:'create_tree', summary:'UI Agent — o‘yin ichidagi HUD va panellar', input:{ parent:'StarterGui', tree:project.uiTree } },
     { name:'create_script', summary:'UI Agent — tugmalar va panellar uchun LocalScript', input:{ path:'StarterGui/QuruvchiMAXUI/UIController.client.lua', className:'LocalScript', source:project.uiSource } },
-    { name:'create_script', summary:'Gameplay Agent — o‘yin mexanikasi', input:{ path:project.path, className:'Script', source:project.source } },
+    { name:'create_script', summary:'Gameplay Agent — o‘yin mexanikasi', input:{ path:project.path, className:'Script', source:gameplayPlan.source } },
     { name:'audit_project', summary:'QA Agent — Studio loyihasini tekshirish', input:{ path:'game', maxNodes:8000 } },
     { name:'get_logs', summary:'QA Agent — Studio Output jurnalini tekshirish', input:{ limit:60, onlyErrors:true } }
   ];
