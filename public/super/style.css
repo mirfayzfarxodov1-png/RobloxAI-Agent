@@ -1,0 +1,8 @@
+/* Quruvchi SUPER Lab · isolated component refinements. Core panel rules remain in /style.css. */
+.super-suite-panel :focus-visible,.super-suite-fab:focus-visible{outline:2px solid #a5a0ff;outline-offset:3px}
+.super-suite-panel button:disabled{opacity:.58;cursor:wait}
+.super-suite-panel textarea,.super-suite-panel select{max-width:100%}
+.super-suite-panel pre,.super-diff{overflow-wrap:anywhere;white-space:pre-wrap;word-break:break-word}
+.super-suite-panel a{overflow-wrap:anywhere}
+@media(max-width:640px){.super-suite-panel{padding:18px 14px}.super-tabs{flex-wrap:wrap}.super-actions{flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){.super-suite-backdrop,.super-suite-panel{animation:none!important;transition:none!important}}
