@@ -22,7 +22,7 @@ export function buildSuperBuildPlan(input={}) {
     {id:'studio',label:'Roblox Studio apply',status:'requires-plugin-confirmation'},
     {id:'playtest',label:'Roblox Play test',status:'not-run'}
   ];
-  const toolkit=runV2Toolkit({action:'project-checklist',title:architecture.plan.title,idea});
+  const toolkit=runV2Toolkit({action:'qa-plan',title:architecture.plan.title});
   return {
     version:'3.0.0',
     title:architecture.plan.title,
