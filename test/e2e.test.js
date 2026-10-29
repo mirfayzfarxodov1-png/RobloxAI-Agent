@@ -115,6 +115,7 @@ test('Quruvchi auth, CSRF, pairing, API-free local build, and device removal', a
   const expected=[
     {name:'create_tree',parent:'Workspace',path:'Workspace/QuruvchiFreeWorld'},
     {name:'create_tree',parent:'StarterGui',path:'StarterGui/QuruvchiMAXUI'},
+    {name:'create_script',path:'StarterGui/QuruvchiMAXUI/UIController.client.lua'},
     {name:'create_script',path:'ServerScriptService/QuruvchiAgents/GameplayAgent/FreeGame.server.lua'},
     {name:'audit_project',path:'game'},
     {name:'get_logs',path:''}
@@ -131,14 +132,18 @@ test('Quruvchi auth, CSRF, pairing, API-free local build, and device removal', a
       assert.ok(command.data.input.tree.children.some(node=>node.name==='JumpPlatform30'));
     }
     if(item.name==='create_tree'&&item.parent==='StarterGui')assert.equal(command.data.input.tree.name,'QuruvchiMAXUI');
-    if(item.name==='create_script'){
+    if(item.name==='create_script'&&item.path.includes('UIController')){
+      assert.equal(command.data.input.className,'LocalScript');
+      assert.match(command.data.input.source,/GetAttribute\\(\\"PanelKey\\"\\)/);
+    }
+    if(item.name==='create_script'&&item.path.includes('GameplayAgent')){
       assert.ok(command.data.input.path.includes('QuruvchiAgents/GameplayAgent/FreeGame.server.lua'));
       assert.match(command.data.input.source,/QuruvchiFreeWorld|JumpPlatform/);
     }
     const result=await sendPluginResult(base,token,{id:command.data.id,ok:true,output:{created:40,path:item.path,warnings:[]}});
     assert.equal(result.response.status,200);
   }
-  await waitUntil(async()=>{const r=await fetch(base+'/api/me',{headers:{Cookie:cookie}});const d=await r.json();return !d.running&&d.steps.used===5?d:null;},10000);
+  await waitUntil(async()=>{const r=await fetch(base+'/api/me',{headers:{Cookie:cookie}});const d=await r.json();return !d.running&&d.steps.used===6?d:null;},10000);
   const history=await (await fetch(base+'/api/chat/history',{headers:{Cookie:cookie}})).json();
   assert.ok(history.messages.some(m=>m.role==='assistant'&&m.text.includes('Quruvchi MAX — ko‘p agentli Studio qurish')));
   assert.ok(history.messages.some(m=>m.role==='assistant'&&m.text.includes('Quruvchi MAX — qurish yakunlandi')));
