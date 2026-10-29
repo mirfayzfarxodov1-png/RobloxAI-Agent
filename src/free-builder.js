@@ -274,12 +274,12 @@ function extractExplicitTitle(prompt) {
   if (!text) return '';
   const quoted = text.match(/[“"]([^”"]{2,100})[”"]/);
   if (quoted) return quoted[1].trim();
-  const labeled = text.match(/(?:o['’ʻ]?yin(?:ning)?\s+nomi|loyiha\s+nomi|game\s+title|title|name)\s*[:=]?\s*["“]?([^"”\n,.]{2,100})/i);
+  const labeled = text.match(/(?:o['’‘ʻ]?yin(?:ning)?\s+nomi|loyiha\s+nomi|game\s+title|title|name)\s*[:=]?\s*["“]?([^"”\n,.]{2,100})/i);
   if (labeled) {
-    const value = labeled[1].split(/\s+(?:yarat\w*|qur\w*|build|create|o['’ʻ]?yin|game|uchun|deb)\b/i)[0].trim();
+    const value = labeled[1].split(/\s+(?:yarat\w*|qur\w*|build|create|o['’‘ʻ]?yin|game|uchun|deb)\b/i)[0].trim();
     if (value.length >= 2) return value.slice(0, 100);
   }
-  const leading = text.match(/^\s*(?:menga\s+)?([A-Z][A-Za-z0-9'’ -]{2,70}?)(?=\s+(?:o['’ʻ]?yin(?:i|ning)?|game|yarat\w*|qur\w*|build|create|deb)\b)/i);
+  const leading = text.match(/^\s*(?:menga\s+)?([A-Z][A-Za-z0-9'’ -]{2,70}?)(?=\s+(?:o['’‘ʻ]?yin(?:i|ning)?|game|yarat\w*|qur\w*|build|create|deb)\b)/i);
   return leading?.[1]?.trim().replace(/[.,:;]+$/, '').slice(0, 100) || '';
 }
 function titleFromHistory(history = []) {

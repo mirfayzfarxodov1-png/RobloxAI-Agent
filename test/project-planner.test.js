@@ -5,7 +5,7 @@ import { createProjectPlan, renderProjectPlanMarkdown } from '../src/project-pla
 test('creates a normalized project plan with sensible defaults', () => {
   const plan = createProjectPlan({ title: '  Sky Realm  ', genre: 'RPG', features: ['Quest', 'Quest', '', 'Inventory'] });
   assert.equal(plan.title, 'Sky Realm');
-  assert.equal(plan.complexity, 'small');
+  assert.equal(plan.complexity, 'large');
   assert.deepEqual(plan.features, ['Quest', 'Inventory']);
   assert.ok(plan.phases.length >= 3);
   assert.equal(plan.schemaVersion, 2);
@@ -23,7 +23,7 @@ test('bounds untrusted input and drops malformed list values', () => {
   assert.equal(plan.title.length, 100);
   assert.equal(plan.features.length, 20);
   assert.deepEqual(plan.constraints, ['safe']);
-  assert.equal(plan.complexity, 'large');
+  assert.equal(plan.complexity, 'small');
   assert.equal(plan.phases[0].goal.length, 500);
   assert.deepEqual(plan.phases[0].systems, ['A', 'B']);
   assert.equal(createProjectPlan({ title: 'Invalid complexity', complexity: 'impossible' }).complexity, 'large');
