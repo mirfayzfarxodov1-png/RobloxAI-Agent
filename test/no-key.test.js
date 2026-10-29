@@ -22,7 +22,7 @@ test('website starts and serves HTML without an AI API key', async t => {
   const dataDir = await mkdtemp(path.join(os.tmpdir(), 'quruvchi-no-key-'));
   const child = spawn(process.execPath, ['--experimental-sqlite', path.join(projectRoot, 'src', 'server.js')], {
     cwd: dataDir,
-    env: { ...process.env, NODE_ENV: 'development', PORT: String(port), PUBLIC_URL: base, DATA_DIR: dataDir, ANTHROPIC_API_KEY: '', COOKIE_SECURE: 'false', INVITE_CODE: '' },
+    env: { ...process.env, NODE_ENV: 'development', PORT: String(port), PUBLIC_URL: base, DATA_DIR: dataDir, COOKIE_SECURE: 'false', INVITE_CODE: '' },
     stdio: ['ignore', 'pipe', 'pipe']
   });
   let output = '';
