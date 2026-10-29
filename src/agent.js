@@ -2,6 +2,9 @@ import crypto from 'node:crypto';
 import { config } from './config.js';
 import { db, currentConversation, saveMessage, getMessages, addUsage, getUsage, getTaskPause, setTaskPause, clearTaskPause } from './db.js';
 import { buildFreeProject } from './free-builder.js';
+import { auditGeneratedProject } from './agents/qa-agent.js';
+import { buildGameplayPlan } from './agents/gameplay-agent.js';
+import { scoutTools } from './agents/tool-scout.js';
 import { emit, sendCommand, statusForUser, setUserRunning, stateForUser } from './hub.js';
 
 const running = new Map();
@@ -95,18 +98,29 @@ async function runFreeTask(userId, task, prompt) {
     return;
   }
   const project = buildFreeProject(prompt, historyMessages);
+  const localQa = auditGeneratedProject(project);
+  const gameplayPlan = buildGameplayPlan(project);
+  const toolReport = scoutTools([prompt, ...(project.features || [])]);
+  if (!localQa.ok) throw new Error('MAX oldindan tekshiruvdan o‘tmadi: ' + localQa.errors.join('; '));
   const explanation = [
-    '## Quruvchi MAX — Studio’da haqiqiy qurish',
-    'MAX endi faqat kod matnini bermaydi: avval xarita va obyektlarni Roblox Studio’ning Explorer/Workspace qismiga joylaydi, keyin gameplay skriptini qo‘shadi.',
+    '## Quruvchi MAX — ko‘p agentli Studio qurish',
+    'Bu ish alohida World, UI, Gameplay, Tool Scout va QA agentlariga bo‘lingan. Avval obyektlar va interfeys yaratiladi, so‘ng gameplay skripti joylanadi; mavjud xarita o‘chirib yuborilmaydi.',
     '',
     '**Loyiha:** ' + project.name,
     '**Tur:** ' + project.kind,
     '**Bosqich:** ' + project.level + ' / 4',
-    '**Quriladigan qismlar:** ' + project.summary,
+    '**World Agent:** ' + localQa.nodeCount + ' ta obyekt node’i rejalashtirildi.',
+    '**UI Agent:** Do‘kon, inventar, vazifalar va yordam tugmalari.',
+    '**Gameplay Agent:** ' + gameplayPlan.systems.join(', '),
+    '**Tool Scout:** ' + toolReport.recommendations.map(item => item.name + ' (' + item.cost + ')').join('; '),
+    '**QA Agent:** ' + localQa.agents.join(', ') + ' — mahalliy tekshiruv o‘tdi.',
     '**Obyektlar yo‘li:** Workspace/QuruvchiFreeWorld',
+    '**UI yo‘li:** StarterGui/QuruvchiMAXUI',
     '**Gameplay skripti:** ' + project.path,
     '',
-    'Qurish tugagach, Roblox Studio → Explorer ichida QuruvchiFreeWorld modelini ko‘r. Keyin Play bosib gameplayni tekshir.'
+    ...toolReport.notes,
+    '',
+    'Qurish tugagach, Studio’da Explorer’ni ochib obyektlarni ko‘r va Play bosib tekshir.'
   ].join('\n');
   const assistantContent = textBlock(explanation);
   saveMessage(task.conversationId, 'assistant', assistantContent);
@@ -115,8 +129,11 @@ async function runFreeTask(userId, task, prompt) {
 
   const results = [];
   const commands = [
-    { name:'create_tree', summary:'Workspace xaritasi va 3D obyektlar', input:{ parent:'Workspace', tree:project.sceneTree } },
-    { name:'create_script', summary:'Gameplay va o‘yin tizimlari', input:{ path:project.path, className:'Script', source:project.source } }
+    { name:'create_tree', summary:'World Agent — xarita va 3D obyektlar', input:{ parent:'Workspace', tree:project.sceneTree } },
+    { name:'create_tree', summary:'UI Agent — o‘yin ichidagi HUD va ishlaydigan panellar', input:{ parent:'StarterGui', tree:project.uiTree } },
+    { name:'create_script', summary:'Gameplay Agent — o‘yin mexanikasi', input:{ path:project.path, className:'Script', source:project.source } },
+    { name:'audit_project', summary:'QA Agent — Studio loyihasini tekshirish', input:{ path:'game', maxNodes:8000 } },
+    { name:'get_logs', summary:'QA Agent — Studio Output jurnalini tekshirish', input:{ limit:60, onlyErrors:true } }
   ];
   for (const command of commands) {
     if (signal.aborted) return;
@@ -139,7 +156,7 @@ async function runFreeTask(userId, task, prompt) {
     emitText(userId, block);
     return;
   }
-  const done = textBlock('## Tayyor — Studio loyihasi o‘zgartirildi\n- Xarita va 3D obyektlar Workspace/QuruvchiFreeWorld ichiga joylandi.\n- Gameplay skripti '+project.path+' ichiga yozildi.\n- Endi **Play** bosib tekshir. Agar xato chiqsa, logs deb yoz — keyingi tuzatishda Studio Output’ni tekshiramiz.');
+  const done = textBlock('## Quruvchi MAX — qurish yakunlandi\n- World Agent: Workspace/QuruvchiFreeWorld ichiga xarita joylandi.\n- UI Agent: StarterGui/QuruvchiMAXUI va ishlaydigan panel tugmalari qo‘shildi.\n- Gameplay Agent: '+project.path+' ichiga skript joylandi.\n- QA Agent: Studio audit va Output jurnali tekshirildi.\n- Tool Scout: bepul Studio vositalari ustun qo‘yildi; uchinchi tomon assetlari avtomatik va ruxsatsiz kiritilmadi.\n\nEndi **Play** bosib o‘yin ichida tekshir.');
   saveMessage(task.conversationId, 'assistant', done);
   emitText(userId, done);
   emit(userId, 'message', {
