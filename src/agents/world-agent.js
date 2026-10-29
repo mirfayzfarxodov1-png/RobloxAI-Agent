@@ -25,19 +25,14 @@ export function buildWorldScene({ kind, title, counts }) {
   } else if(kind==='simulator'){
     add('MainIsland',[200,5,200],[0,-3,0],[62,150,94],'Material.Grass');
     add('PlayerSpawn',[14,1,14],[0,0,0],[70,170,255],'Material.Neon','SpawnLocation');
-    children.push({className:'Folder',name:'Collectibles',children:[]});
-    for(let i=1;i<=counts.collectibles;i++){const a=2*Math.PI*i/counts.collectibles,r=28+(i%3)*8,x=Math.round(Math.cos(a)*r),z=Math.round(Math.sin(a)*r);children.push(part('Collectible'+i,[3,3,3],[x,3+(i%4),z],[Math.round(80+150*(i%2)),Math.round(110+100*(i%3)),255],'Material.Neon','Part',{CollectibleId:i,Reward:1}));}
+    const collectibles={className:'Folder',name:'Collectibles',children:[]};
+    for(let i=1;i<=counts.collectibles;i++){const a=i*2.399,r=12+(i%5)*9;collectibles.children.push(part('Collectible_'+i,[2.5,2.5,2.5],[Math.cos(a)*r,3,Math.sin(a)*r],[255,210,65],'Material.Neon','Part',{CollectibleId:i,Reward:1}));}
+    children.push(collectibles);
     for(let i=1;i<=12;i++){const a=2*Math.PI*i/12;add('IslandPillar'+i,[5,14+(i%3)*3,5],[Math.round(Math.cos(a)*82),5,Math.round(Math.sin(a)*82)],[85,110+(i%3)*30,220],'Material.Neon');}
     add('SpawnSign',[24,7,1],[0,7,-24],[22,30,52]);
   } else if(kind==='tycoon'){
     add('TycoonGround',[Math.max(180,counts.plots*55),3,120],[0,-1,0],[50,65,83],'Material.Concrete');
-    for(let i=1;i<=counts.plots;i++){const x=(i-(counts.plots+1)/2)*55;children.push({className:'Model',name:'Plot'+i,children:[
-      part('BaseFloor',[42,1,42],[x,1,0],[70,100,140],'Material.Metal'),
-      part('ClaimPad',[8,1,8],[x,2,14],[80,220,140],'Material.Neon','Part',{Action:'Claim'}),
-      part('UpgradePad',[8,1,8],[x+12,2,-12],[160,100,255],'Material.Neon','Part',{Action:'Upgrade'}),
-      part('Dropper',[6,8,6],[x-12,5,-12],[255,190,65],'Material.Metal'),
-      part('Conveyor',[22,1,5],[x,2,-12],[80,190,255],'Material.Metal')
-    ]});}
+    for(let i=1;i<=counts.plots;i++){const x=(i-1)*55-((counts.plots-1)*55)/2;children.push(part('Plot_'+i,[44,2,44],[x,0,0],[68,105,145],'Material.Metal'));children.push(part('ClaimPad_'+i,[8,1,8],[x,2,0],[80,220,130],'Material.Neon','Part',{Action:'Claim',Plot:i}));children.push(part('UpgradePad_'+i,[8,1,8],[x+12,2,-12],[160,100,255],'Material.Neon','Part',{Action:'Upgrade',Plot:i}));children.push(part('Dropper_'+i,[6,8,6],[x-12,5,-12],[255,190,65],'Material.Metal'));children.push(part('Conveyor_'+i,[22,1,5],[x,2,-12],[80,190,255],'Material.Metal'));}
   } else {
     add('MainIsland',[200,5,200],[0,-3,0],[62,150,94],'Material.Grass');
     add('PlayerSpawn',[14,1,14],[0,0,0],[70,170,255],'Material.Neon','SpawnLocation');
