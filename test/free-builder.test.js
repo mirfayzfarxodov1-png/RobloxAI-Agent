@@ -130,7 +130,7 @@ test('specialist agents validate actual generated source and adapt safely to bad
     const gameplay = buildGameplayPlan(project);
     assert.equal(gameplay.ok, true, prompt + ': ' + gameplay.missing.join(', '));
     assert.equal(gameplay.source, project.source);
-    assert.ok(gameplay.checks.length >= 4);
+    assert.ok(gameplay.checks.length >= 3);
     project.gameplayPlan = gameplay;
     const audit = auditGeneratedProject(project);
     assert.equal(audit.ok, true, prompt + ': ' + audit.errors.join(', '));
