@@ -117,3 +117,34 @@ test('World and UI agents produce a wide world plus working in-game panels', asy
   assert.equal(auditGeneratedProject(project).ok, true);
   assert.ok(scoutTools(['add UI']).recommendations.some(tool => tool.cost === 'free'));
 });
+
+
+test('specialist agents validate actual generated source and adapt safely to bad inputs', async () => {
+  const { buildGameplayPlan } = await import('../src/agents/gameplay/agent.js');
+  const { buildWorldScene } = await import('../src/agents/world/agent.js');
+  const { auditGeneratedProject } = await import('../src/agents/qa/agent.js');
+  const { scoutTools } = await import('../src/agents/tool-scout/agent.js');
+
+  for (const prompt of ['Menga 12 bosqichli obby yarat','15 ta coinli simulator yarat','4 ta plotli tycoon yarat','Ochiq dunyo yarat']) {
+    const project = buildFreeProject(prompt);
+    const gameplay = buildGameplayPlan(project);
+    assert.equal(gameplay.ok, true, prompt + ': ' + gameplay.missing.join(', '));
+    assert.equal(gameplay.source, project.source);
+    assert.ok(gameplay.checks.length >= 4);
+    project.gameplayPlan = gameplay;
+    const audit = auditGeneratedProject(project);
+    assert.equal(audit.ok, true, prompt + ': ' + audit.errors.join(', '));
+  }
+
+  const fallback = buildWorldScene({kind:'not-a-game',title:'Bad\\nTitle',counts:{stages:999,collectibles:-1,plots:500}});
+  assert.equal(fallback.attributes.GameKind,'world');
+  assert.equal(fallback.attributes.ProjectTitle,'Bad Title');
+  assert.ok(fallback.children.length < 30);
+
+  const ranked = scoutTools(['mountain terrain']);
+  assert.equal(ranked.recommendations[0].id,'terrain');
+  assert.ok(ranked.recommendations.every(item=>item.cost==='free'||item.cost==='verify each item'));
+  const broken = buildGameplayPlan({kind:'obby',path:'Workspace/bad.lua',source:'print("hello")'});
+  assert.equal(broken.ok,false);
+  assert.ok(broken.missing.includes('world root'));
+});
