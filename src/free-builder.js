@@ -492,6 +492,123 @@ function getHistoryKind(history) {
   }
   return 'world';
 }
+function boundedCount(prompt, patterns, fallback, min, max) {
+  const text = String(prompt || '').toLowerCase();
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return Math.max(min, Math.min(max, Number(match[1])));
+  }
+  return fallback;
+}
+function maxFeaturePacks(prompt) {
+  const text = String(prompt || '').toLowerCase();
+  const packs = [];
+  if (/do['’]?kon|shop|magazin|sotib ol|upgrade shop/.test(text)) {
+    packs.push(String.raw\`
+-- QURUVCHI MAX FEATURE: in-world upgrade shop (server authoritative).
+do
+    local shop = Instance.new("Part")
+    shop.Name = "MaxUpgradeShop"
+    shop.Size = Vector3.new(12, 8, 8)
+    shop.Position = Vector3.new(0, 4, 24)
+    shop.Anchored = true
+    shop.Color = Color3.fromRGB(125, 90, 255)
+    shop.Material = Enum.Material.Neon
+    shop.Parent = world
+    local prompt = Instance.new("ProximityPrompt")
+    prompt.Name = "BuySpeedUpgrade"
+    prompt.ActionText = "Tezlikni oshirish · 25 Coins"
+    prompt.ObjectText = "Quruvchi MAX Shop"
+    prompt.HoldDuration = 0.3
+    prompt.MaxActivationDistance = 12
+    prompt.Parent = shop
+    prompt.Triggered:Connect(function(player)
+        local stats = player:FindFirstChild("leaderstats")
+        local currency = stats and (stats:FindFirstChild("Coins") or stats:FindFirstChild("Cash"))
+        if not currency or currency.Value < 25 then return end
+        local level = player:GetAttribute("QuruvchiSpeedLevel") or 0
+        if level >= 5 then return end
+        currency.Value -= 25
+        level += 1
+        player:SetAttribute("QuruvchiSpeedLevel", level)
+        local character = player.Character
+        local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+        if humanoid then humanoid.WalkSpeed = math.min(16 + level * 3, 31) end
+    end)
+end
+\`);
+  }
+  if (/saqla|saqlash|save|data.?store|progress.*saq/.test(text)) {
+    packs.push(String.raw\`
+-- QURUVCHI MAX FEATURE: optional Roblox DataStore persistence.
+-- Publish the experience and enable Studio Access to API Services to test saving in Studio.
+do
+    local DataStoreService = game:GetService("DataStoreService")
+    local Players = game:GetService("Players")
+    local store = DataStoreService:GetDataStore("QuruvchiMAX_PlayerData_v1")
+    local function loadPlayer(player)
+        local ok, data = pcall(function() return store:GetAsync("u_" .. player.UserId) end)
+        if not ok or type(data) ~= "table" then return end
+        local stats = player:FindFirstChild("leaderstats")
+        if not stats then return end
+        for _, name in ipairs({"Coins", "Cash", "Wins", "Stage"}) do
+            local value = stats:FindFirstChild(name)
+            if value and type(data[name]) == "number" then value.Value = math.max(0, math.floor(data[name])) end
+        end
+    end
+    local function savePlayer(player)
+        local stats = player:FindFirstChild("leaderstats")
+        if not stats then return end
+        local data = {}
+        for _, name in ipairs({"Coins", "Cash", "Wins", "Stage"}) do
+            local value = stats:FindFirstChild(name)
+            if value and value:IsA("IntValue") then data[name] = value.Value end
+        end
+        local ok, err = pcall(function() store:UpdateAsync("u_" .. player.UserId, function() return data end) end)
+        if not ok then warn("[Quruvchi MAX] DataStore save failed:", err) end
+    end
+    Players.PlayerAdded:Connect(function(player) task.delay(1, function() if player.Parent then loadPlayer(player) end end) end)
+    Players.PlayerRemoving:Connect(savePlayer)
+    game:BindToClose(function() for _, player in ipairs(Players:GetPlayers()) do savePlayer(player) end end)
+end
+\`);
+  }
+  if (/quest|vazifa|topshiriq|missiya|mission/.test(text)) {
+    packs.push(String.raw\`
+-- QURUVCHI MAX FEATURE: repeatable timed mission board.
+do
+    local mission = Instance.new("Part")
+    mission.Name = "MaxMissionBoard"
+    mission.Size = Vector3.new(10, 8, 2)
+    mission.Position = Vector3.new(0, 4, -26)
+    mission.Anchored = true
+    mission.Color = Color3.fromRGB(255, 190, 65)
+    mission.Material = Enum.Material.Neon
+    mission.Parent = world
+    local prompt = Instance.new("ProximityPrompt")
+    prompt.ActionText = "Vazifani olish"
+    prompt.ObjectText = "Quruvchi MAX Mission"
+    prompt.HoldDuration = 0.25
+    prompt.Parent = mission
+    local cooldown = {}
+    prompt.Triggered:Connect(function(player)
+        local now = os.time()
+        if cooldown[player.UserId] and now - cooldown[player.UserId] < 60 then return end
+        local stats = player:FindFirstChild("leaderstats")
+        local currency = stats and (stats:FindFirstChild("Coins") or stats:FindFirstChild("Cash"))
+        if not currency then return end
+        cooldown[player.UserId] = now
+        currency.Value += 10
+        player:SetAttribute("QuruvchiLastMission", "completed")
+        player:SetAttribute("QuruvchiLastMissionAt", now)
+    end)
+    Players.PlayerRemoving:Connect(function(player) cooldown[player.UserId] = nil end)
+end
+\`);
+  }
+  return packs;
+}
+
 export function buildFreeProject(prompt, history = []) {
   const upgrade = isUpgradeRequest(prompt);
   const currentKind = classify(prompt);
@@ -500,7 +617,16 @@ export function buildFreeProject(prompt, history = []) {
   const priorUpgrades = (history || []).filter(message => message.role === 'user' && isUpgradeRequest(flattenMessage(message.content))).length;
   const level = upgrade ? Math.min(4, Math.max(2, priorUpgrades + 2)) : 1;
   const base = kind === 'obby' ? OBBY : kind === 'tycoon' ? TYCOON : kind === 'simulator' ? SIMULATOR : COMMON;
-  const source = '-- Project title: ' + ((extractExplicitTitle(prompt) || titleFromHistory(history) || NAMES[kind]).replace(/[\r\n]+/g, ' ').slice(0, 100)) + '\n' + base + (level > 1 ? '\n\n' + levelFeatures(kind, level) : '');
+  const stageCount = boundedCount(prompt, [/(\\d{1,3})\\s*(?:ta\\s*)?(?:bosqich|stage|level)/i], 30, 5, 100);
+  const collectibleCount = boundedCount(prompt, [/(\\d{1,3})\\s*(?:ta\\s*)?(?:tanga|coin|collectible|tuxum|egg|pet)/i], 30, 5, 150);
+  const plotCount = boundedCount(prompt, [/(\\d{1,2})\\s*(?:ta\\s*)?(?:plot|baza|base|uy)/i], 4, 2, 12);
+  let customizedBase = base;
+  if (kind === 'obby') customizedBase = customizedBase.replace('local STAGE_COUNT = 30', 'local STAGE_COUNT = ' + stageCount);
+  if (kind === 'simulator') customizedBase = customizedBase.replace('for i = 1, 30 do', 'for i = 1, ' + collectibleCount + ' do');
+  if (kind === 'tycoon') customizedBase = customizedBase.replace('for i = 1, 4 do', 'for i = 1, ' + plotCount + ' do').replace('(i - 1) * 55 - 82', '(i - 1) * 55 - (((' + plotCount + ' - 1) * 55) / 2)');
+  const title = (extractExplicitTitle(prompt) || titleFromHistory(history) || NAMES[kind]).replace(/[\\r\\n]+/g, ' ').slice(0, 100);
+  const packs = maxFeaturePacks(prompt);
+  const source = '-- Project title: ' + title + '\\n-- Generator: Quruvchi MAX (local deterministic engine)\\n' + customizedBase + (level > 1 ? '\\n\\n' + levelFeatures(kind, level) : '') + (packs.length ? '\\n\\n' + packs.join('\\n\\n') : '');
   const featureList = SUMMARIES[kind].slice(0, level);
   const projectTitle = extractExplicitTitle(prompt) || titleFromHistory(history) || NAMES[kind];
   return {
@@ -509,7 +635,7 @@ export function buildFreeProject(prompt, history = []) {
     name: projectTitle,
     path: 'ServerScriptService/QuruvchiFreeBuilder/FreeGame.server.lua',
     source,
-    summary: featureList.join('; '),
-    features: featureList
+    summary: [...featureList, ...packs.map((_, index) => ['do‘kon va tezlik yaxshilash', 'DataStore saqlash', 'vazifalar paneli'][index] || 'qo‘shimcha tizim')].join('; '),
+    features: [...featureList, ...packs.map((_, index) => ['do‘kon va tezlik yaxshilash', 'DataStore saqlash', 'vazifalar paneli'][index] || 'qo‘shimcha tizim')]
   };
 }
