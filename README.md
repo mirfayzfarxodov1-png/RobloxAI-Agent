@@ -1,14 +1,14 @@
 # Quruvchi — Roblox Studio AI Builder
 
-Quruvchi is an Uzbek-first web application connecting a chat UI, Anthropic Claude tool-use loop, and a Roblox Studio plugin. The AI can inspect the open Studio hierarchy, create or update instances and scripts, read code, change properties, delete allowed instances, and read Output logs. **run_code is off by default** and requires an explicit toggle inside the plugin.
+Quruvchi is an Uzbek-first web application with a local template-based game builder and Roblox Studio plugin. It generates supported Luau starter projects without an external AI provider or API key.
 
 ## Requirements
 
 - Node.js **22.13.0 or newer** (uses native node:sqlite).
-- Roblox Studio. An Anthropic API key is optional: without a configured key, Quruvchi uses its local template builder; with a key, it can use the configured AI provider. Provider usage may cost money and has provider-side limits.
+- Roblox Studio. No external AI API key or provider account is required.
 - Roblox Studio.
 
-The application intentionally has **no external npm runtime dependencies**. The web UI and API-free template builder work without an AI key. The no-key mode generates supported starter templates and can advance them through bounded improvement stages using the current conversation history; it is not a general-purpose LLM and cannot reliably implement arbitrary game ideas. When a provider key is configured, requests use that provider. It uses Node.js built-ins, including node:http, node:crypto, node:sqlite, and native fetch.
+The application intentionally has **no external npm runtime dependencies and no external AI-provider integration**. Its local template builder supports obby/parkour, collectible simulators, tycoons, and a decorative 3D world. It can extend those templates through bounded improvement stages, but it is not a general-purpose LLM and cannot reliably implement every arbitrary game idea. It uses Node.js built-ins, including node:http, node:crypto, and node:sqlite.
 
 ## Local setup on Windows
 
@@ -16,8 +16,8 @@ The application intentionally has **no external npm runtime dependencies**. The 
 2. Clone or download this repository and open PowerShell in the project folder.
 3. Start the server with **npm start**. The website opens even if you have not configured AI yet.
 4. Open **http://localhost:3000**. If you only want to see the website, that is enough.
-5. To enable the AI, copy the environment template with **Copy-Item .env.example .env**, open `.env` in Notepad, and set `ANTHROPIC_API_KEY` to your own provider key. Keep the real key in `.env` only. Leave `PUBLIC_URL=http://localhost:3000` and `COOKIE_SECURE=false` for local HTTP.
-6. Restart `npm start`. Create an account, then use **Studio ulash** to generate a one-time pairing code.
+5. Optional: copy `.env.example` to `.env` to configure the local server address and registration options. No AI API key is used.
+6. Start `npm start`. Create an account, then use **Studio ulash** to generate a one-time pairing code.
 
 No npm install is required because the project has no external dependencies. SQLite database files are created under data/.
 
@@ -45,13 +45,13 @@ Without an API key, Quruvchi supports starter templates for obby/parkour, collec
 
 ## Large-project planning
 
-The AI agent has a server-side `create_project_plan` tool for multi-system Roblox projects. It creates a bounded Markdown plan with gameplay loop, features, phased implementation, acceptance criteria, and safety guardrails without mutating Studio. The agent should plan first, then inspect Studio and implement small verified batches. This is a planning aid, not a guarantee that every listed system is already implemented or tested in Roblox Studio.
+The app includes deterministic project-planning utilities for multi-system Roblox projects. These create a Markdown plan with gameplay loop, features, phases, acceptance criteria, and safety guardrails without mutating Studio. This is a planning aid, not a guarantee that every listed system is implemented or tested in Roblox Studio.
 
 ## Tests
 
 Run **npm test**.
 
-The end-to-end test starts a temporary server, uses a fake Claude-compatible HTTP endpoint, and simulates a Studio plugin. It checks authentication, Origin/CSRF checks, pairing-code single-use behavior, tool execution, cancellation history repair, and device revocation. It does not prove that Roblox Studio or the real Anthropic provider works in every environment.
+The end-to-end test starts a temporary server and simulates a Studio plugin. It checks authentication, Origin/CSRF checks, pairing-code single-use behavior, local-template script delivery, and device revocation.
 
 ## Production deployment
 
@@ -62,7 +62,6 @@ Use HTTPS and persistent storage. Set these environment variables in your host's
 - PUBLIC_URL=https://your-real-hostname (exact origin, no trailing path)
 - COOKIE_SECURE=true
 - DATA_DIR=/data (or another persistent directory)
-- ANTHROPIC_API_KEY to your secret API key
 - Optionally INVITE_CODE to restrict registration
 
 Use the included Dockerfile or render.yaml as a deployment starting point. A public site is **not deployed by committing these files**; hosting must still be configured and started.
@@ -73,13 +72,12 @@ Use the included Dockerfile or render.yaml as a deployment starting point. A pub
 - src/server.js — native HTTP server, routes, CSRF/Origin checks, static delivery, and plugin download.
 - src/auth.js — native scrypt password hashing, random sessions, hashed session tokens, and HTTP-only cookies.
 - src/db.js — native SQLite schema, conversations, messages, and usage.
-- src/claude.js — Anthropic Messages API client with bounded retries and cancellation.
-- src/agent.js — bounded tool-use loop, history repair, cancellation, and daily limits.
+- src/agent.js — local template generation, Studio delivery, cancellation, and daily limits.
 - src/hub.js — SSE events, device status, long-poll command queue, timeouts, and result matching.
 - src/tools.js — tool schemas.
 - src/prompt.js — Roblox-specific system prompt.
 - plugin/Quruvchi.lua — Studio plugin and supported tool handlers.
-- test/ — fake provider/plugin helpers and end-to-end tests.
+- test/ — API-free server and Studio plugin end-to-end tests.
 
 ## Studio project audit
 
@@ -90,7 +88,7 @@ The plugin now includes an **AI AUDIT · Loyihani tekshirish** action and an `au
 - The plugin cannot press Play or claim a runtime test passed. You must test in Studio and send “logs” if something fails.
 - External asset IDs are not guessed. Roblox APIs, permissions, DataStore availability, and Studio settings can affect results.
 - run_code is intentionally disabled until you explicitly enable it in the plugin. Only enable it for code and projects you trust.
-- API usage depends on your provider account, model access, pricing, and limits. This application does not make those provider limits disappear.
+- The local template builder is deterministic and limited to supported templates; it is not a general-purpose AI model.
 
 ## Safer build workflow and GUI scaffolding
 
@@ -115,6 +113,6 @@ Run npm test on Node.js 22.13+ to verify V3 tests with the existing suite.
 
 ## Game DNA Engine
 
-Open **Quruvchi V2 → Game DNA**. The authenticated `/api/game-dna` endpoint saves a versioned per-user SQLite manifest containing exact Roblox paths, folder structure, Script/LocalScript/ModuleScript responsibilities, dependencies, phases and safety gates. The **Luau kodlarni yozdirib Studio’da yaratish** button sends the manifest into the existing agent chat. With an external AI provider and connected Studio plugin, the agent is instructed to inspect the place and create/update complete Luau scripts at those paths; the plugin's `create_script` handler creates missing parent folders automatically.
+Open **Quruvchi V2 → Game DNA**. The authenticated `/api/game-dna` endpoint saves a versioned per-user SQLite manifest containing exact Roblox paths, folder structure, Script/LocalScript/ModuleScript responsibilities, dependencies, phases and safety gates. The **Luau kodlarni yozdirib Studio’da yaratish** button sends the manifest into the existing agent chat. The local planner is deterministic. Game DNA can prepare a structured plan, but actual automatic implementation is limited to the local templates; the plugin's `create_script` handler creates missing parent folders automatically.
 
 The local planner is deterministic and does not itself generate general-purpose Luau source. Without a configured provider, code generation remains limited to existing starter templates. A manifest is a plan, not proof that Studio objects exist. The agent must report actual tool acknowledgements, and Play-test remains not-run until tested in Studio.
