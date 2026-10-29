@@ -111,7 +111,7 @@ test('World and UI agents produce a wide world plus working in-game panels', asy
   assert.ok(project.sceneTree.children.some(node => node.name === 'SideRailLeft'));
   assert.ok(project.sceneTree.children.some(node => node.name === 'JumpPlatform30' && node.properties.Position.Vector3[2] > 0));
   assert.equal(project.uiTree.name, 'QuruvchiMAXUI');
-  assert.ok(project.uiTree.children.some(node => node.name === 'UIController'));
+  assert.match(project.uiSource,/GetAttribute\("PanelKey"\)/);
   const actions = project.uiTree.children[0].children.find(node => node.name === 'Actions');
   assert.deepEqual(actions.children.filter(node => node.className === 'TextButton').map(node => node.name), ['ShopButton','InventoryButton','QuestsButton','HelpButton']);
   assert.equal(auditGeneratedProject(project).ok, true);
