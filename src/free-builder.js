@@ -1,18 +1,22 @@
+import { buildWorldScene } from './agents/world-agent.js';
+import { buildGameUi } from './agents/ui-agent.js';
 const COMMON = `-- Quruvchi Free Builder · 3D world starter
 -- API-free generated Luau. All gameplay changes are server-authoritative where practical.
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local Lighting = game:GetService("Lighting")
 local ROOT_NAME = "QuruvchiFreeWorld"
-local old = Workspace:FindFirstChild(ROOT_NAME)
-if old then old:Destroy() end
-local world = Instance.new("Folder")
-world.Name = ROOT_NAME
-world.Parent = Workspace
+local world = Workspace:FindFirstChild(ROOT_NAME)
+if not world then
+    world = Instance.new("Folder")
+    world.Name = ROOT_NAME
+    world.Parent = Workspace
+end
 
 local function part(name, size, position, color, material, parent)
-    local p = Instance.new("Part")
-    p.Name = name
+    local target = parent or world
+    local p = target:FindFirstChild(name)
+    if not p or not p:IsA("Part") then p = Instance.new("Part"); p.Name = name end
     p.Size = size
     p.Position = position
     p.Anchored = true
@@ -20,7 +24,7 @@ local function part(name, size, position, color, material, parent)
     p.Material = material or Enum.Material.SmoothPlastic
     p.TopSurface = Enum.SurfaceType.Smooth
     p.BottomSurface = Enum.SurfaceType.Smooth
-    p.Parent = parent or world
+    p.Parent = target
     return p
 end
 
@@ -29,7 +33,7 @@ Lighting.Brightness = 2
 Lighting.EnvironmentDiffuseScale = 0.5
 Lighting.EnvironmentSpecularScale = 0.5
 part("MainIsland", Vector3.new(180, 4, 180), Vector3.new(0, -3, 0), Color3.fromRGB(62, 150, 94), Enum.Material.Grass)
-local spawn = Instance.new("SpawnLocation")
+local spawn = world:FindFirstChild("PlayerSpawn") or Instance.new("SpawnLocation")
 spawn.Name = "PlayerSpawn"
 spawn.Size = Vector3.new(12, 1, 12)
 spawn.Position = Vector3.new(0, 0, 0)
@@ -64,15 +68,16 @@ local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local ROOT_NAME = "QuruvchiFreeWorld"
 local STAGE_COUNT = 30
-local old = Workspace:FindFirstChild(ROOT_NAME)
-if old then old:Destroy() end
-local world = Instance.new("Folder")
-world.Name = ROOT_NAME
-world.Parent = Workspace
+local world = Workspace:FindFirstChild(ROOT_NAME)
+if not world then
+    world = Instance.new("Folder")
+    world.Name = ROOT_NAME
+    world.Parent = Workspace
+end
 
 local function makePart(name, size, pos, color, material)
-    local p = Instance.new("Part")
-    p.Name = name
+    local p = world:FindFirstChild(name)
+    if not p or not p:IsA("Part") then p = Instance.new("Part"); p.Name = name end
     p.Size = size
     p.Position = pos
     p.Anchored = true
@@ -84,7 +89,7 @@ local function makePart(name, size, pos, color, material)
     return p
 end
 
-local spawn = Instance.new("SpawnLocation")
+local spawn = world:FindFirstChild("StartSpawn") or Instance.new("SpawnLocation")
 spawn.Name = "StartSpawn"
 spawn.Size = Vector3.new(14, 1, 14)
 spawn.Position = Vector3.new(0, 2, 0)
@@ -96,9 +101,11 @@ makePart("StartPlatform", Vector3.new(24, 2, 24), Vector3.new(0, 0, 0), Color3.f
 
 local checkpoints = {}
 for i = 1, STAGE_COUNT do
-    local x = i * 12
-    local z = (i % 2 == 0) and 8 or -8
-    local y = 2 + math.floor(i / 6) * 2
+    local row = math.floor((i - 1) / 6)
+    local col = (i - 1) % 6
+    local x = ((row % 2 == 0) and col or (5 - col)) * 18
+    local z = (row + 1) * 20
+    local y = 2 + math.floor((i - 1) / 8) * 2
     local platform = makePart("JumpPlatform" .. i, Vector3.new(9, 2, 9), Vector3.new(x, y, z), Color3.fromHSV(i / STAGE_COUNT, 0.8, 1))
     platform:SetAttribute("Stage", i)
     platform.Touched:Connect(function(hit)
@@ -122,7 +129,11 @@ for i = 1, STAGE_COUNT do
         end)
     end
 end
-local finish = makePart("FinishPlatform", Vector3.new(22, 2, 22), Vector3.new(STAGE_COUNT * 12 + 22, 2, 0), Color3.fromRGB(255, 205, 70), Enum.Material.Neon)
+local rows = math.ceil(STAGE_COUNT / 6)
+local lastCol = (STAGE_COUNT - 1) % 6
+local lastRow = rows - 1
+local endCol = (lastRow % 2 == 0) and lastCol or (5 - lastCol)
+local finish = makePart("FinishPlatform", Vector3.new(28, 2, 28), Vector3.new(endCol * 18, 3, rows * 20 + 18), Color3.fromRGB(255, 205, 70), Enum.Material.Neon)
 
 local function formatTime(seconds)
     seconds = math.max(0, math.floor(seconds))
@@ -223,11 +234,12 @@ const SIMULATOR = `-- Quruvchi Free Builder · Collectible simulator starter
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local ROOT_NAME = "QuruvchiFreeWorld"
-local old = Workspace:FindFirstChild(ROOT_NAME)
-if old then old:Destroy() end
-local world = Instance.new("Folder")
-world.Name = ROOT_NAME
-world.Parent = Workspace
+local world = Workspace:FindFirstChild(ROOT_NAME)
+if not world then
+    world = Instance.new("Folder")
+    world.Name = ROOT_NAME
+    world.Parent = Workspace
+end
 
 local function part(name, size, pos, color, material, parent)
     local p = Instance.new("Part")
@@ -298,11 +310,12 @@ const TYCOON = `-- Quruvchi Free Builder · claimable tycoon starter
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local ROOT_NAME = "QuruvchiFreeWorld"
-local old = Workspace:FindFirstChild(ROOT_NAME)
-if old then old:Destroy() end
-local world = Instance.new("Folder")
-world.Name = ROOT_NAME
-world.Parent = Workspace
+local world = Workspace:FindFirstChild(ROOT_NAME)
+if not world then
+    world = Instance.new("Folder")
+    world.Name = ROOT_NAME
+    world.Parent = Workspace
+end
 
 local function part(name, size, pos, color, material)
     local p = Instance.new("Part")
@@ -690,12 +703,14 @@ export function buildFreeProject(prompt, history = []) {
   const featureList = SUMMARIES[kind].slice(0, level);
   const projectTitle = extractExplicitTitle(prompt) || titleFromHistory(history) || NAMES[kind];
   const counts = { stages: stageCount, collectibles: collectibleCount, plots: plotCount };
-  const sceneTree = buildStudioScene(kind, projectTitle, counts);
+  const sceneTree = buildWorldScene({ kind, title:projectTitle, counts });
+  const uiTree = buildGameUi(projectTitle, kind);
   return {
     kind,
     level,
     counts,
     sceneTree,
+    uiTree,
     name: projectTitle,
     path: 'ServerScriptService/QuruvchiFreeBuilder/FreeGame.server.lua',
     source,
