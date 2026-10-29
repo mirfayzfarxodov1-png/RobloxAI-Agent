@@ -96,10 +96,10 @@ test('Quruvchi MAX returns editable Workspace scene trees, not code alone', () =
   assert.ok(obby.sceneTree.children.some(node => node.name === 'FinishPlatform'));
 
   const simulator = buildFreeProject('Menga 15 ta coinli simulator yarat');
-  assert.ok(simulator.sceneTree.children.some(node => node.name === 'Collectible15'));
+  assert.ok(simulator.sceneTree.children.find(node => node.name === 'Collectibles').children.some(node => node.name === 'Collectible_15'));
   const tycoon = buildFreeProject('4 ta plotli tycoon yarat');
-  assert.ok(tycoon.sceneTree.children.some(node => node.name === 'Plot4'));
-  assert.ok(tycoon.sceneTree.children.find(node => node.name === 'Plot1').children.some(node => node.name === 'ClaimPad'));
+  assert.ok(tycoon.sceneTree.children.some(node => node.name === 'Plot_4'));
+  assert.ok(tycoon.sceneTree.children.some(node => node.name === 'ClaimPad_1'));
 });
 
 test('World and UI agents produce a wide world plus working in-game panels', async () => {
