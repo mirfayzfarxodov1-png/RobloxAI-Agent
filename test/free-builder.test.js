@@ -12,7 +12,7 @@ test('API-free builder chooses an obby starter for Uzbek parkur requests', () =>
   assert.match(project.source, /QuruvchiObbyHUD/);
   assert.match(project.source, /Coins/);
   assert.match(project.source, /100 Coins/);
-  assert.equal(project.path, 'ServerScriptService/QuruvchiFreeBuilder/FreeGame.server.lua');
+  assert.equal(project.path, 'ServerScriptService/QuruvchiAgents/GameplayAgent/FreeGame.server.lua');
   assert.ok(project.source.length > 1000);
 });
 
@@ -24,7 +24,7 @@ test('API-free builder chooses simulator and tycoon starter templates', () => {
 test('every free template includes a copyable server-side Luau source', () => {
   for (const prompt of ['ochiq dunyo yarat', 'obby yarat', 'simulator yarat', 'tycoon yarat']) {
     const project = buildFreeProject(prompt);
-    assert.equal(project.path, 'ServerScriptService/QuruvchiFreeBuilder/FreeGame.server.lua');
+    assert.equal(project.path, 'ServerScriptService/QuruvchiAgents/GameplayAgent/FreeGame.server.lua');
     assert.match(project.source, /QuruvchiFreeWorld/);
     assert.match(project.summary, /./);
     assert.ok(project.features.length >= 1);
@@ -100,4 +100,20 @@ test('Quruvchi MAX returns editable Workspace scene trees, not code alone', () =
   const tycoon = buildFreeProject('4 ta plotli tycoon yarat');
   assert.ok(tycoon.sceneTree.children.some(node => node.name === 'Plot4'));
   assert.ok(tycoon.sceneTree.children.find(node => node.name === 'Plot1').children.some(node => node.name === 'ClaimPad'));
+});
+
+test('World and UI agents produce a wide world plus working in-game panels', async () => {
+  const { buildGameUi } = await import('../src/agents/ui/agent.js');
+  const { auditGeneratedProject } = await import('../src/agents/qa/agent.js');
+  const { scoutTools } = await import('../src/agents/tool-scout/agent.js');
+  const project = buildFreeProject('Menga 30 bosqichli obby yarat');
+  assert.ok(project.sceneTree.children.some(node => node.name === 'StageMarker3'));
+  assert.ok(project.sceneTree.children.some(node => node.name === 'SideRailLeft'));
+  assert.ok(project.sceneTree.children.some(node => node.name === 'JumpPlatform30' && node.properties.Position.Vector3[2] > 0));
+  assert.equal(project.uiTree.name, 'QuruvchiMAXUI');
+  assert.ok(project.uiTree.children.some(node => node.name === 'UIController'));
+  const actions = project.uiTree.children[0].children.find(node => node.name === 'Actions');
+  assert.deepEqual(actions.children.filter(node => node.className === 'TextButton').map(node => node.name), ['ShopButton','InventoryButton','QuestsButton','HelpButton']);
+  assert.equal(auditGeneratedProject(project).ok, true);
+  assert.ok(scoutTools(['add UI']).recommendations.some(tool => tool.cost === 'free'));
 });
