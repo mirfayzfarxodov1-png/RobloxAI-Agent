@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { config } from './config.js';
 import { db, currentConversation, saveMessage, getMessages, addUsage, getUsage, getTaskPause, setTaskPause, clearTaskPause } from './db.js';
 import { createMessage } from './claude.js';
+import { runMultiAgentReview } from './multi-agent.js';
 import { getCredential } from './providers.js';
 import { tools, truncateOutput, toolSummary } from './tools.js';
 import { systemPrompt } from './prompt.js';
@@ -176,7 +177,28 @@ async function runLoop(userId, task) {
   try {
     while (!signal.aborted) {
       const history = repairHistory(getMessages(task.conversationId));
-      const response = await createMessage({ messages: history, tools, system: systemPrompt, signal, maxTokens: config.maxTokens, credential:getCredential(userId) });
+      if (!task.multiAgentReviewDone) {
+        task.multiAgentReviewDone = true;
+        const review = await runMultiAgentReview({
+          messages: history,
+          signal,
+          maxTokens: Math.min(config.maxTokens, 900),
+          credential: getCredential(userId),
+          askAgent: args => createMessage(args)
+        });
+        if (review && !signal.aborted) {
+          task.multiAgentBrief = review.brief;
+          if (review.inputTokens || review.outputTokens) addUsage(userId, 0, review.inputTokens, review.outputTokens);
+          emit(userId, 'message', {
+            id: crypto.randomUUID(),
+            kind: 'info',
+            text: 'Multi-Agent AI tekshiruvi: ' + review.agentsCompleted + '/4 mutaxassis tahlili tayyor.'
+          });
+        }
+      }
+      if (signal.aborted) break;
+      const activeSystem = task.multiAgentBrief ? systemPrompt + '\n\n' + task.multiAgentBrief : systemPrompt;
+      const response = await createMessage({ messages: history, tools, system: activeSystem, signal, maxTokens: config.maxTokens, credential:getCredential(userId) });
       const content = Array.isArray(response.content) ? response.content : textBlock('AI javobi noto‘g‘ri formatda keldi.');
       saveMessage(task.conversationId, 'assistant', content);
       emitText(userId, content);

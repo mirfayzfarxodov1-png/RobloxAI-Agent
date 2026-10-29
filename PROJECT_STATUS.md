@@ -15,3 +15,16 @@ Not claimed as verified:
 - The GitHub Actions end-to-end test passed on commit 6980fbcbd25978d250ecb421095a8df00f886680 (Node.js 22.13.0; 1 test, 0 failures).
 - The project is not deployed to a public host by these commits.
 - AI-generated code can contain errors; actual Play-testing is manual.
+
+## Multi-Agent and verification workflow
+
+Implemented on main:
+- Four independent specialist analyses (architecture, Roblox security, QA, and code review) run in parallel for complex tasks when an AI provider is configured.
+- Specialist results are passed to the lead agent as untrusted review context; the lead remains responsible for decisions and actual Studio changes.
+- Provider token usage from successful specialist responses is included in usage accounting; failed specialist calls degrade gracefully.
+- The system prompt now requires evidence-driven inspect → minimal fix → re-check loops, safer preview/snapshot use, static/performance audits, and explicit separation of automated checks from manual Roblox Play tests.
+
+Verification boundary:
+- Multi-Agent analysis is not available in the API-free template mode.
+- Static audits and Output logs do not replace Roblox Studio Play or multiplayer tests.
+- The new orchestrator has unit tests; repository-wide checks must be confirmed by CI after the main commit.
