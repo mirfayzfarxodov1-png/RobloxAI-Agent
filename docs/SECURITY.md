@@ -1,5 +1,3 @@
 # Security
 
-The authoritative security checklist is maintained in the root-level SECURITY.md. This file remains as a pointer for old links.
-
-Key rules: keep the Anthropic API key server-side, use HTTPS and persistent storage in production, review generated Luau, and leave the plugin's run_code permission disabled unless the user explicitly enables it for a trusted place.
+The application does not connect to external AI providers and does not use AI API keys. Keep HTTPS enabled for production, protect session secrets, review generated Luau, and leave the plugin's `run_code` permission disabled unless you explicitly enable it for a trusted place.
