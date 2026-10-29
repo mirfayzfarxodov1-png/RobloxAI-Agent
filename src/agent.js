@@ -98,8 +98,10 @@ async function runFreeTask(userId, task, prompt) {
     return;
   }
   const project = buildFreeProject(prompt, historyMessages);
-  const localQa = auditGeneratedProject(project);
   const gameplayPlan = buildGameplayPlan(project);
+  project.gameplayPlan = gameplayPlan;
+  if (!gameplayPlan.ok) throw new Error('Gameplay Agent kod tekshiruvidan o‘tmadi: ' + gameplayPlan.missing.join(', '));
+  const localQa = auditGeneratedProject(project);
   const toolReport = scoutTools([prompt, ...(project.features || [])]);
   if (!localQa.ok) throw new Error('MAX oldindan tekshiruvdan o‘tmadi: ' + localQa.errors.join('; '));
   const explanation = [
@@ -112,6 +114,7 @@ async function runFreeTask(userId, task, prompt) {
     '**World Agent:** ' + localQa.nodeCount + ' ta obyekt node’i rejalashtirildi.',
     '**UI Agent:** Do‘kon, inventar, vazifalar va yordam tugmalari.',
     '**Gameplay Agent:** ' + gameplayPlan.systems.join(', '),
+    '**Gameplay kod tekshiruvi:** ' + gameplayPlan.status + ' · ' + gameplayPlan.checks.filter(item=>item.ok).length + '/' + gameplayPlan.checks.length + ' local checks, ' + gameplayPlan.sourceLength + ' belgili server Luau,',
     '**Tool Scout:** ' + toolReport.recommendations.map(item => item.name + ' (' + item.cost + ')').join('; '),
     '**QA Agent:** ' + localQa.agents.join(', ') + ' — mahalliy tekshiruv o‘tdi.',
     '**Obyektlar yo‘li:** Workspace/QuruvchiFreeWorld',
