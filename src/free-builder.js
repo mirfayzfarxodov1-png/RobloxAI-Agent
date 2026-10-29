@@ -59,10 +59,11 @@ label.Parent = surface
 print("[Quruvchi] World starter created. Press Play and test.")
 `;
 
-const OBBY = `-- Quruvchi Free Builder · Obby starter
+const OBBY = `-- Quruvchi Free Builder · 30-stage Obby
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local ROOT_NAME = "QuruvchiFreeWorld"
+local STAGE_COUNT = 30
 local old = Workspace:FindFirstChild(ROOT_NAME)
 if old then old:Destroy() end
 local world = Instance.new("Folder")
@@ -94,12 +95,22 @@ spawn.Parent = world
 makePart("StartPlatform", Vector3.new(24, 2, 24), Vector3.new(0, 0, 0), Color3.fromRGB(60, 180, 110))
 
 local checkpoints = {}
-for i = 1, 24 do
+for i = 1, STAGE_COUNT do
     local x = i * 12
     local z = (i % 2 == 0) and 8 or -8
     local y = 2 + math.floor(i / 6) * 2
-    makePart("JumpPlatform" .. i, Vector3.new(9, 2, 9), Vector3.new(x, y, z), Color3.fromHSV(i / 24, 0.8, 1))
-    if i % 6 == 0 then
+    local platform = makePart("JumpPlatform" .. i, Vector3.new(9, 2, 9), Vector3.new(x, y, z), Color3.fromHSV(i / STAGE_COUNT, 0.8, 1))
+    platform:SetAttribute("Stage", i)
+    platform.Touched:Connect(function(hit)
+        local character = hit:FindFirstAncestorOfClass("Model")
+        local player = character and Players:GetPlayerFromCharacter(character)
+        if player then
+            local stats = player:FindFirstChild("leaderstats")
+            local stageValue = stats and stats:FindFirstChild("Stage")
+            if stageValue and i > stageValue.Value then stageValue.Value = i end
+        end
+    end)
+    if i % 5 == 0 then
         local index = i
         local cp = makePart("Checkpoint" .. index, Vector3.new(10, 1, 10), Vector3.new(x, y + 2, z), Color3.fromRGB(80, 190, 255), Enum.Material.Neon)
         cp:SetAttribute("CheckpointIndex", index)
@@ -111,9 +122,67 @@ for i = 1, 24 do
         end)
     end
 end
-makePart("FinishPlatform", Vector3.new(22, 2, 22), Vector3.new(310, 2, 0), Color3.fromRGB(255, 205, 70), Enum.Material.Neon)
+local finish = makePart("FinishPlatform", Vector3.new(22, 2, 22), Vector3.new(STAGE_COUNT * 12 + 22, 2, 0), Color3.fromRGB(255, 205, 70), Enum.Material.Neon)
 
-local function bindPlayer(player)
+local function formatTime(seconds)
+    seconds = math.max(0, math.floor(seconds))
+    return string.format("%02d:%02d", math.floor(seconds / 60), seconds % 60)
+end
+
+local function setupPlayer(player)
+    local stats = player:FindFirstChild("leaderstats")
+    if not stats then stats = Instance.new("Folder"); stats.Name = "leaderstats"; stats.Parent = player end
+    local function stat(name, initial)
+        local value = stats:FindFirstChild(name)
+        if not value then value = Instance.new("IntValue"); value.Name = name; value.Value = initial; value.Parent = stats end
+        return value
+    end
+    stat("Wins", 0)
+    stat("Coins", 0)
+    stat("Stage", 0)
+    stat("Time", 0)
+    local best = stat("BestTime", 0)
+    if not player:GetAttribute("QuruvchiObbyStartedAt") then player:SetAttribute("QuruvchiObbyStartedAt", os.time()) end
+
+    local playerGui = player:WaitForChild("PlayerGui", 10)
+    if playerGui and not playerGui:FindFirstChild("QuruvchiObbyHUD") then
+        local gui = Instance.new("ScreenGui")
+        gui.Name = "QuruvchiObbyHUD"
+        gui.ResetOnSpawn = false
+        gui.IgnoreGuiInset = true
+        gui.DisplayOrder = 10
+        gui.Parent = playerGui
+        local panel = Instance.new("Frame")
+        panel.Name = "StatusPanel"
+        panel.AnchorPoint = Vector2.new(0.5, 0)
+        panel.Position = UDim2.new(0.5, 0, 0.025, 0)
+        panel.Size = UDim2.new(0.78, 0, 0, 48)
+        panel.BackgroundColor3 = Color3.fromRGB(18, 22, 38)
+        panel.BackgroundTransparency = 0.12
+        panel.BorderSizePixel = 0
+        panel.Parent = gui
+        local corner = Instance.new("UICorner"); corner.CornerRadius = UDim.new(0, 12); corner.Parent = panel
+        local stroke = Instance.new("UIStroke"); stroke.Color = Color3.fromRGB(116, 108, 255); stroke.Transparency = 0.2; stroke.Thickness = 1.5; stroke.Parent = panel
+        local text = Instance.new("TextLabel")
+        text.Name = "StatusText"
+        text.Size = UDim2.fromScale(1, 1)
+        text.BackgroundTransparency = 1
+        text.TextColor3 = Color3.fromRGB(255, 255, 255)
+        text.TextScaled = true
+        text.Font = Enum.Font.GothamBold
+        text.Text = "OBBY 30 · VAQT 00:00 · COINS 0"
+        text.Parent = panel
+        local limit = Instance.new("UITextSizeConstraint"); limit.MinTextSize = 11; limit.MaxTextSize = 20; limit.Parent = text
+        task.spawn(function()
+            while player.Parent and gui.Parent do
+                local elapsed = os.time() - (player:GetAttribute("QuruvchiObbyStartedAt") or os.time())
+                stat("Time", elapsed)
+                text.Text = "OBBY 30  ·  " .. formatTime(elapsed) .. "  ·  STAGE " .. stat("Stage", 0).Value .. "/" .. STAGE_COUNT .. "  ·  COINS " .. stat("Coins", 0).Value
+                task.wait(1)
+            end
+        end)
+    end
+
     player.CharacterAdded:Connect(function(character)
         task.wait(0.25)
         local index = player:GetAttribute("QuruvchiCheckpoint")
@@ -121,9 +190,33 @@ local function bindPlayer(player)
         if target and character.Parent then character:PivotTo(CFrame.new(target)) end
     end)
 end
-Players.PlayerAdded:Connect(bindPlayer)
-for _, player in ipairs(Players:GetPlayers()) do bindPlayer(player) end
-print("[Quruvchi] 24-stage obby created. Press Play and test.")
+Players.PlayerAdded:Connect(setupPlayer)
+for _, player in ipairs(Players:GetPlayers()) do task.spawn(setupPlayer, player) end
+
+local finishDebounce = {}
+finish.Touched:Connect(function(hit)
+    local character = hit:FindFirstAncestorOfClass("Model")
+    local player = character and Players:GetPlayerFromCharacter(character)
+    if not player or finishDebounce[player.UserId] then return end
+    finishDebounce[player.UserId] = true
+    local stats = player:FindFirstChild("leaderstats")
+    local wins = stats and stats:FindFirstChild("Wins")
+    local coins = stats and stats:FindFirstChild("Coins")
+    local timeValue = stats and stats:FindFirstChild("Time")
+    local best = stats and stats:FindFirstChild("BestTime")
+    if wins and coins and timeValue and best then
+        wins.Value += 1
+        coins.Value += 100
+        if best.Value == 0 or timeValue.Value < best.Value then best.Value = timeValue.Value end
+        player:SetAttribute("QuruvchiObbyStartedAt", os.time())
+        player:SetAttribute("QuruvchiCheckpoint", nil)
+        if stats:FindFirstChild("Stage") then stats.Stage.Value = 0 end
+        print("[Quruvchi] " .. player.Name .. " finished the obby and earned 100 Coins.")
+    end
+    task.delay(3, function() finishDebounce[player.UserId] = nil end)
+end)
+
+print("[Quruvchi] 30-stage obby created with checkpoints, timer, rewards, leaderboard and responsive HUD. Press Play and test.")
 `;
 
 const SIMULATOR = `-- Quruvchi Free Builder · Collectible simulator starter
@@ -338,7 +431,7 @@ end
   }
   if (level >= 3) {
     pieces.push(`
--- PROFESSIONAL PASS 3: consistent stats and server-side completion tracking.
+-- PROFESSIONAL PASS 3: ensure server-side progress stats for starter types without them.
 local upgradePlayers = game:GetService("Players")
 local function ensureLeaderstat(player, name, initialValue)
     local stats = player:FindFirstChild("leaderstats")
@@ -356,20 +449,6 @@ local function prepareProgress(player)
 end
 upgradePlayers.PlayerAdded:Connect(prepareProgress)
 for _, player in ipairs(upgradePlayers:GetPlayers()) do prepareProgress(player) end
-local upgradeWorld = workspace:FindFirstChild("QuruvchiFreeWorld")
-local finish = upgradeWorld and upgradeWorld:FindFirstChild("FinishPlatform")
-if finish and finish:IsA("BasePart") then
-    local debounce = {}
-    finish.Touched:Connect(function(hit)
-        local character = hit:FindFirstAncestorOfClass("Model")
-        local player = character and upgradePlayers:GetPlayerFromCharacter(character)
-        if not player or debounce[player.UserId] then return end
-        debounce[player.UserId] = true
-        local wins = ensureLeaderstat(player, "Wins", 0)
-        wins.Value += 1
-        task.delay(3, function() debounce[player.UserId] = nil end)
-    end)
-end
 `);
   }
   if (level >= 4) {
@@ -398,7 +477,7 @@ end)
 }
 const NAMES = { obby: 'Obby', tycoon: 'Tycoon', simulator: 'Collectible Simulator', world: '3D World Starter' };
 const SUMMARIES = {
-  obby: ['24 bosqichli obby, spawn, rangli platformalar va checkpointlar', 'xavfsiz yiqilish hududi va qayta tug‘ilish', 'Wins leaderstat va finish maydonida g‘alabani hisoblash', 'progress atributlari va o‘yinchi ketishidagi tozalash jurnali'],
+  obby: ['30 bosqichli obby, spawn va rangli platformalar', 'har 5 bosqichda checkpoint va qayta tug‘ilish', 'timer, Coins/Wins/Stage/BestTime leaderboard va 100 Coins mukofoti', 'mobil ekranga mos HUD va progress atributlari'],
   tycoon: ['4 ta plot, bir o‘yinchiga bitta claim va Cash leaderstats', 'xavfsiz yiqilish hududi va qayta tug‘ilish', 'Wins leaderstat va server progress kuzatuvi', 'progress atributlari va lifecycle jurnali'],
   simulator: ['orol, 30 ta collectible, Coins leaderstats va vaqtli respawn', 'xavfsiz yiqilish hududi va qayta tug‘ilish', 'Wins leaderstat va server progress kuzatuvi', 'progress atributlari va lifecycle jurnali'],
   world: ['3D orol, spawn, dekorativ neon ustunlar va welcome sign', 'xavfsiz yiqilish hududi va qayta tug‘ilish', 'Wins leaderstat va server progress kuzatuvi', 'progress atributlari va lifecycle jurnali']
