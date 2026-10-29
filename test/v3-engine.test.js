@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildV3Architecture, buildV3BuildSpec, buildV3ModelSpec, buildV3QAMatrix, runV3Action, runV3Audit } from '../src/v3-engine.js';
+import { buildV3Architecture, buildV3BuildSpec, buildV3ModelSpec, buildV3QAMatrix, runV3Action, runV3Audit } from '../src/super/engine.js';
 test('architect rejects short ideas',()=>{assert.throws(()=>buildV3Architecture({idea:'hi'}),/kamida 8/);});
 test('architect detects game systems and security gates',()=>{const r=buildV3Architecture({title:'Steal an Egg',idea:'Steal an egg simulator with bases, pets, upgrades, shop and multiplayer'});assert.ok(r.plan.features.some(x=>/ownership/i.test(x)));assert.ok(r.plan.securityGates.some(x=>x.id==='remote-validation'));assert.ok(r.plan.phases.length>=6);assert.ok(r.plan.folderTree.some(x=>x.path.includes('ServerScriptService')));});
 test('build spec requires Studio inspection and honest test status',()=>{const r=buildV3BuildSpec({title:'My Game',idea:'A simple obstacle course with checkpoints'});assert.match(r.prompt,/inspect the connected Studio tree/i);assert.match(r.prompt,/Never fake Play-test success/i);assert.match(r.prompt,/rollback/i);});
