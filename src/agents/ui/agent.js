@@ -18,7 +18,7 @@ function panel(name,heading,body) {
     node('TextLabel','Body',{BackgroundTransparency:1,Position:u2(0,16,0,54),Size:u2(1,-32,1,-66),Text:body,TextWrapped:true,TextYAlignment:enumValue('TextYAlignment.Top'),TextColor3:rgb(190,198,225),Font:enumValue('Font.Gotham'),TextSize:14})
   ]);
 }
-const controller=String.raw`local gui=script.Parent
+export const UI_CONTROLLER_SOURCE=String.raw`local gui=script.Parent
 local root=gui:WaitForChild("Root")
 local status=root:WaitForChild("Status")
 local panels=gui:WaitForChild("Panels")
@@ -68,6 +68,5 @@ export function buildGameUi(title,kind) {
       panel('InventoryPanel','INVENTAR','Bu panel UI namunasi. Yig‘iladigan item tizimi qo‘shilganda inventar shu yerda ko‘rinadi.'),
       panel('QuestsPanel','VAZIFALAR','Vazifalar paneli tayyor. Gameplay topshiriqlari qo‘shilganda vazifalar shu yerda ko‘rinadi.')
     ]),
-    node('LocalScript','UIController',{Source:controller})
   ]);
 }
