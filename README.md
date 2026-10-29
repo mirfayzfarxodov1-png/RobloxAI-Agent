@@ -116,3 +116,21 @@ Run npm test on Node.js 22.13+ to verify V3 tests with the existing suite.
 Open **Quruvchi V2 → Game DNA**. The authenticated `/api/game-dna` endpoint saves a versioned per-user SQLite manifest containing exact Roblox paths, folder structure, Script/LocalScript/ModuleScript responsibilities, dependencies, phases and safety gates. The **Luau kodlarni yozdirib Studio’da yaratish** button sends the manifest into the existing agent chat. The local planner is deterministic. Game DNA can prepare a structured plan, but actual automatic implementation is limited to the local templates; the plugin's `create_script` handler creates missing parent folders automatically.
 
 The local planner is deterministic and does not itself generate general-purpose Luau source. Without a configured provider, code generation remains limited to existing starter templates. A manifest is a plan, not proof that Studio objects exist. The agent must report actual tool acknowledgements, and Play-test remains not-run until tested in Studio.
+
+
+## Quruvchi MAX local agent architecture
+
+The API-free MAX builder is split into isolated specialist modules so changes can be tested and improved independently:
+
+- `src/agents/world/agent.js`: generates a wide, editable Workspace scene tree with a zig-zag obby route, checkpoints, scenery, simulator collectibles, or tycoon plots.
+- `src/agents/ui/agent.js`: generates `StarterGui/QuruvchiMAXUI` and a separate `UIController.client.lua` that opens/closes Shop, Inventory, and Quest panels.
+- `src/agents/gameplay/agent.js`: describes the gameplay systems for the selected template.
+- `src/agents/tool-scout/agent.js`: free-first catalog of built-in Studio tools and guidance for reviewing Creator Store assets.
+- `src/agents/qa/agent.js`: validates the local scene tree and checks required objects before Studio commands are sent.
+- `src/agent.js`: orchestrates World, UI, Gameplay, Studio audit, and Output-log commands.
+
+Generated gameplay scripts reuse the existing `Workspace/QuruvchiFreeWorld` and matching named parts rather than deleting the generated scene before Play. The build pipeline creates the World, UI, UI controller, and gameplay script separately, then asks the plugin to audit the project and inspect Output errors.
+
+Tool Scout deliberately does not claim it can live-search the full Roblox Toolbox through a local-only engine. Built-in Studio parts, UI instances, and Terrain Editor are free. Community assets should be checked in Studio's Creator Store/Toolbox for price, creator, permissions, and scripts before insertion. No third-party model is silently purchased or inserted.
+
+The local generator is deterministic rather than a general-purpose language model: it can reliably build and improve its supported templates, but arbitrary game ideas still require new template systems and a Play-test in Roblox Studio.
