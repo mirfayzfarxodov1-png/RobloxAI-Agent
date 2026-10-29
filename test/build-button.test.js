@@ -11,7 +11,7 @@ test('build button remains clickable with an empty prompt and explains what to d
 
 test('index references current cache-busted browser assets', async () => {
   const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
-  assert.match(html, /app\.js\?v=20261029-logo-fix-v3/);
+  assert.match(html, /app\.js\?v=20261029-max-auth-v7/);
 });
 
 
@@ -44,5 +44,5 @@ test('premium 3D world is present on the builder welcome screen and auth screen'
   assert.match(css, /\.world-stage/);
   assert.match(css, /@media\(max-width:520px\)/);
   assert.match(css, /@media\(prefers-reduced-motion:reduce\)/);
-  assert.match(html, /20261029-logo-fix-v3/);
+  assert.match(html, /20261029-max-auth-v7/);
 });
