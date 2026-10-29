@@ -490,6 +490,26 @@ end)
   return pieces.join('\n');
 }
 const NAMES = { obby: 'Obby', tycoon: 'Tycoon', simulator: 'Collectible Simulator', world: '3D World Starter' };
+function applyThemeToSource(source, prompt) {
+  const text = String(prompt || '').toLowerCase();
+  const themes = [
+    { words: ['space', 'kosmos', 'galaktika', 'sayyora', 'alien'], floor: '27, 31, 55', accent: '90, 120, 255', material: 'Metal' },
+    { words: ['cyber', 'neon', 'futur', 'robot'], floor: '25, 29, 48', accent: '85, 235, 255', material: 'Metal' },
+    { words: ['castle', 'medieval', 'fantasy', 'dragon'], floor: '93, 81, 65', accent: '226, 174, 91', material: 'Slate' },
+    { words: ['ocean', 'dengiz', 'underwater', 'pirate'], floor: '36, 100, 122', accent: '75, 220, 210', material: 'Glass' },
+    { words: ['forest', 'orman', 'jungle', 'daraxt'], floor: '45, 105, 65', accent: '135, 220, 105', material: 'Grass' },
+    { words: ['desert', 'sahro', 'qum', 'pyramid'], floor: '169, 126, 68', accent: '255, 202, 95', material: 'Sand' },
+    { words: ['snow', 'qor', 'ice', 'winter'], floor: '130, 165, 190', accent: '180, 235, 255', material: 'Ice' },
+    { words: ['horror', 'zombie', 'haunted', 'survival'], floor: '55, 48, 59', accent: '194, 80, 105', material: 'Slate' }
+  ];
+  const theme = themes.find(item => item.words.some(word => text.includes(word)));
+  if (!theme) return source;
+  return source
+    .replaceAll('Color3.fromRGB(62, 150, 94)', 'Color3.fromRGB(' + theme.floor + ')')
+    .replaceAll('Color3.fromRGB(70, 170, 255)', 'Color3.fromRGB(' + theme.accent + ')')
+    .replaceAll('Enum.Material.Grass', 'Enum.Material.' + theme.material)
+    .replace('Quruvchi MAX (local deterministic engine)', 'Quruvchi MAX (local deterministic engine) · ' + theme.material);
+}
 const SUMMARIES = {
   obby: ['30 bosqichli obby, spawn va rangli platformalar', 'har 5 bosqichda checkpoint va qayta tug‘ilish', 'timer, Coins/Wins/Stage/BestTime leaderboard va 100 Coins mukofoti', 'mobil ekranga mos HUD va progress atributlari'],
   tycoon: ['4 ta plot, bir o‘yinchiga bitta claim va Cash leaderstats', 'xavfsiz yiqilish hududi va qayta tug‘ilish', 'Wins leaderstat va server progress kuzatuvi', 'progress atributlari va lifecycle jurnali'],
@@ -644,7 +664,7 @@ export function buildFreeProject(prompt, history = []) {
   if (kind === 'tycoon') customizedBase = customizedBase.replace('for i = 1, 4 do', 'for i = 1, ' + plotCount + ' do').replace('(i - 1) * 55 - 82', '(i - 1) * 55 - (((' + plotCount + ' - 1) * 55) / 2)');
   const title = (extractExplicitTitle(prompt) || titleFromHistory(history) || NAMES[kind]).replace(/[\r\n]+/g, ' ').slice(0, 100);
   const packs = maxFeaturePacks(prompt);
-  const source = '-- Project title: ' + title + '\n-- Generator: Quruvchi MAX (local deterministic engine)\n' + customizedBase + (level > 1 ? '\n\n' + levelFeatures(kind, level) : '') + (packs.length ? '\n\n' + packs.join('\n\n') : '');
+  const source = applyThemeToSource('-- Project title: ' + title + '\n-- Generator: Quruvchi MAX (local deterministic engine)\n' + customizedBase + (level > 1 ? '\n\n' + levelFeatures(kind, level) : '') + (packs.length ? '\n\n' + packs.join('\n\n') : ''), prompt);
   const featureList = SUMMARIES[kind].slice(0, level);
   const projectTitle = extractExplicitTitle(prompt) || titleFromHistory(history) || NAMES[kind];
   const counts = { stages: stageCount, collectibles: collectibleCount, plots: plotCount };
