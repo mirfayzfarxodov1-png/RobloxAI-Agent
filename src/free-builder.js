@@ -269,6 +269,28 @@ end)
 print("[Quruvchi] Four claimable tycoon plots created.")
 `;
 
+function extractExplicitTitle(prompt) {
+  const text = String(prompt || '').trim();
+  if (!text) return '';
+  const quoted = text.match(/[“"]([^”"]{2,100})[”"]/);
+  if (quoted) return quoted[1].trim();
+  const labeled = text.match(/(?:o['’ʻ]?yin(?:ning)?\s+nomi|loyiha\s+nomi|game\s+title|title|name)\s*[:=]?\s*["“]?([^"”\n,.]{2,100})/i);
+  if (labeled) {
+    const value = labeled[1].split(/\s+(?:yarat\w*|qur\w*|build|create|o['’ʻ]?yin|game|uchun|deb)\b/i)[0].trim();
+    if (value.length >= 2) return value.slice(0, 100);
+  }
+  const leading = text.match(/^\s*(?:menga\s+)?([A-Z][A-Za-z0-9'’ -]{2,70}?)(?=\s+(?:o['’ʻ]?yin(?:i|ning)?|game|yarat\w*|qur\w*|build|create|deb)\b)/i);
+  return leading?.[1]?.trim().replace(/[.,:;]+$/, '').slice(0, 100) || '';
+}
+function titleFromHistory(history = []) {
+  for (const message of history) {
+    if (message?.role !== 'user') continue;
+    const title = extractExplicitTitle(flattenMessage(message.content));
+    if (title) return title;
+  }
+  return '';
+}
+
 function classify(prompt) {
   const s = String(prompt || '').toLowerCase();
   if (/obby|parkur|checkpoint|sakra|sakrash|to['’]?siq/.test(s)) return 'obby';
@@ -399,12 +421,13 @@ export function buildFreeProject(prompt, history = []) {
   const priorUpgrades = (history || []).filter(message => message.role === 'user' && isUpgradeRequest(flattenMessage(message.content))).length;
   const level = upgrade ? Math.min(4, Math.max(2, priorUpgrades + 2)) : 1;
   const base = kind === 'obby' ? OBBY : kind === 'tycoon' ? TYCOON : kind === 'simulator' ? SIMULATOR : COMMON;
-  const source = base + (level > 1 ? '\n\n' + levelFeatures(kind, level) : '');
+  const source = '-- Project title: ' + ((extractExplicitTitle(prompt) || titleFromHistory(history) || NAMES[kind]).replace(/[\r\n]+/g, ' ').slice(0, 100)) + '\n' + base + (level > 1 ? '\n\n' + levelFeatures(kind, level) : '');
   const featureList = SUMMARIES[kind].slice(0, level);
+  const projectTitle = extractExplicitTitle(prompt) || titleFromHistory(history) || NAMES[kind];
   return {
     kind,
     level,
-    name: NAMES[kind] + (level > 1 ? ' · Professional pass ' + level : ''),
+    name: projectTitle,
     path: 'ServerScriptService/QuruvchiFreeBuilder/FreeGame.server.lua',
     source,
     summary: featureList.join('; '),

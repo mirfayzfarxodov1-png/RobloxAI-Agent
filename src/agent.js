@@ -125,10 +125,47 @@ export async function startTask(user, text) {
 async function runFreeTask(userId, task, prompt) {
   const signal = task.controller.signal;
   if (signal.aborted) return;
-  const project = buildFreeProject(prompt, getMessages(task.conversationId));
+  const historyMessages = getMessages(task.conversationId);
+  const project = buildFreeProject(prompt, historyMessages);
+  let research = null;
+  let planMarkdown = '';
+  const needsResearch = /steal|legacy|roblox|o['’ʻ]?yin|game|tycoon|simulator|pet|egg|world|o['’ʻ]?g['’ʻ]?irl/i.test(prompt) || String(prompt || '').length >= 90;
+  if (needsResearch && !signal.aborted) {
+    try {
+      research = await searchWeb({
+        queries: [
+          project.name + ' Roblox official experience gameplay',
+          'site:create.roblox.com/docs Roblox DataStore server authoritative game mechanics'
+        ],
+        maxResults: 4,
+        signal
+      });
+    } catch (error) {
+      research = { results: [], warning: 'Internet tadqiqoti bajarilmadi: ' + String(error?.message || error).slice(0, 160) };
+    }
+  }
+  if (needsResearch) {
+    const sources = (research?.results || []).map(item => ({ title: item.title, url: item.url, summary: item.snippet }));
+    const researchSummary = sources.length
+      ? sources.map((item, index) => (index + 1) + '. ' + item.title + ': ' + item.summary).join('\n').slice(0, 2500)
+      : (research?.warning || 'Qidiruv natijasi olinmadi; manbalar tasdiqlanmadi.');
+    const plan = createProjectPlan({
+      title: project.name,
+      genre: project.kind === 'simulator' ? 'Collectible simulator' : project.kind,
+      pitch: prompt,
+      complexity: 'large',
+      features: project.features,
+      sources,
+      researchSummary,
+      researchDate: research?.searchedAt || new Date().toISOString()
+    });
+    planMarkdown = renderProjectPlanMarkdown(plan);
+  }
   const explanation = [
     '## Quruvchi bepul qurish rejimi',
-    'Tashqi AI API kaliti talab qilinmadi. So‘roving va suhbat tarixiga qarab mahalliy quruvchi ishladi.',
+    'Tashqi AI API kaliti talab qilinmadi. Mahalliy shablon builder ishladi; u internet tadqiqoti va katta reja tayyorlay oladi, lekin erkin LLM kabi istalgan o‘yinni to‘liq mustaqil implement qila olmaydi.',
+    ...(planMarkdown ? ['', planMarkdown, '', '## Hozir yaratiladigan starter', 'Internet manbalari reja uchun ishlatildi; ular quyidagi shablon kodida to‘liq mexanika implement qilinganini anglatmaydi.'] : []),
+    ...(research?.warning && !research?.results?.length ? ['', '**Tadqiqot ogohlantirishi:** ' + research.warning] : []),
     '',
     '**Loyiha:** ' + project.name,
     '**Bosqich:** ' + project.level + ' / 4',

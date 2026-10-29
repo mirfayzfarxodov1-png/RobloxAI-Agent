@@ -51,3 +51,13 @@ test('upgrade stage is capped and unrelated prompts still select a new game type
   assert.equal(buildFreeProject('Yana yaxshila', history).level, 4);
   assert.equal(buildFreeProject('Tycoon yarat', history).kind, 'tycoon');
 });
+
+
+test('API-free builder preserves explicit game titles instead of replacing them with a generic template name', () => {
+  const project = buildFreeProject('Menga Steal an Legacy o‘yini yarat');
+  assert.equal(project.name, 'Steal an Legacy');
+  assert.match(project.source, /Project title: Steal an Legacy/);
+  const history = [{ role: 'user', content: [{ type: 'text', text: 'Menga Steal an Legacy o‘yini yarat' }] }];
+  const upgraded = buildFreeProject('Endi uni yaxshila', history);
+  assert.equal(upgraded.name, 'Steal an Legacy');
+});
