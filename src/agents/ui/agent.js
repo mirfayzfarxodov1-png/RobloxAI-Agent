@@ -8,9 +8,10 @@ const node = (className,name,properties={},children=[],attributes) => {
   return result;
 };
 function panel(name,heading,body) {
-  return node('Frame',name,{AnchorPoint:{Vector2:[0.5,0.5]},Position:u2(0.5,0,0.5,0),Size:u2(0,330,0,250),BackgroundColor3:rgb(23,27,46),BorderSizePixel:0,Visible:false},[
+  return node('Frame',name,{AnchorPoint:{Vector2:[0.5,0.5]},Position:u2(0.5,0,0.5,0),Size:u2(1,-24,0,250),BackgroundColor3:rgb(23,27,46),BorderSizePixel:0,Visible:false},[
     node('UICorner','Corner',{CornerRadius:udim(0,14)}),
     node('UIStroke','Outline',{Color:rgb(113,103,255),Thickness:1.5,Transparency:0.15}),
+    node('UISizeConstraint','ResponsiveBounds',{MinSize:{Vector2:[280,220]},MaxSize:{Vector2:[480,320]}}),
     node('TextLabel','Heading',{BackgroundTransparency:1,Position:u2(0,16,0,12),Size:u2(1,-60,0,34),Text:heading,TextColor3:rgb(246,245,255),Font:enumValue('Font.GothamBold'),TextSize:19,TextXAlignment:enumValue('TextXAlignment.Left')}),
     node('TextButton','Close',{Position:u2(1,-42,0,10),Size:u2(0,30,0,30),Text:'×',BackgroundColor3:rgb(67,70,126),TextColor3:rgb(255,255,255),Font:enumValue('Font.GothamBold'),TextSize:20},[
       node('UICorner','Corner',{CornerRadius:udim(0,8)})
@@ -49,17 +50,17 @@ export function buildGameUi(title,kind) {
     ['QuestsButton','Vazifalar','Quests'],
     ['HelpButton','Yordam',null]
   ];
-  const actionChildren=[node('UIListLayout','Layout',{FillDirection:enumValue('FillDirection.Horizontal'),Padding:udim(0,8),HorizontalAlignment:enumValue('HorizontalAlignment.Center'),VerticalAlignment:enumValue('VerticalAlignment.Center'),SortOrder:enumValue('SortOrder.LayoutOrder')})];
+  const actionChildren=[node('UIGridLayout','Layout',{CellSize:u2(0.5,-6,0,32),CellPadding:{UDim2:[0,8,0,6]},FillDirection:enumValue('FillDirection.Horizontal'),FillDirectionMaxCells:2,HorizontalAlignment:enumValue('HorizontalAlignment.Center'),VerticalAlignment:enumValue('VerticalAlignment.Center'),SortOrder:enumValue('SortOrder.LayoutOrder')})];
   for(let i=0;i<buttons.length;i++){
     const [name,label,key]=buttons[i];
-    actionChildren.push(node('TextButton',name,{Size:u2(0,78,0,38),BackgroundColor3:rgb(67,70,126),TextColor3:rgb(255,255,255),Text:label,Font:enumValue('Font.GothamSemibold'),TextSize:11,LayoutOrder:i+1,AutoButtonColor:true},[node('UICorner','Corner',{CornerRadius:udim(0,9)})],key?{PanelKey:key}:undefined));
+    actionChildren.push(node('TextButton',name,{Size:u2(0.5,-6,0,32),BackgroundColor3:rgb(67,70,126),TextColor3:rgb(255,255,255),Text:label,Font:enumValue('Font.GothamSemibold'),TextSize:11,LayoutOrder:i+1,AutoButtonColor:true},[node('UICorner','Corner',{CornerRadius:udim(0,9)})],key?{PanelKey:key}:undefined));
   }
-  const root=node('Frame','Root',{AnchorPoint:{Vector2:[0.5,0]},Position:u2(0.5,0,0,18),Size:u2(0,360,0,122),BackgroundColor3:rgb(17,20,36),BackgroundTransparency:0.08,BorderSizePixel:0},[
+  const root=node('Frame','Root',{AnchorPoint:{Vector2:[0.5,0]},Position:u2(0.5,0,0,18),Size:u2(1,-24,0,154),BackgroundColor3:rgb(17,20,36),BackgroundTransparency:0.08,BorderSizePixel:0},[
     node('UICorner','Corner',{CornerRadius:udim(0,16)}),
     node('UIStroke','Outline',{Color:rgb(113,103,255),Thickness:1.5,Transparency:0.2}),
     node('TextLabel','Title',{BackgroundTransparency:1,Position:u2(0,14,0,5),Size:u2(1,-28,0,24),Text:String(title||'Quruvchi MAX').slice(0,60),TextColor3:rgb(255,255,255),Font:enumValue('Font.GothamBold'),TextSize:16,TextXAlignment:enumValue('TextXAlignment.Left')}),
     node('TextLabel','Status',{BackgroundTransparency:1,Position:u2(0,14,0,31),Size:u2(1,-28,0,20),Text:'O‘yin tayyor · '+kind,TextColor3:rgb(176,186,220),Font:enumValue('Font.Gotham'),TextSize:12,TextXAlignment:enumValue('TextXAlignment.Left')}),
-    node('Frame','Actions',{BackgroundTransparency:1,Position:u2(0,0,0,74),Size:u2(1,0,0,42)},actionChildren)
+    node('Frame','Actions',{BackgroundTransparency:1,Position:u2(0,10,0,72),Size:u2(1,-20,0,72)},actionChildren)
   ]);
   return node('ScreenGui','QuruvchiMAXUI',{ResetOnSpawn:false,IgnoreGuiInset:false,ZIndexBehavior:enumValue('ZIndexBehavior.Sibling'),DisplayOrder:20},[
     root,
