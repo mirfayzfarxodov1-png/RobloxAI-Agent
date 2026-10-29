@@ -112,29 +112,36 @@ test('Quruvchi auth, CSRF, pairing, API-free local build, and device removal', a
   assert.equal(noProviderRoute.status,404,'external AI provider endpoints must not exist');
   const started=await post(base,'/api/chat',{text:'Menga oddiy obby o‘yini yarat'},{cookie});
   assert.equal(started.status,202);
-  const command=await waitUntil(async()=>{
-    const result=await pollPlugin(base,token,1);
-    return result.response.ok&&result.data.type==='command'?result:null;
-  },7000);
-  assert.equal(command.data.name,'create_tree');
-  assert.equal(command.data.input.parent,'Workspace');
-  assert.equal(command.data.input.tree.name,'QuruvchiFreeWorld');
-  assert.ok(command.data.input.tree.children.some(item=>item.name==='JumpPlatform30'));
-  const sceneResult=await sendPluginResult(base,token,{id:command.data.id,ok:true,output:{created:40,path:'Workspace/QuruvchiFreeWorld',warnings:[]}});
-  assert.equal(sceneResult.response.status,200);
-  const scriptCommand=await waitUntil(async()=>{
-    const result=await pollPlugin(base,token,1);
-    return result.response.ok&&result.data.type==='command'?result:null;
-  },7000);
-  assert.equal(scriptCommand.data.name,'create_script');
-  assert.match(scriptCommand.data.input.path,/QuruvchiFreeBuilder\/FreeGame\.server\.lua$/);
-  assert.match(scriptCommand.data.input.source,/QuruvchiFreeWorld|JumpPlatform/);
-  const result=await sendPluginResult(base,token,{id:scriptCommand.data.id,ok:true,output:{created:1,path:scriptCommand.data.input.path,warnings:[]}});
-  assert.equal(result.response.status,200);
-  await waitUntil(async()=>{const r=await fetch(base+'/api/me',{headers:{Cookie:cookie}});const d=await r.json();return !d.running&&d.steps.used===2?d:null;},7000);
+  const expected=[
+    {name:'create_tree',parent:'Workspace',path:'Workspace/QuruvchiFreeWorld'},
+    {name:'create_tree',parent:'StarterGui',path:'StarterGui/QuruvchiMAXUI'},
+    {name:'create_script',path:'ServerScriptService/QuruvchiAgents/GameplayAgent/FreeGame.server.lua'},
+    {name:'audit_project',path:'game'},
+    {name:'get_logs',path:''}
+  ];
+  for(const item of expected){
+    const command=await waitUntil(async()=>{
+      const result=await pollPlugin(base,token,1);
+      return result.response.ok&&result.data.type==='command'?result:null;
+    },7000);
+    assert.equal(command.data.name,item.name);
+    if(item.parent)assert.equal(command.data.input.parent,item.parent);
+    if(item.name==='create_tree'&&item.parent==='Workspace'){
+      assert.equal(command.data.input.tree.name,'QuruvchiFreeWorld');
+      assert.ok(command.data.input.tree.children.some(node=>node.name==='JumpPlatform30'));
+    }
+    if(item.name==='create_tree'&&item.parent==='StarterGui')assert.equal(command.data.input.tree.name,'QuruvchiMAXUI');
+    if(item.name==='create_script'){
+      assert.match(command.data.input.path,/QuruvchiAgents\\/GameplayAgent\\/FreeGame\\.server\\.lua$/);
+      assert.match(command.data.input.source,/QuruvchiFreeWorld|JumpPlatform/);
+    }
+    const result=await sendPluginResult(base,token,{id:command.data.id,ok:true,output:{created:40,path:item.path,warnings:[]}});
+    assert.equal(result.response.status,200);
+  }
+  await waitUntil(async()=>{const r=await fetch(base+'/api/me',{headers:{Cookie:cookie}});const d=await r.json();return !d.running&&d.steps.used===5?d:null;},10000);
   const history=await (await fetch(base+'/api/chat/history',{headers:{Cookie:cookie}})).json();
-  assert.ok(history.messages.some(m=>m.role==='assistant'&&m.text.includes('Quruvchi MAX — Studio’da haqiqiy qurish')));
-  assert.ok(history.messages.some(m=>m.role==='assistant'&&m.text.includes('Studio loyihasi o‘zgartirildi')));
+  assert.ok(history.messages.some(m=>m.role==='assistant'&&m.text.includes('Quruvchi MAX — ko‘p agentli Studio qurish')));
+  assert.ok(history.messages.some(m=>m.role==='assistant'&&m.text.includes('Quruvchi MAX — qurish yakunlandi')));
   
   const removed=await fetch(base+'/api/devices/'+deviceId,{method:'DELETE',headers:{Cookie:cookie,Origin:base,'Content-Type':'application/json'}});
   assert.equal(removed.status,200);
