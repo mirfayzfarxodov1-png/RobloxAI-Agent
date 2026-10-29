@@ -444,3 +444,15 @@ body::before{opacity:.075;background-image:linear-gradient(rgba(145,158,255,.10)
 .v2-panel button:focus-visible,.v2-panel a:focus-visible,.v2-panel textarea:focus-visible{outline:2px solid #b6adff;outline-offset:2px}
 @media(max-width:640px){.v2-panel .v2-tool-actions{grid-template-columns:minmax(0,1fr)}.v2-tool-actions button{width:100%}.v2-panel .v2-tool-output{max-height:38dvh}}
 @media(prefers-reduced-motion:reduce){.v2-panel *{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+
+/* Quruvchi V1 brand system: crisp SVG mark, accessible focus and low-end-safe motion. */
+.brand-mark{overflow:hidden;isolation:isolate}
+.brand-mark svg{display:block;width:100%;height:100%;flex:none}
+.brand-row .brand-mark{padding:3px;border-color:#5c56a5;background:linear-gradient(145deg,#292750,#171a30);box-shadow:inset 0 1px 0 #ffffff12}
+.auth-card-v2>.brand-mark{padding:5px;border-color:#5c56a5;background:linear-gradient(145deg,#292750,#171a30)}
+button,a{touch-action:manipulation}
+::selection{background:#6e62d866;color:#fff}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
