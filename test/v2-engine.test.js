@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { V2_TECHNOLOGIES, runV2Toolkit } from '../src/v2-engine.js';
+import { V2_TECHNOLOGIES, runV2Toolkit } from '../src/v2/engine.js';
 
 test('V2 registry exposes ten distinct technologies',()=>{
   assert.equal(V2_TECHNOLOGIES.length,10);
