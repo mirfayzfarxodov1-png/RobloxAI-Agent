@@ -99,16 +99,21 @@ export function createProjectPlan(input = {}) {
   const platforms = cleanList(input.platforms, 5, 40);
   const contextText = [title, genre, pitch, ...(Array.isArray(input.coreLoop) ? input.coreLoop : []), ...(Array.isArray(input.features) ? input.features : [])].join(' ');
   const gameType = detectGameType(contextText);
+  const largePlan = complexity === 'large' || complexity === 'very-large';
+  const minimumLoopItems = largePlan ? 4 : complexity === 'medium' ? 3 : 1;
+  const loopLimit = largePlan ? 8 : complexity === 'medium' ? 5 : 3;
   const coreLoop = cleanList(input.coreLoop, 8, 180);
   const defaultLoopItems = defaultLoop(gameType);
-  const normalizedLoop = coreLoop.length >= 4
+  const normalizedLoop = coreLoop.length >= minimumLoopItems
     ? coreLoop
-    : [...coreLoop, ...defaultLoopItems.filter(item => !coreLoop.some(existing => existing.toLocaleLowerCase() === item.toLocaleLowerCase()))].slice(0, 8);
+    : [...coreLoop, ...defaultLoopItems.filter(item => !coreLoop.some(existing => existing.toLocaleLowerCase() === item.toLocaleLowerCase()))].slice(0, loopLimit);
   const features = cleanList(input.features, MAX_FEATURES, 180);
   const defaultFeatureItems = defaultFeatures(gameType);
-  const normalizedFeatures = features.length >= 6
+  const minimumFeatures = largePlan ? 6 : complexity === 'medium' ? 4 : 1;
+  const featureLimit = largePlan ? MAX_FEATURES : complexity === 'medium' ? 10 : 6;
+  const normalizedFeatures = features.length >= minimumFeatures
     ? features
-    : [...features, ...defaultFeatureItems.filter(item => !features.some(existing => existing.toLocaleLowerCase() === item.toLocaleLowerCase()))].slice(0, MAX_FEATURES);
+    : [...features, ...defaultFeatureItems.filter(item => !features.some(existing => existing.toLocaleLowerCase() === item.toLocaleLowerCase()))].slice(0, featureLimit);
   const constraints = cleanList(input.constraints, MAX_CONSTRAINTS, 180);
   const phasesInput = Array.isArray(input.phases) ? input.phases.slice(0, MAX_PHASES) : [];
   // Large projects must not degrade into a short, vague roadmap when the model

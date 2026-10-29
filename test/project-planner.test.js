@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { createProjectPlan, renderProjectPlanMarkdown } from '../src/project-planner.js';
 
 test('creates a normalized project plan with sensible defaults', () => {
-  const plan = createProjectPlan({ title: '  Sky Realm  ', genre: 'RPG', features: ['Quest', 'Quest', '', 'Inventory'] });
+  const plan = createProjectPlan({ title: '  Sky Realm  ', genre: 'RPG', complexity: 'small', features: ['Quest', 'Quest', '', 'Inventory'] });
   assert.equal(plan.title, 'Sky Realm');
-  assert.equal(plan.complexity, 'large');
+  assert.equal(plan.complexity, 'small');
   assert.deepEqual(plan.features, ['Quest', 'Inventory']);
   assert.ok(plan.phases.length >= 3);
   assert.equal(plan.schemaVersion, 2);
