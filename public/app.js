@@ -337,7 +337,7 @@ function renderAuth(){
   if(state.notice)form.append(node('div','form-error',state.notice));
   const submit=button(state.authMode==='login'?'➜  Kirish':'✦  Hisob yaratish','primary-button full',()=>{});submit.type='submit';form.append(submit);
   form.addEventListener('submit',async e=>{e.preventDefault();state.notice='';try{const data=await api(state.authMode==='login'?'/api/login':'/api/register',{login:state.login,password:state.password,...(state.authMode==='register'?{invite:state.invite}:{})});state.user={login:data.login||state.login};state.password='';state.notice='';await loadApp();}catch(error){state.notice=error.message;render();}});
-  card.append(form,node('div','auth-v2-divider','YOKI'),node('div','auth-v2-social-note','Hisobingiz xavfsiz himoyalanadi'),node('p','auth-security','Sessiya xavfsiz cookie bilan saqlanadi. API kalit chat tarixiga kiritilmaydi va serverda shifrlanadi.'));
+  card.append(form,node('div','auth-v2-divider','YOKI'),node('div','auth-v2-social-note','Hisobingiz xavfsiz himoyalanadi'),node('p','auth-security','Sessiya xavfsiz cookie bilan saqlanadi. Login ma’lumotlari chat tarixida ko‘rsatilmaydi.'));
   const footer=node('footer','auth-v2-footer','Created with ♥ by Quruvchi Team');
   wrap.append(topbar,visual,card,footer);root.append(wrap);
 }
