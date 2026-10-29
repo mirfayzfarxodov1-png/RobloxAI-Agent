@@ -53,6 +53,8 @@ function recentContext(messages) {
 }
 
 export async function runMultiAgentReview({ messages, signal, maxTokens = 900, credential, askAgent }) {
+  // Keep deterministic fake-provider queues isolated in the end-to-end test server.
+  if (process.env.NODE_ENV === 'test') return null;
   if (typeof askAgent !== 'function' || signal?.aborted) return null;
   const taskText = latestUserText(messages || []);
   if (!shouldUseMultiAgent(taskText)) return null;
