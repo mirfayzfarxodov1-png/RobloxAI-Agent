@@ -1,8 +1,62 @@
-/* Quruvchi SUPER Lab · isolated component refinements. Core panel rules remain in /style.css. */
-.super-suite-panel :focus-visible,.super-suite-fab:focus-visible{outline:2px solid #a5a0ff;outline-offset:3px}
-.super-suite-panel button:disabled{opacity:.58;cursor:wait}
-.super-suite-panel textarea,.super-suite-panel select{max-width:100%}
-.super-suite-panel pre,.super-diff{overflow-wrap:anywhere;white-space:pre-wrap;word-break:break-word}
+/* Quruvchi AI Lab — focused, responsive workspace */
+.super-topbar-link{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  min-height:34px;padding:0 12px;border:1px solid #302b52;border-radius:10px;
+  background:linear-gradient(135deg,#1d1837,#10101a);color:#dcd7ff;
+  font-size:11px;font-weight:750;white-space:nowrap;cursor:pointer;
+  transition:background .18s,border-color .18s,transform .18s
+}
+.super-topbar-link:hover{background:#282147;border-color:#6257a6;transform:translateY(-1px)}
+.super-topbar-link:focus-visible{outline:2px solid #a5a0ff;outline-offset:3px}
+.super-suite-panel{
+  width:min(1080px,100%);max-height:min(92dvh,920px);min-height:0;
+  display:flex;flex-direction:column;overflow:hidden;
+  color:#f4f2ff;background:radial-gradient(ellipse at 88% 0%,#211b3b 0,transparent 38%),#0c0d13;
+  border:1px solid #343044;border-radius:22px;box-shadow:0 36px 120px #000d
+}
+.super-suite-head{padding:23px 26px 19px;align-items:center;gap:20px;background:transparent;border-bottom:1px solid #292737}
+.super-kicker{color:#a8a0ff;font-size:10px;letter-spacing:.19em;font-weight:800}
+.super-suite-head h2{margin:8px 0 6px;font-size:clamp(22px,3vw,29px);letter-spacing:-.045em}
+.super-suite-head p{margin:0;color:#9996ae;font-size:12px;line-height:1.65}
+.super-close{display:grid;place-items:center;width:38px;height:38px;flex:0 0 auto;border:1px solid #343044;border-radius:11px;background:#171722;color:#d9d5f2;font-size:23px}
+.super-tabs{display:flex;gap:7px;padding:12px 20px;overflow-x:auto;border-bottom:1px solid #292737;background:#0d0e15;scrollbar-width:thin}
+.super-tabs button{flex:0 0 auto;padding:10px 13px;border:1px solid transparent;border-radius:10px;background:transparent;color:#a5a2b8;font-size:11px;font-weight:750;white-space:nowrap}
+.super-tabs button:hover{background:#1a1928;color:#eeeaff}
+.super-tabs button.active{background:#272141;border-color:#554a86;color:#e8e3ff;box-shadow:inset 0 0 0 1px #8c7df31a}
+.super-body{padding:22px 26px 28px;overflow:auto;min-height:0;overscroll-behavior:contain}
+.super-body>.super-muted{max-width:850px;margin:0 0 18px;color:#a09db4;font-size:12px;line-height:1.7}
+.super-field{display:flex;flex-direction:column;gap:8px;margin:14px 0;color:#d0cde2;font-size:12px;font-weight:700}
+.super-field textarea,.super-field input,.super-field select{width:100%;min-height:45px;padding:12px 13px;border:1px solid #343144;border-radius:11px;background:#11121b;color:#f4f2ff;font:inherit;font-size:13px;line-height:1.55;resize:vertical}
+.super-field textarea::placeholder,.super-field input::placeholder{color:#77748c}
+.super-field textarea:focus,.super-field input:focus,.super-field select:focus{outline:2px solid #7e70dc66;border-color:#7165bc}
+.super-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:18px 0}
+.super-primary,.super-secondary,.super-quiet{min-height:39px;padding:0 14px;border:1px solid #3a3554;border-radius:10px;cursor:pointer;font-size:12px;font-weight:750;transition:transform .16s,filter .16s}
+.super-primary{background:linear-gradient(135deg,#9c8cff,#76cfff);color:#11101a;border-color:#aaa1ff}
+.super-secondary{background:#1a1b28;color:#e1def5;border-color:#38374c}
+.super-quiet{background:transparent;color:#aaa6c0;border-color:#302f40}
+.super-primary:hover,.super-secondary:hover,.super-quiet:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.super-diff{max-width:100%;max-height:300px;overflow:auto;margin:16px 0 0;padding:16px;border:1px solid #353147;border-radius:13px;background:#10111a;color:#dcd9ee;font:12px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}
+.super-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin-top:18px}
+.super-card{min-width:0;padding:17px;border:1px solid #302e42;border-radius:14px;background:linear-gradient(145deg,#171722,#11121a);overflow-wrap:anywhere}
+.super-card strong{display:block;margin:7px 0;color:#f2efff;font-size:13px;line-height:1.5}
+.super-card p{margin:8px 0;color:#a09db4;font-size:12px;line-height:1.65}
+.super-card a{display:inline-block;margin:6px 10px 0 0;color:#c5bcff;font-size:12px;text-decoration:underline;overflow-wrap:anywhere}
+.super-card button{margin:10px 6px 0 0}
+.super-status{flex:0 0 auto;margin:0;padding:12px 24px;border-top:1px solid #292737;background:#10111a;color:#b4b0cc;font-size:11px;line-height:1.5}
+.super-suite-panel :focus-visible{outline:2px solid #a5a0ff;outline-offset:3px}
+.super-suite-panel button:disabled{opacity:.55;cursor:wait;transform:none}
+.super-suite-panel pre,.super-suite-panel textarea{max-width:100%;box-sizing:border-box}
 .super-suite-panel a{overflow-wrap:anywhere}
-@media(max-width:640px){.super-suite-panel{padding:18px 14px}.super-tabs{flex-wrap:wrap}.super-actions{flex-wrap:wrap}}
-@media(prefers-reduced-motion:reduce){.super-suite-backdrop,.super-suite-panel{animation:none!important;transition:none!important}}
+@media(max-width:760px){
+  .super-topbar-link{min-height:32px;padding:0 9px;font-size:10px}
+  .super-suite-backdrop{padding:0;place-items:stretch}
+  .super-suite-panel{width:100%;height:100dvh;max-height:100dvh;border-radius:0;border-left:0;border-right:0}
+  .super-suite-head{padding:17px 15px 14px;align-items:flex-start}
+  .super-tabs{padding:10px 12px;gap:5px}
+  .super-tabs button{padding:9px 10px}
+  .super-body{padding:16px 14px 22px}
+  .super-list{grid-template-columns:minmax(0,1fr)}
+  .super-actions{align-items:stretch}
+  .super-actions button{flex:1 1 180px}
+}
+@media(prefers-reduced-motion:reduce){.super-suite-panel,.super-topbar-link,.super-suite-panel button{transition:none!important}}
