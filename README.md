@@ -41,11 +41,24 @@ The plugin uses long-polling with bearer-token authentication. Pairing codes exp
 
 ## Local step-by-step game building
 
-Quruvchi supports starter templates for obby/parkour, collectible simulators, tycoons, and a decorative 3D world. In the same conversation, follow-up requests such as “endi yaxshila” advance the current template through bounded professional passes: fall recovery, progress/leaderstats, and lifecycle telemetry. The full updated Luau script is returned for copying and written to `ServerScriptService/QuruvchiFreeBuilder/FreeGame.server.lua` when Studio is connected. Always use Studio Play mode and Output to verify the generated game; the template generator does not replace a general-purpose reasoning model or automatic runtime testing.
+Quruvchi supports starter templates for obby/parkour, collectible simulators, tycoons, and a decorative 3D world. In the same conversation, follow-up requests such as “endi yaxshila” advance the current template through bounded professional passes: fall recovery, progress/leaderstats, and lifecycle telemetry. The World Agent creates a deterministic scene tree, the UI Agent creates a responsive `ScreenGui` plus a separate `LocalScript`, and the Gameplay Agent validates and supplies the generated server Luau to `ServerScriptService/QuruvchiAgents/GameplayAgent/FreeGame.server.lua`. QA checks scene objects, script contracts, and UI controls before any Studio write. Always use Studio Play mode and Output to verify the generated game; the template generator does not replace a general-purpose reasoning model or automatic runtime testing.
 
 ## Large-project planning
 
 The app includes deterministic project-planning utilities for multi-system Roblox projects. These create a Markdown plan with gameplay loop, features, phases, acceptance criteria, and safety guardrails without mutating Studio. This is a planning aid, not a guarantee that every listed system is implemented or tested in Roblox Studio.
+
+
+## Specialist agent contracts
+
+Each `src/agents/*/agent.js` module has a concrete role and a testable contract:
+
+- **World Agent**: clamps requested counts, sanitizes the title, and builds a deterministic scene tree for obby, simulator, tycoon, or world starter.
+- **UI Agent**: creates the in-game ScreenGui, bounded responsive panels, a two-column mobile-safe button grid, and a separate controller script with Activated event bindings.
+- **Gameplay Agent**: supplies the actual generated Luau source, checks kind-specific gameplay requirements and the server Script path, and refuses the Studio write if the source contract is incomplete.
+- **Tool Scout**: ranks free-first Studio tools against the requested features and provides an asset review checklist; it does not pretend to download Creator Store assets.
+- **QA Agent**: validates the generated world tree, required game-specific objects, source size/content, UI controls and controller bindings before any Studio write.
+
+Duplicate browser bundles at `public/v2.js` and `public/super.js`, and unused root-level V2/V3 entry points, were removed. The canonical browser files now live in `public/v2/` and `public/super/`; the runtime imports the canonical modules in `src/v2/` and `src/super/`. CI syntax-checks these files and all nested agent modules.
 
 ## Tests
 
