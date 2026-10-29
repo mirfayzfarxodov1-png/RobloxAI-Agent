@@ -31,3 +31,16 @@ test('unused legacy V2/V3 entry points are removed after migration', () => {
     assert.equal(fs.existsSync(new URL(path,import.meta.url)),false,path+' should not remain');
   }
 });
+
+test('V2 and SUPER no longer inject competing sidebar or floating launch buttons', () => {
+  const v2=fs.readFileSync(new URL('../public/v2/index.js',import.meta.url),'utf8');
+  const lab=fs.readFileSync(new URL('../public/super/index.js',import.meta.url),'utf8');
+  const css=fs.readFileSync(new URL('../public/super/style.css',import.meta.url),'utf8');
+  assert.match(v2,/root\.querySelectorAll\('\.v2-side-link,\.v2-floating-trigger'\)/);
+  assert.match(lab,/AI laboratoriya/);
+  assert.match(lab,/let active='agents'/);
+  assert.match(lab,/Open-world/);
+  assert.match(css,/\.super-topbar-link/);
+  assert.match(css,/\.super-presets/);
+  assert.doesNotMatch(lab,/append\(f\)/);
+});
