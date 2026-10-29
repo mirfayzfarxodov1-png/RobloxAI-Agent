@@ -14,7 +14,7 @@ The application intentionally has **no external npm runtime dependencies and no 
 
 1. Install Node.js 22.13+.
 2. Clone or download this repository and open PowerShell in the project folder.
-3. Start the server with **npm start**. The website opens even if you have not configured AI yet.
+3. Start the server with **npm start**. The website works without any external AI configuration.
 4. Open **http://localhost:3000**. If you only want to see the website, that is enough.
 5. Optional: copy `.env.example` to `.env` to configure the local server address and registration options. No AI API key is used.
 6. Start `npm start`. Create an account, then use **Studio ulash** to generate a one-time pairing code.
