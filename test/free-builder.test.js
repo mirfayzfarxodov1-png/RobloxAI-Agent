@@ -148,3 +148,23 @@ test('specialist agents validate actual generated source and adapt safely to bad
   assert.equal(broken.ok,false);
   assert.ok(broken.missing.includes('world root'));
 });
+
+
+test('World Agent builds theme-aware worlds and adds optional systems from the full prompt', async () => {
+  const { buildWorldScene } = await import('../src/agents/world/agent.js');
+  const space = buildWorldScene({kind:'world',title:'Cosmic Frontier',prompt:'Build a space adventure with portals, buildings, NPC and roads'});
+  assert.equal(space.attributes.WorldTheme,'space');
+  const childNames = space.children.map(child=>child.name);
+  assert.ok(childNames.includes('WorldZones'));
+  assert.ok(childNames.includes('WorldProps'));
+  assert.ok(childNames.includes('WorldRoutes'));
+  assert.ok(childNames.includes('WorldPortals'));
+  assert.ok(childNames.includes('WorldBuildings'));
+  assert.ok(childNames.includes('InteractionPoints'));
+  assert.ok(space.children.find(child=>child.name==='WorldZones').children.length>=4);
+
+  const forest = buildWorldScene({kind:'obby',title:'Forest Obby',prompt:'forest parkour with trees'});
+  assert.equal(forest.attributes.WorldTheme,'forest');
+  assert.ok(forest.children.some(child=>child.name==='ThemeDressing'));
+  assert.ok(forest.children.some(child=>child.name==='Checkpoint5'));
+});
