@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildV2Plan, V2_CAPABILITIES } from '../src/v2.js';
+import { buildV2Plan, V2_CAPABILITIES } from '../src/v2/index.js';
 
 test('V2 plan contains a complete phased architecture and QA checks', () => {
   const result = buildV2Plan({ title:'Steal an Egg', idea:'Tycoon with bases, egg stealing, pets and upgrades' });
