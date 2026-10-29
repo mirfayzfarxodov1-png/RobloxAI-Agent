@@ -113,5 +113,14 @@ export function buildWorldScene(input = {}) {
     children.push(props);
     add('WelcomeSign',[28,9,1],[0,8,-24],[22,30,52]);
   }
+  if(kind!=='world'){
+    const dressing={className:'Folder',name:'ThemeDressing',attributes:{Theme:theme.id},children:[]};
+    for(let i=1;i<=12;i++){
+      const angle=i*Math.PI/6,radius=92,x=Math.round(Math.cos(angle)*radius),z=Math.round(Math.sin(angle)*radius);
+      const shape=theme.id==='forest'?'TreeCanopy':theme.id==='ocean'?'Coral':theme.id==='space'?'Beacon':theme.id==='snow'?'IceSpire':'ThemeLandmark';
+      dressing.children.push(part(shape+'_'+i,[3+(i%3)*2,7+(i%4)*4,3+(i%3)*2],[x,4,z],i%2?theme.accent:theme.floor,theme.material));
+    }
+    children.push(dressing);
+  }
   return {className:'Folder',name:'QuruvchiFreeWorld',attributes:{QuruvchiGenerated:true,GameKind:kind,ProjectTitle:title,WorldTheme:theme.id,FeaturePrompt:prompt.slice(0,500)},children};
 }
