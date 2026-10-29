@@ -503,7 +503,7 @@ function boundedCount(prompt, patterns, fallback, min, max) {
 function maxFeaturePacks(prompt) {
   const text = String(prompt || '').toLowerCase();
   const packs = [];
-  if (/do['’]?kon|shop|magazin|sotib ol|upgrade shop/.test(text)) {
+  if (/do['’‘]?kon|shop|magazin|sotib ol|upgrade shop/.test(text)) {
     packs.push(String.raw`
 -- QURUVCHI MAX FEATURE: in-world upgrade shop (server authoritative).
 do
