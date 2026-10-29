@@ -46,5 +46,5 @@ Verification boundary:
 - Added dedicated `public/v2/` and `public/super/` browser bundles and isolated style refinements.
 - Added `src/v2/` for project planning/memory and local toolkit engine.
 - Added `src/super/` for architecture/build specifications, QA, model specs, and a deterministic build-package orchestrator.
-- Server and tests use the organized module paths; legacy root entry points remain compatibility re-exports.
+- Server and tests use the organized module paths; unused legacy root entry points were removed after all runtime imports migrated.
 - The SUPER package explicitly labels Studio application as requiring plugin confirmation and Play-test as not run until a real Studio test is performed.
