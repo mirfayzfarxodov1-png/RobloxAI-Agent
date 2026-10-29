@@ -136,7 +136,7 @@ test('specialist agents validate actual generated source and adapt safely to bad
     assert.equal(audit.ok, true, prompt + ': ' + audit.errors.join(', '));
   }
 
-  const fallback = buildWorldScene({kind:'not-a-game',title:'Bad\\nTitle',counts:{stages:999,collectibles:-1,plots:500}});
+  const fallback = buildWorldScene({kind:'not-a-game',title:'Bad\nTitle',counts:{stages:999,collectibles:-1,plots:500}});
   assert.equal(fallback.attributes.GameKind,'world');
   assert.equal(fallback.attributes.ProjectTitle,'Bad Title');
   assert.ok(fallback.children.length < 30);
