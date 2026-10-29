@@ -132,7 +132,7 @@ test('Quruvchi auth, CSRF, pairing, API-free local build, and device removal', a
     }
     if(item.name==='create_tree'&&item.parent==='StarterGui')assert.equal(command.data.input.tree.name,'QuruvchiMAXUI');
     if(item.name==='create_script'){
-      assert.match(command.data.input.path,/QuruvchiAgents\\/GameplayAgent\\/FreeGame\\.server\\.lua$/);
+      assert.ok(command.data.input.path.includes('QuruvchiAgents/GameplayAgent/FreeGame.server.lua'));
       assert.match(command.data.input.source,/QuruvchiFreeWorld|JumpPlatform/);
     }
     const result=await sendPluginResult(base,token,{id:command.data.id,ok:true,output:{created:40,path:item.path,warnings:[]}});
