@@ -134,7 +134,7 @@ test('Quruvchi auth, CSRF, pairing, API-free local build, and device removal', a
     if(item.name==='create_tree'&&item.parent==='StarterGui')assert.equal(command.data.input.tree.name,'QuruvchiMAXUI');
     if(item.name==='create_script'&&item.path.includes('UIController')){
       assert.equal(command.data.input.className,'LocalScript');
-      assert.match(command.data.input.source,/GetAttribute\\(\\"PanelKey\\"\\)/);
+      assert.ok(command.data.input.source.includes('GetAttribute("PanelKey")'));
     }
     if(item.name==='create_script'&&item.path.includes('GameplayAgent')){
       assert.ok(command.data.input.path.includes('QuruvchiAgents/GameplayAgent/FreeGame.server.lua'));
