@@ -38,8 +38,18 @@ function renderMessage(m){
     if(m.preview||m.details)wrap.append(node('div','tool-preview hidden',m.preview||m.details));return wrap;
   }
   const article=node('article','message message-'+(m.role||'assistant'));article.append(node('div','message-avatar',m.role==='user'?'M':m.role==='error'?'!':'Q'));
-  const body=node('div','message-body'),meta=node('div','message-meta');meta.append(node('strong','',m.role==='user'?'Sen':m.role==='error'?'Xatolik':'Quruvchi AI'));body.append(meta);
-  const text=node('div','message-text');safeMarkdown(text,m.text||'');body.append(text);article.append(body);return article;
+  const body=node('div','message-body'),meta=node('div','message-meta');meta.append(node('strong','',m.role==='user'?'Sen':m.role==='error'?'Xatolik':m.role==='choices'?'Tanlovlar':'Quruvchi AI'));body.append(meta);
+  if(m.role==='choices'){
+    body.append(node('p','message-text',m.text||'Keyingi qadamni tanla:'));
+    const options=node('div','choice-actions');
+    for(const option of (m.options||[])){
+      options.append(button(option.label,'builder-shortcut',()=>{if(state.busy)return;state.prompt=option.prompt;sendMessage();},state.busy));
+    }
+    body.append(options);
+  }else{
+    const text=node('div','message-text');safeMarkdown(text,m.text||'');body.append(text);
+  }
+  article.append(body);return article;
 }
 function render(){
   const oldScroll=root.querySelector('.chat-scroll');const oldScrollTop=oldScroll?oldScroll.scrollTop:0;
@@ -409,11 +419,11 @@ function connectStream(){
   if(stream)stream.close();stream=new EventSource('/api/stream');
   stream.addEventListener('status',e=>{try{state.status=JSON.parse(e.data);render();}catch{}});
   stream.addEventListener('state',e=>{try{const d=JSON.parse(e.data);state.busy=!!d.running;if(d.steps)state.steps=d.steps;state.paused=d.paused||null;render();}catch{}});
-  stream.addEventListener('message',e=>{try{const d=JSON.parse(e.data);if(d.kind==='user'||d.kind==='assistant')addMessage({id:d.id,role:d.kind,text:d.text});else if(d.kind==='tool')addMessage({id:d.id||d.toolId,role:'tool',name:d.name,summary:d.summary,text:(d.name||'Tool')+(d.summary?' · '+d.summary:'')});else if(d.kind==='tool_result')addMessage({id:d.id||('result-'+d.toolId+'-'+Date.now()),role:'tool_result',toolId:d.toolId,ok:d.ok,preview:d.preview,text:(d.ok?'✓ ':'✕ ')+(d.preview||'Tool natijasi')});else if(d.kind==='error'||d.kind==='pause')addMessage({id:d.id,role:'error',text:d.text||'Xatolik yuz berdi'});else if(d.kind==='info')addMessage({id:d.id,role:'assistant',text:d.text||''});}catch{}});
+  stream.addEventListener('message',e=>{try{const d=JSON.parse(e.data);if(d.kind==='user'||d.kind==='assistant')addMessage({id:d.id,role:d.kind,text:d.text});else if(d.kind==='tool')addMessage({id:d.id||d.toolId,role:'tool',name:d.name,summary:d.summary,text:(d.name||'Tool')+(d.summary?' · '+d.summary:'')});else if(d.kind==='tool_result')addMessage({id:d.id||('result-'+d.toolId+'-'+Date.now()),role:'tool_result',toolId:d.toolId,ok:d.ok,preview:d.preview,text:d.text||((d.ok?'✓ ':'✕ ')+(d.preview||'Tool natijasi'))});else if(d.kind==='choices')addMessage({id:d.id,role:'choices',text:d.text,options:d.options||[]});else if(d.kind==='error'||d.kind==='pause')addMessage({id:d.id,role:'error',text:d.text||'Xatolik yuz berdi'});else if(d.kind==='info')addMessage({id:d.id,role:'assistant',text:d.text||''});}catch{}});
   stream.addEventListener('pause',e=>{try{state.paused=JSON.parse(e.data);state.busy=false;render();}catch{}});
   stream.addEventListener('reset',()=>{state.messages=[];state.paused=null;render();});stream.onerror=()=>{};
 }
-async function sendMessage(){const input=root.querySelector('#prompt');const text=String(input?.value??state.prompt).trim();state.prompt=text;if(state.busy)return;if(!text){if(input)input.focus();addMessage({role:'error',text:'Avval o‘yin g‘oyangni yoz yoki yuqoridagi tayyor g‘oyalardan birini tanla. Keyin “Qurishni boshlash”ni bos.'});return;}try{const result=await api('/api/chat',{text});state.prompt='';state.paused=result.pause||state.paused;state.busy=!result.paused;render();}catch(error){if(error.status===412||error.data?.needPairing){openPair().then(()=>{state.notice='Avval Roblox Studio’ni ulang.';render();});}else if(error.status===503){addMessage({role:'error',text:'Quruvchi server so‘rovni qabul qilmadi: '+error.message+'. Server CMD oynasidagi xatoni tekshiring.'});}else if(error.data?.paused){state.paused=error.data.paused;addMessage({role:'error',text:error.message});render();}else addMessage({role:'error',text:error.message});}}
+async function sendMessage(){const input=root.querySelector('#prompt');const text=String(input&&input.value.trim()?input.value:state.prompt).trim();state.prompt=text;if(state.busy)return;if(!text){if(input)input.focus();addMessage({role:'error',text:'Avval o‘yin g‘oyangni yoz yoki yuqoridagi tayyor g‘oyalardan birini tanla. Keyin “Qurishni boshlash”ni bos.'});return;}try{const result=await api('/api/chat',{text});state.prompt='';state.paused=result.pause||state.paused;state.busy=!result.paused;render();}catch(error){if(error.status===412||error.data?.needPairing){openPair().then(()=>{state.notice='Avval Roblox Studio’ni ulang.';render();});}else if(error.status===503){addMessage({role:'error',text:'Quruvchi server so‘rovni qabul qilmadi: '+error.message+'. Server CMD oynasidagi xatoni tekshiring.'});}else if(error.data?.paused){state.paused=error.data.paused;addMessage({role:'error',text:error.message});render();}else addMessage({role:'error',text:error.message});}}
 async function resumeBuild(){
   if(state.busy||!state.paused)return;
   try{
