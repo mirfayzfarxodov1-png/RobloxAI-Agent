@@ -168,3 +168,11 @@ test('World Agent builds theme-aware worlds and adds optional systems from the f
   assert.ok(forest.children.some(child=>child.name==='ThemeDressing'));
   assert.ok(forest.children.some(child=>child.name==='Checkpoint5'));
 });
+
+test('local Luau generator applies requested theme colors and materials', () => {
+  const space = buildFreeProject('Kosmosdagi space adventure yarat');
+  assert.match(space.source, /theme: Metal/);
+  assert.match(space.source, /Color3.fromRGB\(27, 31, 55\)/);
+  const forest = buildFreeProject('Forest world yarat');
+  assert.match(forest.source, /theme: Grass/);
+});
