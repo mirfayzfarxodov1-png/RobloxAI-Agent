@@ -526,7 +526,7 @@ do
         local stats = player:FindFirstChild("leaderstats")
         if not stats then stats = Instance.new("Folder"); stats.Name = "leaderstats"; stats.Parent = player end
         local currency = stats:FindFirstChild("Coins") or stats:FindFirstChild("Cash")
-        if not currency then currency = Instance.new("IntValue"); currency.Name = "Coins"; currency.Value = 0; currency.Parent = stats end
+        if not currency then currency = Instance.new("IntValue"); currency.Name = "Coins"; currency.Value = 100; currency.Parent = stats end
         if currency.Value < 25 then return end
         local level = player:GetAttribute("QuruvchiSpeedLevel") or 0
         if level >= 5 then return end
@@ -552,7 +552,8 @@ do
         local ok, data = pcall(function() return store:GetAsync("u_" .. player.UserId) end)
         if not ok or type(data) ~= "table" then return end
         local stats = player:FindFirstChild("leaderstats")
-        if not stats then return end
+        if not stats then stats = Instance.new("Folder"); stats.Name = "leaderstats"; stats.Parent = player end
+        if not stats:FindFirstChild("Coins") and not stats:FindFirstChild("Cash") then local coins = Instance.new("IntValue"); coins.Name = "Coins"; coins.Value = 0; coins.Parent = stats end
         for _, name in ipairs({"Coins", "Cash", "Wins", "Stage"}) do
             local value = stats:FindFirstChild(name)
             if value and type(data[name]) == "number" then value.Value = math.max(0, math.floor(data[name])) end
