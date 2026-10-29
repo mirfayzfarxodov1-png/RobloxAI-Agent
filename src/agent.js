@@ -2,9 +2,9 @@ import crypto from 'node:crypto';
 import { config } from './config.js';
 import { db, currentConversation, saveMessage, getMessages, addUsage, getUsage, getTaskPause, setTaskPause, clearTaskPause } from './db.js';
 import { buildFreeProject } from './free-builder.js';
-import { auditGeneratedProject } from './agents/qa-agent.js';
-import { buildGameplayPlan } from './agents/gameplay-agent.js';
-import { scoutTools } from './agents/tool-scout.js';
+import { auditGeneratedProject } from './agents/qa/agent.js';
+import { buildGameplayPlan } from './agents/gameplay/agent.js';
+import { scoutTools } from './agents/tool-scout/agent.js';
 import { emit, sendCommand, statusForUser, setUserRunning, stateForUser } from './hub.js';
 
 const running = new Map();
