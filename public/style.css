@@ -719,3 +719,55 @@ svg,canvas,.avatar-3d-canvas,.world-canvas,.hero-mascot,.world-stage,.world-stag
  .paste-prompt-button,.send-button{min-height:42px}
  .auth-card-v2 .auth-tabs button{font-size:10px;padding-inline:5px}
 }
+
+
+/* Quruvchi auth repair — fix duplicate grid item and restore the visible brand mark. */
+.auth-page-v2{
+  width:100%!important;max-width:none!important;min-height:100svh;
+  grid-template-columns:minmax(360px,.86fr) minmax(0,1.14fr)!important;
+  grid-template-rows:auto minmax(0,1fr) auto!important;
+  align-items:center;gap:clamp(22px,4vw,64px)!important;
+  padding:20px clamp(22px,5vw,84px) 16px!important;
+}
+.auth-v2-topbar{grid-column:1/-1!important;grid-row:1!important}
+.auth-v2-visual{grid-column:2!important;grid-row:2!important;min-width:0}
+.auth-v2-copy{grid-column:2!important;grid-row:2!important;min-width:0}
+.auth-card-v2{grid-column:1!important;grid-row:2!important;justify-self:center!important;width:min(100%,460px)!important;min-width:0}
+.auth-v2-footer{grid-column:1/-1!important;grid-row:3!important}
+.auth-v2-brand-mark{
+  width:48px!important;height:48px!important;min-width:48px!important;
+  padding:0!important;overflow:visible!important;border:0!important;
+  border-radius:14px!important;background:transparent!important;
+  box-shadow:none!important;color:transparent!important;font-size:0!important;
+  display:grid!important;place-items:center!important;
+}
+.auth-v2-brand-mark svg{display:block!important;width:48px!important;height:48px!important;filter:none!important}
+.auth-card-v2>.brand-mark{
+  width:58px!important;height:58px!important;min-width:58px!important;
+  padding:0!important;margin:0 auto 12px!important;overflow:visible!important;
+  border:0!important;border-radius:16px!important;background:transparent!important;
+  box-shadow:none!important;
+}
+.auth-card-v2>.brand-mark svg{display:block!important;width:58px!important;height:58px!important;filter:none!important}
+.auth-card-v2>.brand-mark svg path:first-child,.auth-v2-brand-mark svg path:first-child{fill:#9f9aff!important}
+.auth-card-v2>.brand-mark svg path:last-child,.auth-v2-brand-mark svg path:last-child{fill:#f3d77b!important}
+.auth-card-v2 .auth-tabs{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:6px!important}
+.auth-card-v2 .auth-tabs button{min-width:0!important;padding-inline:8px!important;white-space:normal!important;line-height:1.3}
+.auth-card-v2 .form-label input{width:100%!important;min-width:0!important}
+.auth-v2-copy .auth-visual-title,.auth-v2-gradient-title{overflow-wrap:anywhere}
+@media(max-width:760px){
+ .auth-page-v2{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto auto auto auto!important;gap:12px!important;padding:14px!important}
+ .auth-v2-topbar{grid-column:1!important;grid-row:1!important}
+ .auth-v2-visual{grid-column:1!important;grid-row:2!important;width:100%;height:clamp(230px,58vw,360px)!important;min-height:230px!important}
+ .auth-v2-copy{grid-column:1!important;grid-row:2!important;width:min(64%,360px)!important;margin:18px 0 0 12px!important}
+ .auth-card-v2{grid-column:1!important;grid-row:3!important;width:min(100%,460px)!important;padding:clamp(18px,5vw,28px)!important}
+ .auth-v2-footer{grid-column:1!important;grid-row:4!important}
+}
+@media(max-width:420px){
+ .auth-page-v2{padding:10px!important}
+ .auth-v2-brand-mark,.auth-v2-brand-mark svg{width:40px!important;height:40px!important;min-width:40px!important}
+ .auth-v2-copy{width:60%!important;margin:14px 0 0 8px!important}
+ .auth-v2-copy .auth-visual-title,.auth-v2-gradient-title{font-size:clamp(24px,7vw,30px)!important;letter-spacing:-1px!important}
+ .auth-v2-copy .auth-visual-description{font-size:10px!important}
+ .auth-card-v2 .auth-tabs button{font-size:10px!important;padding-inline:4px!important}
+}
