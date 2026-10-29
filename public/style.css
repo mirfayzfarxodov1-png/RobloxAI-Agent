@@ -456,3 +456,6 @@ button,a{touch-action:manipulation}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+
+.v2-side-link>svg{width:18px;height:18px;flex:0 0 18px}
+.v2-floating-trigger>svg{width:29px;height:29px;display:block}
