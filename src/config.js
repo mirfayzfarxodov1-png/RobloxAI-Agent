@@ -19,18 +19,12 @@ export const config = Object.freeze({
   port: number('PORT', 3000, 1, 65535),
   dataDir: path.resolve(process.env.DATA_DIR || './data'),
   publicUrl: parsedUrl.origin,
-  anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
-  anthropicBaseUrl: (process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com').replace(/\/+$/, ''),
-  claudeModel: process.env.CLAUDE_MODEL || 'claude-sonnet-5',
   maxTokens: number('MAX_TOKENS', 12000, 256, 64000),
   dailyStepLimit: number('DAILY_STEP_LIMIT', 500, 1, 10000),
   maxSteps: number('MAX_STEPS', 120, 1, 500),
   commandTimeoutMs: number('COMMAND_TIMEOUT_MS', 60000, 1000, 300000),
-  apiTimeoutMs: number('API_TIMEOUT_MS', 90000, 1000, 300000),
   cookieSecure: process.env.COOKIE_SECURE === 'true' || (process.env.NODE_ENV === 'production' && process.env.COOKIE_SECURE !== 'false'),
   trustProxy: process.env.TRUST_PROXY === 'true',
   isTest: process.env.NODE_ENV === 'test',
   registrationInvite: process.env.INVITE_CODE || '',
 });
-console.info('[Quruvchi] Tashqi AI faqat foydalanuvchi sozlamada API kalitini ixtiyoriy ulaganda ishlaydi.');
-if (!config.isTest && !process.env.CLAUDE_MODEL) console.warn('[Quruvchi] CLAUDE_MODEL was not set; using configured default claude-sonnet-5.');
