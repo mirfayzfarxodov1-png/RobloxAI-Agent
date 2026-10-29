@@ -3,10 +3,15 @@ import assert from 'node:assert/strict';
 import { buildFreeProject } from '../src/free-builder.js';
 
 test('API-free builder chooses an obby starter for Uzbek parkur requests', () => {
-  const project = buildFreeProject('Menga 24 bosqichli parkur va checkpoint yarat');
+  const project = buildFreeProject('Menga 30 bosqichli obby, checkpoint, timer, mukofot, leaderboard va mobilga mos UI yarat');
   assert.equal(project.kind, 'obby');
   assert.equal(project.level, 1);
+  assert.match(project.source, /STAGE_COUNT = 30/);
   assert.match(project.source, /Checkpoint/);
+  assert.match(project.source, /BestTime/);
+  assert.match(project.source, /QuruvchiObbyHUD/);
+  assert.match(project.source, /Coins/);
+  assert.match(project.source, /100 Coins/);
   assert.equal(project.path, 'ServerScriptService/QuruvchiFreeBuilder/FreeGame.server.lua');
   assert.ok(project.source.length > 1000);
 });
