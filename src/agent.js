@@ -130,7 +130,8 @@ async function runFreeTask(userId, task, prompt) {
   const results = [];
   const commands = [
     { name:'create_tree', summary:'World Agent — xarita va 3D obyektlar', input:{ parent:'Workspace', tree:project.sceneTree } },
-    { name:'create_tree', summary:'UI Agent — o‘yin ichidagi HUD va ishlaydigan panellar', input:{ parent:'StarterGui', tree:project.uiTree } },
+    { name:'create_tree', summary:'UI Agent — o‘yin ichidagi HUD va panellar', input:{ parent:'StarterGui', tree:project.uiTree } },
+    { name:'create_script', summary:'UI Agent — tugmalar va panellar uchun LocalScript', input:{ path:'StarterGui/QuruvchiMAXUI/UIController.client.lua', className:'LocalScript', source:project.uiSource } },
     { name:'create_script', summary:'Gameplay Agent — o‘yin mexanikasi', input:{ path:project.path, className:'Script', source:project.source } },
     { name:'audit_project', summary:'QA Agent — Studio loyihasini tekshirish', input:{ path:'game', maxNodes:8000 } },
     { name:'get_logs', summary:'QA Agent — Studio Output jurnalini tekshirish', input:{ limit:60, onlyErrors:true } }
@@ -156,7 +157,7 @@ async function runFreeTask(userId, task, prompt) {
     emitText(userId, block);
     return;
   }
-  const done = textBlock('## Quruvchi MAX — qurish yakunlandi\n- World Agent: Workspace/QuruvchiFreeWorld ichiga xarita joylandi.\n- UI Agent: StarterGui/QuruvchiMAXUI va ishlaydigan panel tugmalari qo‘shildi.\n- Gameplay Agent: '+project.path+' ichiga skript joylandi.\n- QA Agent: Studio audit va Output jurnali tekshirildi.\n- Tool Scout: bepul Studio vositalari ustun qo‘yildi; uchinchi tomon assetlari avtomatik va ruxsatsiz kiritilmadi.\n\nEndi **Play** bosib o‘yin ichida tekshir.');
+  const done = textBlock('## Quruvchi MAX — qurish yakunlandi\n- World Agent: Workspace/QuruvchiFreeWorld ichiga xarita joylandi.\n- UI Agent: StarterGui/QuruvchiMAXUI va alohida UIController LocalScript qo‘shildi.\n- Gameplay Agent: '+project.path+' ichiga skript joylandi.\n- QA Agent: Studio audit va Output jurnali tekshirildi.\n- Tool Scout: bepul Studio vositalari ustun qo‘yildi; uchinchi tomon assetlari avtomatik va ruxsatsiz kiritilmadi.\n\nEndi **Play** bosib o‘yin ichida tekshir.');
   saveMessage(task.conversationId, 'assistant', done);
   emitText(userId, done);
   emit(userId, 'message', {
