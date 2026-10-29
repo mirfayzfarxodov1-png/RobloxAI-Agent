@@ -459,3 +459,79 @@ button,a{touch-action:manipulation}
 
 .v2-side-link>svg{width:18px;height:18px;flex:0 0 18px}
 .v2-floating-trigger>svg{width:29px;height:29px;display:block}
+
+
+/* Quruvchi monochrome redesign + Super Lab */
+:root{color-scheme:dark;--bg:#080808;--bg2:#101010;--panel:#151515;--panel2:#1c1c1c;--line:#303030;--text:#f7f7f7;--muted:#a6a6a6;--accent:#f5f5f5;--accent2:#cfcfcf;--brand:#fff;--brand-ink:#080808;--shadow:0 24px 80px #0009}
+html,body{background:#080808!important;color:#f7f7f7!important}
+body{background-image:radial-gradient(ellipse at 52% -12%,#ffffff0d,transparent 45%)!important}
+.app-shell{background:transparent!important}
+.sidebar,.topbar,.chat-panel,.message,.modal-card,.auth-card,.auth-card-v2,.v2-panel{background:#0d0d0d!important;border-color:#292929!important}
+.sidebar{box-shadow:1px 0 0 #ffffff08}
+.brand-mark,.brand-row .brand-mark,.auth-card-v2>.brand-mark{background:#f5f5f5!important;border-color:#fff!important;box-shadow:0 0 0 4px #ffffff0b!important}
+.brand-mark svg{filter:grayscale(1) contrast(1.2)}
+.brand-mark svg path{fill:#080808!important}
+button,.side-link,.suggestion-card,.builder-shortcut,.icon-button{transition:background .18s ease,border-color .18s ease,transform .18s ease,opacity .18s ease}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid #fff!important;outline-offset:3px}
+.primary-button,.v2-primary,.new-chat,.super-primary{background:#f5f5f5!important;color:#080808!important;border:1px solid #fff!important;font-weight:750!important;box-shadow:0 5px 22px #ffffff12!important}
+.primary-button:hover,.v2-primary:hover,.super-primary:hover{background:#dcdcdc!important;transform:translateY(-1px)}
+.side-link.active,.side-link:hover,.suggestion-card:hover,.builder-shortcut:hover{background:#202020!important;border-color:#555!important;color:#fff!important}
+.side-link.active:before{background:#fff!important}
+.topbar{backdrop-filter:blur(18px);background:#090909e8!important}
+input,textarea,select,.prompt-input,.chat-input{background:#101010!important;color:#f5f5f5!important;border-color:#333!important}
+::selection{background:#fff;color:#000}
+.badge,.tiny-status.online{filter:grayscale(1)}
+.v2-floating-trigger{background:#f5f5f5!important;color:#080808!important;border-color:#fff!important;box-shadow:0 12px 35px #000!important}
+.v2-floating-trigger svg{filter:grayscale(1) brightness(.2)}
+.v2-panel{background:#0b0b0b!important;color:#f5f5f5!important;border:1px solid #383838!important}
+.v2-tabs button.active{background:#f2f2f2!important;color:#090909!important}
+.v2-phase,.v2-tool-output,.v2-result,.v2-field textarea{background:#111!important;border-color:#333!important}
+.super-suite-link{border:1px solid #444!important;background:#151515!important;color:#fff!important}
+.super-suite-link:hover{background:#272727!important}
+.super-suite-fab{position:fixed;right:24px;bottom:24px;z-index:90;width:54px;height:54px;border-radius:50%;border:1px solid #fff;background:#f7f7f7;color:#080808;font-size:25px;font-weight:800;box-shadow:0 10px 40px #000b;cursor:pointer}
+.super-suite-fab:hover{transform:translateY(-3px);background:#ddd}
+.super-suite-backdrop{position:fixed;inset:0;z-index:9999;background:#000b;backdrop-filter:blur(10px);display:grid;place-items:center;padding:18px}
+.super-suite-panel{width:min(1040px,100%);max-height:min(90vh,900px);display:flex;flex-direction:column;background:#0b0b0b;color:#f5f5f5;border:1px solid #383838;border-radius:22px;box-shadow:0 35px 100px #000d;overflow:hidden}
+.super-suite-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:24px 26px 18px;border-bottom:1px solid #282828;background:linear-gradient(125deg,#171717,#0b0b0b 70%)}
+.super-kicker{display:block;color:#aaa;font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}
+.super-suite-head h2{margin:8px 0 5px;font-size:clamp(22px,3vw,30px);letter-spacing:-.04em}
+.super-suite-head p,.super-muted{color:#aaa;line-height:1.6;font-size:13px}
+.super-suite-head p{margin:0}
+.super-close{flex:0 0 38px;width:38px;height:38px;border-radius:12px;background:#171717;color:#fff;border:1px solid #393939;font-size:22px;cursor:pointer}
+.super-tabs{display:flex;gap:7px;padding:13px 22px;overflow-x:auto;border-bottom:1px solid #292929}
+.super-tabs button{flex:0 0 auto;background:transparent;color:#aaa;border:1px solid transparent;border-radius:10px;padding:10px 13px;font-size:12px;font-weight:700;cursor:pointer}
+.super-tabs button.active{background:#f5f5f5;color:#080808;border-color:#fff}
+.super-body{padding:22px 26px 26px;overflow:auto;overscroll-behavior:contain}
+.super-body>.super-muted{margin-top:0}
+.super-field{display:flex;flex-direction:column;gap:8px;margin:15px 0;color:#ddd;font-size:12px;font-weight:700}
+.super-field textarea{width:100%;resize:vertical;min-height:44px;padding:12px 13px;border-radius:12px;border:1px solid #333;background:#111;color:#f5f5f5;font:13px/1.55 inherit;box-sizing:border-box}
+.super-field textarea:focus,.super-select:focus{border-color:#eee;outline:1px solid #eee}
+.super-actions{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0 20px}
+.super-primary,.super-secondary,.super-quiet{border-radius:10px;padding:10px 13px;cursor:pointer;font-size:12px;font-weight:750}
+.super-secondary{background:#171717;color:#f4f4f4;border:1px solid #444}
+.super-secondary:hover{background:#292929;border-color:#666}
+.super-quiet{background:transparent;color:#aaa;border:1px solid #333}
+.super-quiet:hover{color:#fff;background:#222}
+.super-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+.super-card{min-width:0;padding:16px;border:1px solid #303030;background:linear-gradient(145deg,#151515,#0e0e0e);border-radius:14px;overflow-wrap:anywhere}
+.super-card strong{display:block;font-size:13px;line-height:1.5;margin:7px 0}
+.super-card p{font-size:12px;line-height:1.55;color:#aaa}
+.super-card a{color:#f5f5f5;text-decoration:underline;font-size:12px;margin-right:12px}
+.super-card button{margin:12px 6px 0 0}
+.super-diff{white-space:pre-wrap;max-height:240px;overflow:auto;padding:12px;border:1px solid #333;border-radius:10px;background:#080808;color:#eee;font:12px/1.6 ui-monospace,monospace}
+.super-status{margin:0;padding:12px 24px;border-top:1px solid #292929;color:#c8c8c8;font-size:12px;background:#101010}
+.super-test-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.super-select{max-width:170px;padding:9px;background:#101010;color:#eee;border:1px solid #3b3b3b;border-radius:9px}
+.super-summary{padding:13px 15px;background:#161616;border:1px solid #333;border-radius:12px;font-size:12px;line-height:1.6;margin:12px 0}
+.super-range{display:block;margin:18px 0;padding:14px 15px;border:1px solid #303030;border-radius:13px;background:#101010}
+.super-range-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;font-size:12px;color:#ddd}
+.super-range-head strong{color:#fff;font-variant-numeric:tabular-nums}
+.super-range input{width:100%;accent-color:#fff}
+.super-economy-result{margin-top:20px;padding:18px;border:1px solid #393939;border-radius:14px;background:#101010}
+.super-economy-result h3{margin-top:0}
+.super-economy-result p{color:#ccc;font-size:13px;line-height:1.5}
+.super-economy-table{margin-top:14px;display:grid;gap:5px}
+.super-economy-row{display:grid;grid-template-columns:.6fr 1fr 1.2fr;gap:10px;padding:10px;border-bottom:1px solid #292929;font-size:11px;color:#bbb}
+.super-economy-row strong{color:#fff}
+@media(max-width:680px){.super-suite-backdrop{padding:0;place-items:stretch}.super-suite-panel{width:100%;height:100%;max-height:100vh;border-radius:0;border-left:0;border-right:0}.super-suite-head{padding:19px 17px 14px}.super-tabs{padding:10px 12px}.super-body{padding:16px 15px 22px}.super-list{grid-template-columns:1fr}.super-suite-fab{right:14px;bottom:14px;width:48px;height:48px}.super-test-row{align-items:flex-start;flex-direction:column}.super-select{max-width:none;width:100%}.super-economy-row{grid-template-columns:.7fr 1fr 1fr}}
+@media(prefers-reduced-motion:reduce){.super-suite-fab,button{transition:none!important}}
