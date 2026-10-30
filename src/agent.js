@@ -6,6 +6,7 @@ import { auditGeneratedProject } from './agents/qa/agent.js';
 import { buildGameplayPlan } from './agents/gameplay/agent.js';
 import { scoutTools } from './agents/tool-scout/agent.js';
 import { emit, sendCommand, statusForUser, setUserRunning, stateForUser } from './hub.js';
+import { buildStudioCommandPlan, executeStudioCommandPlan } from './integration/studio-bridge.js';
 
 const running = new Map();
 
@@ -130,26 +131,21 @@ async function runFreeTask(userId, task, prompt) {
   emitText(userId, assistantContent);
   if (signal.aborted) return;
 
-  const results = [];
-  const commands = [
-    { name:'create_tree', summary:'World Agent — xarita va 3D obyektlar', input:{ parent:'Workspace', tree:project.sceneTree } },
-    { name:'create_tree', summary:'UI Agent — o‘yin ichidagi HUD va panellar', input:{ parent:'StarterGui', tree:project.uiTree } },
-    { name:'create_script', summary:'UI Agent — tugmalar va panellar uchun LocalScript', input:{ path:'StarterGui/QuruvchiMAXUI/UIController.client.lua', className:'LocalScript', source:project.uiSource } },
-    { name:'create_script', summary:'Gameplay Agent — o‘yin mexanikasi', input:{ path:project.path, className:'Script', source:gameplayPlan.source } },
-    { name:'audit_project', summary:'QA Agent — Studio loyihasini tekshirish', input:{ path:'game', maxNodes:8000 } },
-    { name:'get_logs', summary:'QA Agent — Studio Output jurnalini tekshirish', input:{ limit:60, onlyErrors:true } }
-  ];
-  for (const command of commands) {
-    if (signal.aborted) return;
-    const toolId = crypto.randomUUID();
-    emit(userId, 'message', { id:toolId, kind:'tool', toolId, name:command.name, summary:command.summary });
-    sendState(userId, task.conversationId);
-    const result = await sendCommand(userId, command.name, command.input, signal);
-    const output = String(result.output || '');
-    results.push({ ...result, name:command.name, summary:command.summary });
-    saveMessage(task.conversationId, 'user', [{ type:'tool_result', tool_use_id:toolId, is_error:!result.ok, content:output.slice(0,20000) }]);
-    emit(userId, 'message', { id:crypto.randomUUID(), kind:'tool_result', toolId, ok:!!result.ok, text:command.summary, preview:output.slice(0,500) });
-  }
+  const commands = buildStudioCommandPlan(project, gameplayPlan);
+  const results = await executeStudioCommandPlan({
+    userId,
+    commands,
+    signal,
+    sendCommand,
+    onCommand(command, toolId) {
+      emit(userId, 'message', { id:toolId, kind:'tool', toolId, name:command.name, summary:command.summary });
+      sendState(userId, task.conversationId);
+    },
+    onResult({ command, toolId, result, output }) {
+      saveMessage(task.conversationId, 'user', [{ type:'tool_result', tool_use_id:toolId, is_error:!result.ok, content:output.slice(0,20000) }]);
+      emit(userId, 'message', { id:crypto.randomUUID(), kind:'tool_result', toolId, ok:!!result.ok, text:command.summary, preview:output.slice(0,500) });
+    }
+  });
   addUsage(userId, commands.length, 0, 0);
   if (signal.aborted) return;
   const failed = results.filter(result => !result.ok);
