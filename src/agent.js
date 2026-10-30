@@ -146,8 +146,8 @@ async function runFreeTask(userId, task, prompt) {
       emit(userId, 'message', { id:crypto.randomUUID(), kind:'tool_result', toolId, ok:!!result.ok, text:command.summary, preview:output.slice(0,500) });
     }
   });
-  addUsage(userId, commands.length, 0, 0);
   if (signal.aborted) return;
+  addUsage(userId, commands.length, 0, 0);
   const failed = results.filter(result => !result.ok);
   if (failed.length) {
     const details = failed.map(result => '- **'+result.summary+'**: '+(result.output||'noma’lum xato').slice(0,500)).join('\n');
