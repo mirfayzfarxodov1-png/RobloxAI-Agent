@@ -1,5 +1,5 @@
 /**
- * QURUVCHI QA ENGINE — ANALYZER
+ * QURuvchi QA ENGINE — ANALYZER
  * Normalizes supplied project files and delegates static audit to the QA Agent.
  */
 import { runQAAudit, createGameplayTestPlan, getQAAgentInfo } from '../agent.js';
@@ -10,8 +10,9 @@ const LIMITS = Object.freeze({ files: 2000, fileSize: 500000, totalSize: 2000000
 
 export function normalizeQAProject(input = {}) {
   const files = (Array.isArray(input.files) ? input.files : []).slice(0, LIMITS.files).filter(isObject).map(file => {
-    const source = typeof file.source === 'string' ? file.source : typeof file.content === 'string' ? file.content : '';
-    return { path: clean(file.path || file.name || 'Unknown.lua'), source, size: source.length, agent: clean(file.agent || 'unknown', 80) };
+    const content = typeof file.content === 'string' ? file.content : typeof file.source === 'string' ? file.source : '';
+    const boundedContent = content.slice(0, LIMITS.fileSize);
+    return { path: clean(file.path || file.name || 'Unknown.lua'), content: boundedContent, source: boundedContent, size: boundedContent.length, agent: clean(file.agent || 'unknown', 80), type: clean(file.type || '', 40) };
   });
   return { ...input, files, requirements: Array.isArray(input.requirements) ? input.requirements.slice(0, 500) : [], features: Array.isArray(input.features) ? input.features.slice(0, 500) : [] };
 }
@@ -32,4 +33,4 @@ export function analyzeQAProject(input = {}) {
   return { ok: findings.every(item => item.severity !== 'error') && Boolean(report), status: report?.status || 'blocked', project: { name: clean(project.name || 'Untitled Project'), files: project.files.length, totalSize }, report, testPlan, findings, execution: { staticAuditOnly: true, studioPlaytestPerformed: false } };
 }
 
-export function getQAAnalyzerInfo() { return { name: 'QA Engine Analyzer', version: '1.0.0', sourceAgent: getQAAgentInfo().name, limits: { ...LIMITS }, capabilities: ['file normalization','project inventory','static QA delegation','test plan generation','bounded input checks'] }; }
+export function getQAAnalyzerInfo() { return { name: 'QA Engine Analyzer', version: '1.0.1', sourceAgent: getQAAgentInfo().name, limits: { ...LIMITS }, capabilities: ['file normalization','project inventory','static QA delegation','test plan generation','bounded input checks'] }; }
