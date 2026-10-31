@@ -1322,10 +1322,12 @@ export function auditGeneratedProject(project = {}) {
     }
     const report = runQAAudit({ ...project, files });
     const errors = report.issues.filter(issue => issue.severity === 'critical' || issue.severity === 'error');
+    const countNodes = (node) => 1 + (Array.isArray(node?.children) ? node.children.reduce((sum, child) => sum + countNodes(child), 0) : 0);
     return {
         ok: errors.length === 0,
         errors: errors.map(issue => issue.title + ': ' + issue.description),
         warnings: report.issues.filter(issue => issue.severity === 'warning'),
+        nodeCount: project.sceneTree ? countNodes(project.sceneTree) : 0,
         report
     };
 }
