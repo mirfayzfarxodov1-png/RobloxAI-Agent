@@ -2420,11 +2420,12 @@ export function buildWorldScene(options = {}) {
     const stages = Math.round(clamp(counts.stages ?? 30, 1, 100));
     const collectibles = Math.round(clamp(counts.collectibles ?? 30, 1, 250));
     const plots = Math.round(clamp(counts.plots ?? 4, 1, 24));
-    const theme = detectBiome(prompt);
+    const theme = /space|cosmic|cosmos|kosmos|galaxy|galaktika/i.test(prompt) ? 'space' : detectBiome(prompt);
+    const nativeBiome = theme === 'space' ? 'fantasy' : theme;
     // Build the native blueprint and serialize its hierarchy directly.
     // The Free Builder only needs the tree here; Luau generation is handled
     // by the gameplay builder and must not block on unrelated material checks.
-    const world = generateWorld({ name: 'QuruvchiFreeWorld', prompt, biome: theme, seed: 2026,
+    const world = generateWorld({ name: 'QuruvchiFreeWorld', prompt, biome: nativeBiome, seed: 2026,
         worldSize: { x: 1024, z: 1024 }, buildings: { count: 8 }, vegetation: { trees: 80, density: 0.25 } });
     const nativeTree = createWorldInstanceTree(world);
     const children = nativeTree.children.map(node => ({ ...node }));
@@ -2442,14 +2443,23 @@ export function buildWorldScene(options = {}) {
     children.push(folder('InteractionPoints', [part('WorldInteractionPoint', 12, 12)]));
     if (/forest|o‘rmon|orman|daraxt/i.test(prompt)) children.push(folder('ThemeDressing', [part('ForestThemeMarker', 24, 24)]));
     if (kind === 'obby') {
-        const nodes = [];
+        const nodes = [
+            { name: 'StartSpawn', className: 'SpawnLocation', properties: { Position: { Vector3: [0, 3, 0] }, Size: { Vector3: [14, 1, 14] }, Anchored: true } }
+        ];
         for (let i = 1; i <= stages; i++) {
             const row = Math.floor((i - 1) / 6), col = (i - 1) % 6;
-            nodes.push(part('JumpPlatform' + i, (row % 2 ? 5 - col : col) * 18, (row + 1) * 20, { Stage: i }));
-            if (i % 5 === 0) nodes.push(part('Checkpoint' + i, (row % 2 ? 5 - col : col) * 18, (row + 1) * 20, { CheckpointIndex: i }));
-            if (i === 3) nodes.push(part('StageMarker3', 36, 20));
+            const platform = part('JumpPlatform' + i, (row % 2 ? 5 - col : col) * 18, (row + 1) * 20, { Stage: i });
+            nodes.push(platform);
+            children.push(platform);
+            if (i % 5 === 0) {
+                const checkpoint = part('Checkpoint' + i, (row % 2 ? 5 - col : col) * 18, (row + 1) * 20, { CheckpointIndex: i });
+                nodes.push(checkpoint);
+                children.push(checkpoint);
+            }
+            if (i === 3) { const stageMarker = part('StageMarker3', 36, 20); nodes.push(stageMarker); children.push(stageMarker); }
         }
         nodes.push(part('FinishPlatform', 0, (Math.ceil(stages / 6) + 1) * 20), part('SideRailLeft', -12, 30), part('SideRailRight', 102, 30));
+        children.push(part('SideRailLeft', -12, 30), part('SideRailRight', 102, 30));
         children.push(folder('ObbyCourse', nodes));
     } else if (kind === 'simulator') {
         children.push(folder('Collectibles', Array.from({ length: collectibles }, (_, i) => part('Collectible_' + (i + 1), (i % 15) * 12, Math.floor(i / 15) * 12))));
