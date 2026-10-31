@@ -2466,9 +2466,11 @@ export function buildWorldScene(options = {}) {
     } else if (kind === 'simulator') {
         children.push(folder('Collectibles', Array.from({ length: collectibles }, (_, i) => part('Collectible_' + (i + 1), (i % 15) * 12, Math.floor(i / 15) * 12))));
     } else if (kind === 'tycoon') {
+        const claimPads = Array.from({ length: plots }, (_, i) => part('ClaimPad_' + (i + 1), i * 55, 0));
         const plotNodes = Array.from({ length: plots }, (_, i) => ({
-            name: 'Plot_' + (i + 1), className: 'Model', children: [part('ClaimPad_' + (i + 1), i * 55, 0)]
+            name: 'Plot_' + (i + 1), className: 'Model', children: [claimPads[i]]
         }));
+        children.push(...claimPads);
         children.push(...plotNodes);
         children.push(folder('TycoonPlots', plotNodes));
     }
