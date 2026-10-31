@@ -4,11 +4,11 @@
  * It does not execute generated Luau, install tools, mutate Studio, or claim Play-test success.
  */
 import { buildFreeProject } from '../../free-builder.js';
-import { runWorldEngine } from '../world/engine/index.js';
-import { runUIEngine } from '../ui/engine/index.js';
-import { buildGameplayPlan, getGameplayAgentInfo } from '../gameplay/engine/index.js';
-import { runToolScoutEngine } from '../tool-scout/engine/index.js';
-import { runQAEngine } from '../qa/engine/index.js';
+import { runWorldEngine, runWorldEngineDiagnostics } from '../world/engine/index.js';
+import { runUIEngine, runUIEngineDiagnostics } from '../ui/engine/index.js';
+import { buildGameplayPlan, getGameplayAgentInfo, runGameplayEngineDiagnostics } from '../gameplay/engine/index.js';
+import { runToolScoutEngine, runToolScoutEngineDiagnostics } from '../tool-scout/engine/index.js';
+import { runQAEngine, runQAEngineDiagnostics } from '../qa/engine/index.js';
 
 const clean = (value, max = 30000) => String(value ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, max);
 const list = value => Array.isArray(value) ? value : [];
@@ -59,5 +59,20 @@ export async function runMultiAgentEngine(input = {}) {
     gameplayAgent: getGameplayAgentInfo()
   };
 }
-export function getMultiAgentEngineInfo() { return { name: 'Quruvchi Multi-Agent Engine Hub', version: '1.0.2', agents: ['World Engine','UI Engine','Gameplay Engine','Tool Scout Engine','QA Engine'], integration: 'adapter-only', changesOriginalAgentFiles: false, executesLuau: false, mutatesStudio: false, requiresStudioPlaytest: true }; }
-export default Object.freeze({ run: runMultiAgentEngine, getInfo: getMultiAgentEngineInfo });
+export function runMultiAgentEngineDiagnostics() {
+  const engines = [
+    ['world', runWorldEngineDiagnostics],
+    ['ui', runUIEngineDiagnostics],
+    ['gameplay', runGameplayEngineDiagnostics],
+    ['toolScout', runToolScoutEngineDiagnostics],
+    ['qa', runQAEngineDiagnostics]
+  ];
+  const results = engines.map(([name, diagnose]) => {
+    try { return { name, ...diagnose() }; }
+    catch (error) { return { name, ok: false, status: 'failed', error: clean(error?.message || error, 1000) }; }
+  });
+  const failed = results.filter(item => item.ok !== true).length;
+  return { name: 'Quruvchi Multi-Agent Engine Hub', version: '1.1.0', ok: failed === 0, status: failed ? 'degraded' : 'healthy', summary: { engines: results.length, passed: results.length - failed, failed }, engines: results, execution: { studioMutated: false, luauExecuted: false, playtestPerformed: false }, timestamp: new Date().toISOString() };
+}
+export function getMultiAgentEngineInfo() { return { name: 'Quruvchi Multi-Agent Engine Hub', version: '1.1.0', agents: ['World Engine','UI Engine','Gameplay Engine','Tool Scout Engine','QA Engine'], capabilities: ['parallel-safe specialist health checks','cross-agent status aggregation','bounded project handoff','static QA handoff'], integration: 'adapter-only', changesOriginalAgentFiles: false, executesLuau: false, mutatesStudio: false, requiresStudioPlaytest: true }; }
+export default Object.freeze({ run: runMultiAgentEngine, diagnostics: runMultiAgentEngineDiagnostics, getInfo: getMultiAgentEngineInfo });
