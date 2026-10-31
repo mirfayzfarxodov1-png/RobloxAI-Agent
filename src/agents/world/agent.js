@@ -2466,9 +2466,11 @@ export function buildWorldScene(options = {}) {
     } else if (kind === 'simulator') {
         children.push(folder('Collectibles', Array.from({ length: collectibles }, (_, i) => part('Collectible_' + (i + 1), (i % 15) * 12, Math.floor(i / 15) * 12))));
     } else if (kind === 'tycoon') {
-        children.push(folder('TycoonPlots', Array.from({ length: plots }, (_, i) => ({
+        const plotNodes = Array.from({ length: plots }, (_, i) => ({
             name: 'Plot_' + (i + 1), className: 'Model', children: [part('ClaimPad_' + (i + 1), i * 55, 0)]
-        }))));
+        }));
+        children.push(...plotNodes);
+        children.push(folder('TycoonPlots', plotNodes));
     }
     return { name: 'QuruvchiFreeWorld', className: 'Folder',
         attributes: { GameKind: kind, ProjectTitle: title, WorldTheme: theme }, children };
