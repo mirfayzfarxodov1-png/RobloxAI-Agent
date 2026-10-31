@@ -2460,6 +2460,7 @@ export function buildWorldScene(options = {}) {
             if (i === 3) { const stageMarker = part('StageMarker3', 36, 20); nodes.push(stageMarker); children.push(stageMarker); }
         }
         nodes.push(part('FinishPlatform', 0, (Math.ceil(stages / 6) + 1) * 20), part('SideRailLeft', -12, 30), part('SideRailRight', 102, 30));
+        children.push(part('FinishPlatform', 0, (Math.ceil(stages / 6) + 1) * 20));
         children.push(part('SideRailLeft', -12, 30), part('SideRailRight', 102, 30));
         children.push(folder('ObbyCourse', nodes));
     } else if (kind === 'simulator') {
