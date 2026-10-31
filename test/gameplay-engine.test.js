@@ -43,13 +43,13 @@ test('facade preserves V2 fields and adds an engine blueprint', () => {
   const plan = buildGameplayPlan({ kind: 'world', source: '', path: '' });
   assert.equal(typeof plan.ok, 'boolean');
   assert.equal(typeof plan.source, 'string');
-  assert.equal(plan.engine.version, '1.0.0');
+  assert.equal(plan.engine.version, '2.0.0');
   assert.ok(plan.engine.blueprint.layers.length >= 5);
 });
 
 test('agent info keeps V2 version and reports the new engine', () => {
   const info = getGameplayAgentInfo();
   assert.equal(info.version, '2.0.0');
-  assert.equal(info.engineVersion, '1.0.0');
+  assert.equal(info.engineVersion, '2.0.0');
   assert.ok(info.engineModules.includes('analyzer.js'));
 });
