@@ -26,7 +26,7 @@ test('blueprint maps requested gameplay features to modules', () => {
   assert.ok(result.modules.includes('PetService'));
   assert.ok(result.modules.includes('CurrencyService'));
   assert.equal(result.remoteContract.serverOwnsRewards, true);
-  assert.equal(result.persistence.enabled, false);
+  assert.equal(result.persistence.enabled, true); // Currency state requires persistence.
 });
 
 test('validator includes failed legacy checks', () => {
