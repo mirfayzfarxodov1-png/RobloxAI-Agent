@@ -334,6 +334,9 @@ end
 
 local plots = {}
 local owners = {}
+local purchasePads = {}
+local droppers = {}
+local purchased = {}
 local function setupPlayer(player)
     local stats = player:FindFirstChild("leaderstats")
     if not stats then stats = Instance.new("Folder"); stats.Name = "leaderstats"; stats.Parent = player end
@@ -349,6 +352,32 @@ for i = 1, 4 do
     plot:SetAttribute("OwnerUserId", 0)
     plots[i] = plot
     local pad = part("ClaimPad_" .. i, Vector3.new(8, 1, 8), Vector3.new(x, 2, 0), Color3.fromRGB(80, 220, 130), Enum.Material.Neon)
+    local purchasePad = part("PurchasePad_" .. i, Vector3.new(9, 1, 9), Vector3.new(x, 2, 14), Color3.fromRGB(255, 190, 65), Enum.Material.Neon)
+    purchasePad:SetAttribute("Price", 50)
+    purchasePad.CanTouch = false
+    purchasePads[i] = purchasePad
+    purchasePad.Touched:Connect(function(hit)
+        local character = hit:FindFirstAncestorOfClass("Model")
+        local player = character and Players:GetPlayerFromCharacter(character)
+        if not player or owners[i] ~= player.UserId or purchased[i] then return end
+        local stats = player:FindFirstChild("leaderstats")
+        local cash = stats and stats:FindFirstChild("Cash")
+        local price = purchasePad:GetAttribute("Price")
+        if not cash or typeof(price) ~= "number" or price < 0 or cash.Value < price then return end
+        cash.Value -= price
+        purchased[i] = true
+        purchasePad.CanTouch = false
+        purchasePad.Color = Color3.fromRGB(95, 105, 125)
+        droppers[i] = part("Dropper_" .. i, Vector3.new(8, 8, 8), Vector3.new(x, 6, 14), Color3.fromRGB(90, 175, 255), Enum.Material.Metal)
+        droppers[i]:SetAttribute("ProductionPerTick", 5)
+        task.spawn(function()
+            while purchased[i] and owners[i] == player.UserId and player.Parent do
+                cash.Value += 5
+                task.wait(5)
+            end
+        end)
+        print("[Quruvchi Tycoon] " .. player.Name .. " purchased Dropper for " .. price .. " Cash.")
+    end)
     pad.Touched:Connect(function(hit)
         if owners[i] then return end
         local character = hit:FindFirstAncestorOfClass("Model")
@@ -358,6 +387,8 @@ for i = 1, 4 do
         owners[i] = player.UserId
         owners[player.UserId] = i
         plot:SetAttribute("OwnerUserId", player.UserId)
+        purchasePad.CanTouch = true
+        purchasePad.Color = Color3.fromRGB(255, 190, 65)
         pad.Color = Color3.fromRGB(100, 110, 130)
         pad.Name = "ClaimedBy_" .. player.UserId
         local sign = part("OwnerSign_" .. i, Vector3.new(12, 5, 1), Vector3.new(x, 5, -16), Color3.fromRGB(25, 35, 55))
@@ -371,6 +402,12 @@ Players.PlayerRemoving:Connect(function(player)
         owners[index] = nil
         owners[player.UserId] = nil
         plots[index]:SetAttribute("OwnerUserId", 0)
+        purchased[index] = nil
+        if droppers[index] then droppers[index]:Destroy(); droppers[index] = nil end
+        if purchasePads[index] then
+            purchasePads[index].CanTouch = false
+            purchasePads[index].Color = Color3.fromRGB(100, 110, 130)
+        end
     end
 end)
 print("[Quruvchi] Four claimable tycoon plots created.")
