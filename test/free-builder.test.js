@@ -185,3 +185,29 @@ test('local generator implements portal travel and NPC interactions when request
   assert.match(project.source, /prompt.Triggered:Connect/);
   assert.match(project.summary, /qo‘shimcha tizim|vazifalar paneli/);
 });
+
+test('Free Builder UI exports are linked and produce a plugin-ready hierarchy', async () => {
+  const ui = await import('../src/agents/ui/agent.js');
+  assert.equal(typeof ui.buildGameUi, 'function');
+  assert.equal(typeof ui.UI_CONTROLLER_SOURCE, 'string');
+  assert.ok(ui.UI_CONTROLLER_SOURCE.includes('GetAttribute("PanelKey")'));
+
+  const tree = ui.buildGameUi('Integration Test', 'obby');
+  assert.equal(tree.className, 'ScreenGui');
+  assert.equal(tree.name, 'QuruvchiMAXUI');
+  const mainPanel = tree.children.find(node => node.name === 'MainPanel');
+  assert.ok(mainPanel);
+  const actions = mainPanel.children.find(node => node.name === 'Actions');
+  assert.ok(actions);
+  const buttons = actions.children.filter(node => node.className === 'TextButton');
+  assert.deepEqual(buttons.map(node => node.name), [
+    'ShopButton', 'InventoryButton', 'QuestsButton', 'HelpButton'
+  ]);
+  assert.deepEqual(buttons.map(node => node.attributes?.PanelKey), [
+    'Shop', 'Inventory', 'Quests', 'Help'
+  ]);
+
+  const project = buildFreeProject('Menga 12 bosqichli obby yarat');
+  assert.equal(project.uiTree.name, 'QuruvchiMAXUI');
+  assert.equal(project.uiSource, ui.UI_CONTROLLER_SOURCE);
+});
