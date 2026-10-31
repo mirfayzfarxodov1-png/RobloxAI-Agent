@@ -71,7 +71,7 @@ const DANGEROUS_PATTERNS = Object.freeze([
   {
     id: 'global-state',
     pattern: /\b_G\s*(?:\[|\.|=)/,
-    severity: 'warning',
+    severity: 'error',
     title: 'Shared global state',
     detail: 'Avoid _G for game architecture. Prefer ModuleScripts and explicit dependencies.',
     recommendation: 'Move shared logic into a ModuleScript.'
