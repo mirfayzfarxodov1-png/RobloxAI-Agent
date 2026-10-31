@@ -1,26 +1,5 @@
 import { buildWorldScene } from './agents/world/agent.js';
-import { buildUIBlueprint, generateLuau } from './agents/ui/agent.js';
-
-// Compatibility adapter: Free Builder uses the current UI Agent public API.
-function buildGameUi(gameName, kind) {
-  const preset = kind === 'obby' || kind === 'simulator' || kind === 'tycoon'
-    ? 'game-hud'
-    : 'main-menu';
-  const blueprint = buildUIBlueprint({
-    gameName: String(gameName || 'Quruvchi Game').slice(0, 100),
-    preset,
-    theme: 'midnight',
-    viewport: { width: 1280, height: 720 }
-  });
-  return blueprint.root;
-}
-
-const UI_CONTROLLER_SOURCE = generateLuau(buildUIBlueprint({
-  gameName: 'Quruvchi Game',
-  preset: 'game-hud',
-  theme: 'midnight',
-  viewport: { width: 1280, height: 720 }
-})).source;
+import { buildGameUi, UI_CONTROLLER_SOURCE } from './agents/ui/agent.js';
 const COMMON = `-- Quruvchi Free Builder · 3D world starter
 -- API-free generated Luau. All gameplay changes are server-authoritative where practical.
 local Players = game:GetService("Players")
