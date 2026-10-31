@@ -1328,6 +1328,8 @@ export function auditGeneratedProject(project = {}) {
         errors: errors.map(issue => issue.title + ': ' + issue.description),
         warnings: report.issues.filter(issue => issue.severity === 'warning'),
         nodeCount: project.sceneTree ? countNodes(project.sceneTree) : 0,
+        // Stable compatibility contract consumed by src/agent.js.
+        agents: ['World Agent', 'UI Agent', 'Gameplay Agent', 'Tool Scout', 'QA Agent'],
         report
     };
 }
