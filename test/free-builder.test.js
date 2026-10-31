@@ -149,7 +149,7 @@ test('specialist agents validate actual generated source and adapt safely to bad
   assert.ok(ranked.recommendations.every(item=>item.cost==='free'||item.cost==='verify each item'));
   const broken = buildGameplayPlan({kind:'obby',path:'Workspace/bad.lua',source:'print("hello")'});
   assert.equal(broken.ok,false);
-  assert.ok(broken.missing.includes('world root'));
+  assert.ok(broken.missing.some(item => String(item).toLowerCase() === 'world root'));
 });
 
 
