@@ -60,6 +60,11 @@ Each `src/agents/*/agent.js` module has a concrete role and a testable contract:
 
 Duplicate browser bundles at `public/v2.js` and `public/super.js`, and unused root-level V2/V3 entry points, were removed. The canonical browser files now live in `public/v2/` and `public/super/`; the runtime imports the canonical modules in `src/v2/` and `src/super/`. CI syntax-checks these files and all nested agent modules.
 
+
+## Specialist Engine diagnostics
+
+Each specialist Engine exposes a side-effect-free `diagnostics()` check through its public API. World, UI, Tool Scout, and QA verify their analyzer/blueprint/runner/validator contracts and reject malformed requests safely; Gameplay retains its deeper module diagnostics. The Multi-Agent Engine Hub aggregates all five reports through `runMultiAgentEngineDiagnostics()`. These checks do not write to Roblox Studio, execute Luau, install packages, or count as a Play-test.
+
 ## Tests
 
 Run **npm test**.
