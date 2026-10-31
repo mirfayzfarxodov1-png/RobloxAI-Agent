@@ -2390,6 +2390,120 @@ export function getUIAgentInfo() {
 }
 
 // ------------------------------------------------------------
+// FREE BUILDER COMPATIBILITY API
+// ------------------------------------------------------------
+
+export function buildGameUi(gameName = 'Quruvchi Game', kind = 'world') {
+    const theme = getTheme('midnight');
+    const root = node('ScreenGui', 'QuruvchiMAXUI', {
+        ResetOnSpawn: false,
+        IgnoreGuiInset: false,
+        DisplayOrder: 10,
+        ZIndexBehavior: 'Sibling',
+        Enabled: true
+    });
+    const panel = createPanel('MainPanel', theme, {
+        size: { x: 0, y: 0, xOffset: 310, yOffset: 300 },
+        position: { x: 0.5, y: 0.5 },
+        radius: 16
+    });
+    panel.children.push(createLabel('GameTitle', text(gameName, 100), theme, {
+        textSize: 22,
+        align: 'Center',
+        size: { x: 1, y: 0, yOffset: 48 }
+    }));
+    panel.children.push(createLabel('GameType', String(kind || 'world').toUpperCase(), theme, {
+        textSize: 11,
+        color: theme.muted,
+        align: 'Center',
+        position: { x: 0, y: 0.16 },
+        size: { x: 1, y: 0, yOffset: 24 }
+    }));
+    const actions = createPanel('Actions', theme, {
+        size: { x: 0.9, y: 0, yOffset: 190 },
+        position: { x: 0.5, y: 0.62 },
+        color: theme.surfaceSecondary,
+        radius: 12
+    });
+    const actionItems = [
+        ['ShopButton', 'SHOP', 'Shop'],
+        ['InventoryButton', 'INVENTORY', 'Inventory'],
+        ['QuestsButton', 'QUESTS', 'Quests'],
+        ['HelpButton', 'HELP', 'Help']
+    ];
+    actionItems.forEach(([name, label, panelKey], index) => {
+        const button = createButton(name, label, theme, {
+            size: { x: 0.88, y: 0, yOffset: 36 },
+            position: { x: 0.06, y: 0.04 + index * 0.24 },
+            textSize: 14
+        });
+        button.attributes = { PanelKey: panelKey };
+        actions.children.push(button);
+    });
+    panel.children.push(actions);
+    root.children.push(panel);
+    return root;
+}
+
+export const UI_CONTROLLER_SOURCE = `-- Quruvchi MAX UI Controller
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local gui = playerGui:WaitForChild("QuruvchiMAXUI")
+local panel = gui:WaitForChild("MainPanel")
+local actions = panel:WaitForChild("Actions")
+local openedPanel = nil
+
+local function closePanels()
+    for _, child in ipairs(gui:GetChildren()) do
+        if child:IsA("Frame") and child.Name ~= "MainPanel" then
+            child.Visible = false
+        end
+    end
+    openedPanel = nil
+end
+
+for _, button in ipairs(actions:GetChildren()) do
+    if button:IsA("TextButton") then
+        button.Activated:Connect(function()
+            local panelKey = button:GetAttribute("PanelKey")
+            if typeof(panelKey) ~= "string" or panelKey == "" then return end
+            local target = gui:FindFirstChild(panelKey .. "Panel")
+            if not target then
+                target = Instance.new("Frame")
+                target.Name = panelKey .. "Panel"
+                target.Size = UDim2.fromScale(0.42, 0.36)
+                target.Position = UDim2.fromScale(0.5, 0.5)
+                target.AnchorPoint = Vector2.new(0.5, 0.5)
+                target.BackgroundColor3 = Color3.fromRGB(25, 31, 49)
+                target.BorderSizePixel = 0
+                target.Parent = gui
+                local corner = Instance.new("UICorner")
+                corner.CornerRadius = UDim.new(0, 14)
+                corner.Parent = target
+                local label = Instance.new("TextLabel")
+                label.Size = UDim2.fromScale(1, 1)
+                label.BackgroundTransparency = 1
+                label.Text = panelKey
+                label.TextColor3 = Color3.new(1, 1, 1)
+                label.TextScaled = true
+                label.Font = Enum.Font.GothamBold
+                label.Parent = target
+            end
+            if openedPanel == target then
+                target.Visible = false
+                openedPanel = nil
+            else
+                closePanels()
+                target.Visible = true
+                openedPanel = target
+            end
+        end)
+    end
+end
+`;
+
+// ------------------------------------------------------------
 // 28. DEFAULT EXPORT
 // ------------------------------------------------------------
 
