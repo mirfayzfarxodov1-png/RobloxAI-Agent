@@ -25,9 +25,19 @@ export function improveWorldThroughEngine(world, instructions = {}) {
   return { success: after.ok, before, after, world: improved, runtimeExecuted: false };
 }
 
+export function runWorldEngineDiagnostics() {
+  const checks = [];
+  const add = (name, ok, detail = '') => checks.push({ name, ok: Boolean(ok), status: ok ? 'passed' : 'failed', ...(detail ? { detail } : {}) });
+  for (const [name, fn] of [['analyzer', inspectWorldRequest], ['blueprint', buildWorldBlueprint], ['runner', runWorldEngine], ['validator', validateWorldResult], ['artifact-analysis', analyzeWorldArtifact], ['improver', improveWorldThroughEngine]]) add(name, typeof fn === 'function');
+  try { const result = inspectWorldRequest({ prompt: '' }); add('invalid-input-guard', result?.ok === false && result?.status === 'missing-prompt'); } catch (error) { add('invalid-input-guard', false, String(error.message).slice(0, 300)); }
+  try { const result = validateWorldResult({}); add('safe-validation', Boolean(result && typeof result.ok === 'boolean' && Array.isArray(result.issues))); } catch (error) { add('safe-validation', false, String(error.message).slice(0, 300)); }
+  const failed = checks.filter(item => !item.ok).length;
+  return { name: 'Quruvchi World Engine', version: '1.1.0', ok: failed === 0, status: failed ? 'degraded' : 'healthy', summary: { total: checks.length, passed: checks.length - failed, failed }, checks, execution: { studioMutated: false, playtestPerformed: false }, timestamp: new Date().toISOString() };
+}
+
 export function getWorldEngineInfo() {
   return { name: 'Quruvchi World Engine', version: '1.0.0', sourceAgent: getWorldAgentInfo(), modules: { analyzer: getWorldAnalyzerInfo(), blueprint: getWorldBlueprintInfo(), validator: getWorldValidatorInfo() }, preservesOriginalAgent: true };
 }
 
-export const WorldEngine = Object.freeze({ inspect: inspectWorldRequest, build: buildWorldBlueprint, run: runWorldEngine, validate: validateWorldResult, analyzeArtifact: analyzeWorldArtifact, improve: improveWorldThroughEngine, getInfo: getWorldEngineInfo });
+export const WorldEngine = Object.freeze({ inspect: inspectWorldRequest, build: buildWorldBlueprint, run: runWorldEngine, validate: validateWorldResult, analyzeArtifact: analyzeWorldArtifact, improve: improveWorldThroughEngine, diagnostics: runWorldEngineDiagnostics, getInfo: getWorldEngineInfo });
 export default WorldEngine;
