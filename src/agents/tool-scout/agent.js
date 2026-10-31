@@ -1140,6 +1140,24 @@ export async function runToolScout(project = {}) {
 // 16. AGENT INFORMATION
 // ------------------------------------------------------------
 
+/** Synchronous compatibility facade for the original server orchestrator. */
+export function scoutTools(input = []) {
+    const query = clean((Array.isArray(input) ? input : [input]).join(' '), CONFIG.maxQueryLength).toLowerCase();
+    const catalog = [
+        { id: 'terrain', name: 'Roblox Terrain Engine', cost: 'free', tags: ['terrain', 'mountain', 'world', 'landscape'] },
+        { id: 'ui', name: 'Roblox UI Builder', cost: 'free', tags: ['ui', 'interface', 'screen', 'button', 'panel'] },
+        { id: 'modeling', name: 'Roblox Model Tools', cost: 'free', tags: ['model', 'building', 'object', 'part'] },
+        { id: 'testing', name: 'Roblox Studio Test Tools', cost: 'free', tags: ['test', 'qa', 'debug', 'playtest'] }
+    ];
+    const terms = query.split(/[^a-z0-9а-яё‘’]+/i).filter(Boolean);
+    const recommendations = catalog
+        .map(item => ({ ...item, score: item.tags.reduce((sum, tag) => sum + (terms.some(term => tag.includes(term) || term.includes(tag)) ? 1 : 0), 0) }))
+        .filter(item => item.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .map(({ score, ...item }) => item);
+    return { success: true, query, total: recommendations.length, recommendations };
+}
+
 export function getToolScoutInfo() {
     return {
         name: 'Quruvchi MAX Tool Scout Agent',
