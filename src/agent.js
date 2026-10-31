@@ -9,6 +9,7 @@ import { emit, sendCommand, statusForUser, setUserRunning, stateForUser } from '
 import { buildStudioCommandPlan, executeStudioCommandPlan } from './integration/studio-bridge.js';
 
 const running = new Map();
+const listOrEmpty = value => Array.isArray(value) ? value : [];
 
 function textBlock(text) { return [{ type: 'text', text }]; }
 function emitText(userId, content) {
@@ -101,10 +102,10 @@ async function runFreeTask(userId, task, prompt) {
   const project = buildFreeProject(prompt, historyMessages);
   const gameplayPlan = buildGameplayPlan(project);
   project.gameplayPlan = gameplayPlan;
-  if (!gameplayPlan.ok) throw new Error('Gameplay Agent kod tekshiruvidan o‘tmadi: ' + gameplayPlan.missing.join(', '));
+  if (!gameplayPlan.ok) throw new Error('Gameplay Agent kod tekshiruvidan o‘tmadi: ' + listOrEmpty(gameplayPlan.missing).join(', '));
   const localQa = auditGeneratedProject(project);
   const toolReport = scoutTools([prompt, ...(project.features || [])]);
-  if (!localQa.ok) throw new Error('MAX oldindan tekshiruvdan o‘tmadi: ' + localQa.errors.join('; '));
+  if (!localQa.ok) throw new Error('MAX oldindan tekshiruvdan o‘tmadi: ' + listOrEmpty(localQa.errors).join('; '));
   const explanation = [
     '## Quruvchi MAX — ko‘p agentli Studio qurish',
     'Bu ish alohida World, UI, Gameplay, Tool Scout va QA agentlariga bo‘lingan. Agentlar faqat so‘rovdagi otlarni sanab chiqmaydi: mavzu, zonalar, dekor, spawn, o‘zaro ta’sir va zarur qo‘llab-quvvatlovchi tizimlarni ham aniqlaydi. Mavjud xarita ko‘r-ko‘rona o‘chirib yuborilmaydi.',
@@ -114,15 +115,15 @@ async function runFreeTask(userId, task, prompt) {
     '**Bosqich:** ' + project.level + ' / 4',
     '**World Agent:** ' + localQa.nodeCount + ' ta obyekt node’i · mavzu: ' + (project.sceneTree.attributes?.WorldTheme || 'adventure') + ' · zonalar, dekor va so‘rovga mos obyektlar.',
     '**UI Agent:** Do‘kon, inventar, vazifalar va yordam tugmalari.',
-    '**Gameplay Agent:** ' + gameplayPlan.systems.join(', '),
-    '**Gameplay kod tekshiruvi:** ' + gameplayPlan.status + ' · ' + gameplayPlan.checks.filter(item=>item.ok).length + '/' + gameplayPlan.checks.length + ' local tekshiruv, ' + gameplayPlan.sourceLength + ' belgili server Luau.',
-    '**Tool Scout:** ' + toolReport.recommendations.map(item => item.name + ' (' + item.cost + ')').join('; '),
-    '**QA Agent:** ' + localQa.agents.join(', ') + ' — mahalliy tekshiruv o‘tdi.',
+    '**Gameplay Agent:** ' + listOrEmpty(gameplayPlan.systems).join(', '),
+    '**Gameplay kod tekshiruvi:** ' + gameplayPlan.status + ' · ' + listOrEmpty(gameplayPlan.checks).filter(item=>item?.ok).length + '/' + listOrEmpty(gameplayPlan.checks).length + ' local tekshiruv, ' + gameplayPlan.sourceLength + ' belgili server Luau.',
+    '**Tool Scout:** ' + listOrEmpty(toolReport.recommendations).map(item => item.name + ' (' + item.cost + ')').join('; ') || 'Mos vosita topilmadi',
+    '**QA Agent:** ' + listOrEmpty(localQa.agents).join(', ') || 'QA Agent' + ' — mahalliy tekshiruv o‘tdi.',
     '**Obyektlar yo‘li:** Workspace/QuruvchiFreeWorld',
     '**UI yo‘li:** StarterGui/QuruvchiMAXUI',
     '**Gameplay skripti:** ' + project.path,
     '',
-    ...toolReport.notes,
+    ...listOrEmpty(toolReport.notes),
     '',
     'Qurish tugagach, Studio’da Explorer’ni ochib obyektlarni ko‘r va Play bosib tekshir.'
   ].join('\n');
