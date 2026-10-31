@@ -2446,6 +2446,7 @@ export function buildWorldScene(options = {}) {
         const nodes = [
             { name: 'StartSpawn', className: 'SpawnLocation', properties: { Position: { Vector3: [0, 3, 0] }, Size: { Vector3: [14, 1, 14] }, Anchored: true } }
         ];
+        children.push({ name: 'StartSpawn', className: 'SpawnLocation', properties: { Position: { Vector3: [0, 3, 0] }, Size: { Vector3: [14, 1, 14] }, Anchored: true } });
         for (let i = 1; i <= stages; i++) {
             const row = Math.floor((i - 1) / 6), col = (i - 1) % 6;
             const platform = part('JumpPlatform' + i, (row % 2 ? 5 - col : col) * 18, (row + 1) * 20, { Stage: i });
