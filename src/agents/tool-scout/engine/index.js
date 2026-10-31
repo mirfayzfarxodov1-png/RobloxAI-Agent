@@ -26,6 +26,6 @@ export function runToolScoutEngineDiagnostics() {
   return { name: 'Quruvchi Tool Scout Engine', version: '1.1.0', ok: failed === 0, status: failed ? 'degraded' : 'healthy', summary: { total: checks.length, passed: checks.length - failed, failed }, checks, execution: { packagesInstalled: false, externalCodeExecuted: false }, timestamp: new Date().toISOString() };
 }
 
-export function getToolScoutEngineInfo() { return { name: 'Quruvchi Tool Scout Engine', version: '1.0.0', sourceAgent: getToolScoutInfo(), modules: { analyzer: getToolScoutAnalyzerInfo(), blueprint: getToolScoutBlueprintInfo(), validator: getToolScoutValidatorInfo() }, preservesOriginalAgent: true }; }
+export function getToolScoutEngineInfo() { return { name: 'Quruvchi Tool Scout Engine', version: '1.1.0', sourceAgent: getToolScoutInfo(), modules: { analyzer: getToolScoutAnalyzerInfo(), blueprint: getToolScoutBlueprintInfo(), validator: getToolScoutValidatorInfo() }, preservesOriginalAgent: true }; }
 export const ToolScoutEngine = Object.freeze({ inspect: inspectToolRequest, build: buildToolPlan, run: runToolScoutEngine, validate: validateToolPlan, analyzeCandidates: analyzeToolCandidates, validateDependencies: validateToolDependencies, diagnostics: runToolScoutEngineDiagnostics, getInfo: getToolScoutEngineInfo });
 export default ToolScoutEngine;
