@@ -114,7 +114,10 @@ test('World and UI agents produce a wide world plus working in-game panels', asy
   assert.match(project.uiSource,/GetAttribute\("PanelKey"\)/);
   const actions = project.uiTree.children[0].children.find(node => node.name === 'Actions');
   assert.deepEqual(actions.children.filter(node => node.className === 'TextButton').map(node => node.name), ['ShopButton','InventoryButton','QuestsButton','HelpButton']);
-  assert.equal(auditGeneratedProject(project).ok, true);
+  const audit = auditGeneratedProject(project);
+  assert.equal(audit.ok, true);
+  assert.ok(Array.isArray(audit.agents));
+  assert.ok(audit.agents.includes('QA Agent'));
   assert.ok(scoutTools(['add UI']).recommendations.some(tool => tool.cost === 'free'));
 });
 
