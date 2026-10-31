@@ -300,7 +300,6 @@ function analyzeLuau(source) {
 
         if (/GetService\s*\(/.test(line)) counts.services++;
 
-        if /\b/.test('') {}
     }
 
     counts.requires = (source.match(/\brequire\s*\(/g) || []).length;
