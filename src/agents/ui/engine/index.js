@@ -32,6 +32,6 @@ export function runUIEngineDiagnostics() {
   return { name: 'Quruvchi UI Engine', version: '1.1.0', ok: failed === 0, status: failed ? 'degraded' : 'healthy', summary: { total: checks.length, passed: checks.length - failed, failed }, checks, execution: { studioMutated: false, playtestPerformed: false }, timestamp: new Date().toISOString() };
 }
 
-export function getUIEngineInfo() { return { name: 'Quruvchi UI Engine', version: '1.0.0', sourceAgent: getUIAgentInfo(), modules: { analyzer: getUIAnalyzerInfo(), blueprint: getUIBlueprintInfo(), validator: getUIValidatorInfo() }, preservesOriginalAgent: true }; }
+export function getUIEngineInfo() { return { name: 'Quruvchi UI Engine', version: '1.1.0', sourceAgent: getUIAgentInfo(), modules: { analyzer: getUIAnalyzerInfo(), blueprint: getUIBlueprintInfo(), validator: getUIValidatorInfo() }, preservesOriginalAgent: true }; }
 export const UIEngine = Object.freeze({ inspect: inspectUIRequest, build: buildUIBlueprintPackage, run: runUIEngine, validate: validateUIResult, analyzeArtifact: analyzeUIArtifact, improve: improveUIThroughEngine, diagnostics: runUIEngineDiagnostics, getInfo: getUIEngineInfo });
 export default UIEngine;
