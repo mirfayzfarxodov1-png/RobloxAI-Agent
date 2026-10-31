@@ -2410,6 +2410,54 @@ export function getWorldAgentInfo() {
     };
 }
 
+
+/** Free Builder scene-tree compatibility API backed by the native World Agent. */
+export function buildWorldScene(options = {}) {
+    const prompt = safeText(options.prompt || options.title || 'Roblox world', LIMITS.maxText);
+    const kind = ['obby', 'simulator', 'tycoon', 'world'].includes(options.kind) ? options.kind : 'world';
+    const title = safeText(options.title || 'Quruvchi Game', 100).replace(/[\r\n]+/g, ' ');
+    const counts = options.counts || {};
+    const stages = Math.round(clamp(counts.stages ?? 30, 1, 100));
+    const collectibles = Math.round(clamp(counts.collectibles ?? 30, 1, 250));
+    const plots = Math.round(clamp(counts.plots ?? 4, 1, 24));
+    const theme = detectBiome(prompt);
+    const project = generateWorldProject({ name: 'QuruvchiFreeWorld', prompt, biome: theme, seed: 2026,
+        worldSize: { x: 1024, z: 1024 }, buildings: { count: 8 }, vegetation: { trees: 80, density: 0.25 } });
+    const children = project.world.instanceTree.children.map(node => ({ ...node }));
+    const part = (name, x, z, attributes = {}) => ({ name, className: 'Part',
+        properties: { Position: { Vector3: [x, 4, z] }, Size: { Vector3: [8, 1, 8] }, Anchored: true }, attributes });
+    const folder = (name, nodes = []) => ({ name, className: 'Folder', children: nodes });
+    children.push(folder('WorldZones', Array.from({ length: 4 }, (_, i) => ({
+        name: 'WorldZone' + (i + 1), className: 'Model', children: [part('ZoneMarker' + (i + 1), i * 120, 0)]
+    }))));
+    children.push(folder('WorldProps', [part('WorldCenterMarker', 0, 0)]));
+    children.push(folder('WorldRoutes', [part('MainRouteStart', -300, 0), part('MainRouteEnd', 300, 0)]));
+    const portalNodes = /portal|teleport|darvoza/i.test(prompt) ? [1, 2, 3].map(i => part('WorldPortal' + i, i * 35, -60)) : [];
+    children.push(folder('WorldPortals', portalNodes));
+    children.push(folder('WorldBuildings', [part('WorldLandmark', 80, 80)]));
+    children.push(folder('InteractionPoints', [part('WorldInteractionPoint', 12, 12)]));
+    if (/forest|o‘rmon|orman|daraxt/i.test(prompt)) children.push(folder('ThemeDressing', [part('ForestThemeMarker', 24, 24)]));
+    if (kind === 'obby') {
+        const nodes = [];
+        for (let i = 1; i <= stages; i++) {
+            const row = Math.floor((i - 1) / 6), col = (i - 1) % 6;
+            nodes.push(part('JumpPlatform' + i, (row % 2 ? 5 - col : col) * 18, (row + 1) * 20, { Stage: i }));
+            if (i % 5 === 0) nodes.push(part('Checkpoint' + i, (row % 2 ? 5 - col : col) * 18, (row + 1) * 20, { CheckpointIndex: i }));
+            if (i === 3) nodes.push(part('StageMarker3', 36, 20));
+        }
+        nodes.push(part('FinishPlatform', 0, (Math.ceil(stages / 6) + 1) * 20), part('SideRailLeft', -12, 30), part('SideRailRight', 102, 30));
+        children.push(folder('ObbyCourse', nodes));
+    } else if (kind === 'simulator') {
+        children.push(folder('Collectibles', Array.from({ length: collectibles }, (_, i) => part('Collectible_' + (i + 1), (i % 15) * 12, Math.floor(i / 15) * 12))));
+    } else if (kind === 'tycoon') {
+        children.push(folder('TycoonPlots', Array.from({ length: plots }, (_, i) => ({
+            name: 'Plot_' + (i + 1), className: 'Model', children: [part('ClaimPad_' + (i + 1), i * 55, 0)]
+        }))));
+    }
+    return { name: 'QuruvchiFreeWorld', className: 'Folder',
+        attributes: { GameKind: kind, ProjectTitle: title, WorldTheme: theme }, children };
+}
+
 // ================================================================
 // 26. DEFAULT EXPORT
 // ================================================================
