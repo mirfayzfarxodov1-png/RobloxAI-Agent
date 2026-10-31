@@ -43,3 +43,31 @@ test('Multi-Agent Engine Hub reports manual Studio verification boundaries', asy
   assert.equal(info.changesOriginalAgentFiles, false);
   assert.equal(info.executesLuau, false);
 });
+
+
+test('All specialist engines expose passing self-diagnostics', async () => {
+  const cases = [
+    ['world', '../src/agents/world/engine/index.js', 'runWorldEngineDiagnostics'],
+    ['ui', '../src/agents/ui/engine/index.js', 'runUIEngineDiagnostics'],
+    ['gameplay', '../src/agents/gameplay/engine/index.js', 'runGameplayEngineDiagnostics'],
+    ['tool-scout', '../src/agents/tool-scout/engine/index.js', 'runToolScoutEngineDiagnostics'],
+    ['qa', '../src/agents/qa/engine/index.js', 'runQAEngineDiagnostics']
+  ];
+  for (const [name, path, method] of cases) {
+    const engine = await import(path);
+    assert.equal(typeof engine[method], 'function', name + ' diagnostics API');
+    const report = engine[method]();
+    assert.equal(report.ok, true, name + ' diagnostics should pass: ' + JSON.stringify(report.checks));
+    assert.equal(report.summary.failed, 0, name + ' diagnostics failures');
+  }
+});
+
+test('Multi-Agent Engine Hub aggregates specialist diagnostics without Studio execution', async () => {
+  const hub = await import('../src/agents/engine-hub/index.js');
+  const report = hub.runMultiAgentEngineDiagnostics();
+  assert.equal(report.ok, true);
+  assert.equal(report.summary.engines, 5);
+  assert.equal(report.execution.studioMutated, false);
+  assert.equal(report.execution.luauExecuted, false);
+  assert.equal(report.execution.playtestPerformed, false);
+});
