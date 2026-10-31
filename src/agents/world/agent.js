@@ -2421,9 +2421,13 @@ export function buildWorldScene(options = {}) {
     const collectibles = Math.round(clamp(counts.collectibles ?? 30, 1, 250));
     const plots = Math.round(clamp(counts.plots ?? 4, 1, 24));
     const theme = detectBiome(prompt);
-    const project = generateWorldProject({ name: 'QuruvchiFreeWorld', prompt, biome: theme, seed: 2026,
+    // Build the native blueprint and serialize its hierarchy directly.
+    // The Free Builder only needs the tree here; Luau generation is handled
+    // by the gameplay builder and must not block on unrelated material checks.
+    const world = generateWorld({ name: 'QuruvchiFreeWorld', prompt, biome: theme, seed: 2026,
         worldSize: { x: 1024, z: 1024 }, buildings: { count: 8 }, vegetation: { trees: 80, density: 0.25 } });
-    const children = project.world.instanceTree.children.map(node => ({ ...node }));
+    const nativeTree = createWorldInstanceTree(world);
+    const children = nativeTree.children.map(node => ({ ...node }));
     const part = (name, x, z, attributes = {}) => ({ name, className: 'Part',
         properties: { Position: { Vector3: [x, 4, z] }, Size: { Vector3: [8, 1, 8] }, Anchored: true }, attributes });
     const folder = (name, nodes = []) => ({ name, className: 'Folder', children: nodes });
