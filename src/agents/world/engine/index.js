@@ -36,7 +36,7 @@ export function runWorldEngineDiagnostics() {
 }
 
 export function getWorldEngineInfo() {
-  return { name: 'Quruvchi World Engine', version: '1.0.0', sourceAgent: getWorldAgentInfo(), modules: { analyzer: getWorldAnalyzerInfo(), blueprint: getWorldBlueprintInfo(), validator: getWorldValidatorInfo() }, preservesOriginalAgent: true };
+  return { name: 'Quruvchi World Engine', version: '1.1.0', sourceAgent: getWorldAgentInfo(), modules: { analyzer: getWorldAnalyzerInfo(), blueprint: getWorldBlueprintInfo(), validator: getWorldValidatorInfo() }, preservesOriginalAgent: true };
 }
 
 export const WorldEngine = Object.freeze({ inspect: inspectWorldRequest, build: buildWorldBlueprint, run: runWorldEngine, validate: validateWorldResult, analyzeArtifact: analyzeWorldArtifact, improve: improveWorldThroughEngine, diagnostics: runWorldEngineDiagnostics, getInfo: getWorldEngineInfo });
