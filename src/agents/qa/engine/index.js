@@ -28,6 +28,6 @@ export function runQAEngineDiagnostics() {
   return { name: 'Quruvchi QA Engine', version: '1.1.0', ok: failed === 0, status: failed ? 'degraded' : 'healthy', summary: { total: checks.length, passed: checks.length - failed, failed }, checks, execution: { studioPlaytestPerformed: false }, timestamp: new Date().toISOString() };
 }
 
-export function getQAEngineInfo() { return { name: 'Quruvchi QA Engine', version: '1.0.0', sourceAgent: getQAAgentInfo(), modules: { analyzer: getQAAnalyzerInfo(), blueprint: getQABlueprintInfo(), validator: getQAValidatorInfo() }, preservesOriginalAgent: true }; }
+export function getQAEngineInfo() { return { name: 'Quruvchi QA Engine', version: '1.1.0', sourceAgent: getQAAgentInfo(), modules: { analyzer: getQAAnalyzerInfo(), blueprint: getQABlueprintInfo(), validator: getQAValidatorInfo() }, preservesOriginalAgent: true }; }
 export const QAEngine = Object.freeze({ inspect: inspectQAProject, build: buildQAEngineBlueprint, run: runQAEngine, validate: validateQAResult, verifyRepairs: verifyRepairsThroughQA, diagnostics: runQAEngineDiagnostics, getInfo: getQAEngineInfo });
 export default QAEngine;
