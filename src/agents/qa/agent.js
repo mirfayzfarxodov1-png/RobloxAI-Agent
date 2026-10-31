@@ -1308,6 +1308,28 @@ function createSummary(status, counts, score) {
 // 19. REPAIR VERIFICATION
 // ------------------------------------------------------------
 
+/** Compatibility adapter used by the legacy agent orchestrator and Free Builder tests. */
+export function auditGeneratedProject(project = {}) {
+    const files = Array.isArray(project.files) ? [...project.files] : [];
+    if (typeof project.source === 'string' && project.source.trim()) {
+        files.push({ path: project.path || 'ServerScriptService/Quruvchi/Gameplay.server.lua', content: project.source, agent: 'Gameplay Agent' });
+    }
+    if (typeof project.uiSource === 'string' && project.uiSource.trim()) {
+        files.push({ path: 'StarterGui/QuruvchiMAXUI/UIController.client.lua', content: project.uiSource, agent: 'UI Agent' });
+    }
+    if (project.sceneTree) {
+        files.push({ path: 'Workspace/QuruvchiFreeWorld/World.model.json', content: JSON.stringify(project.sceneTree), agent: 'World Agent' });
+    }
+    const report = runQAAudit({ ...project, files });
+    const errors = report.issues.filter(issue => issue.severity === 'critical' || issue.severity === 'error');
+    return {
+        ok: errors.length === 0,
+        errors: errors.map(issue => issue.title + ': ' + issue.description),
+        warnings: report.issues.filter(issue => issue.severity === 'warning'),
+        report
+    };
+}
+
 export function verifyQAFixes(previousReport, updatedProject) {
 
     const nextReport = runQAAudit(updatedProject);
